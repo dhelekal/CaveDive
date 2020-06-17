@@ -76,21 +76,25 @@
 \newpage
 \section{Simulation}
 \subsection{Coalescent Preliminaries}
-The coalescent is a CTMC defined on the set $\{1 ... n\}$, parametrised via the coalescent rate, in our case $g/Ne(t)$, where $g$ is a scale parameter and $Ne(t)$ the population size at time $t$. 
+The coalescent is a CTMC defined on the set $\{1 ... n\}$, parametrised via the coalescent rate, in our case $1/Ne(t)g$, where $g$ is a scale parameter and $Ne(t)$ the population size at time $t$. 
 The transition rates of the coalescent process are given by 
 \begin{gather*}
-\rho(j, j-1) = \binom{j}{2}\cdot\frac{g}{Ne(t)}
+\rho(j, j-1) = \binom{j}{2}\cdot\frac{1}{Ne(t)g}
 \end{gather*}
 The waiting times in the homogenous case are exponentially distributed
 \begin{gather*}
-W_j \sim 1-\exp{-\frac{g\binom{j}{2}}{Ne(t)}}
+P[W_j \leq s] = 1-\exp(-s\frac{\binom{j}{2}}{Ne(t)g})
 \end{gather*}
+Furthermore, the waiting times for individual coalescent events, conditioned on being less than the time between two consecutive sampling events $\Delta t$ are distributed as follows
+\begin{gather}\label{eq:conditional}
+P[W_j \leq s\mid W_j \leq \Delta t ] = \frac{P[W_j \leq s]}{P[W_j \leq \Delta t]} \quad\forall s \leq \Delta t
+\end{gather}
 In the inhomogenous case, the waiting times can be derived as follows:
 For an inhomogenous CTMC, let $E_j(t)$ be the total exit rate from state $j$ at time $t$.
 By the markov property individual exit events from a given state only depend on the state and given time, i.e. they form a time-inhomogenous poisson process.
 As such the probability of no events in an interval $[t,t+s]\quad s\in \R^+$ is 
 \begin{gather}
-\exp{-\int_t^{t+s}E_j(\tau)d\tau} = \exp{-\int_0^{s}E_j(t+\tau)d\tau}
+\exp(-\int_t^{t+s}E_j(\tau)d\tau) = \exp(-\int_0^{s}E_j(t+\tau)d\tau)
 \end{gather}
 The waiting times are defined as
 \begin{gather}
@@ -102,12 +106,12 @@ W_j(t) > s \Rightarrow \forall \tau\in[t, t+s] X(\tau) = j
 \end{gather}
 Furthermore the above relation doesn't hold iff an exit event has occured in the time interval $[t,t+s]$. As such:
 \begin{align*}
-&P[W_j(t) > s] = P[\text{no exit events in }[t,t+s]] = \exp{-\int_0^{s}E_j(t+\tau)d\tau}\\
-&P[W_j(t) < s] = 1 - \exp{-\int_0^{s}E_j(t+\tau)d\tau}
+&P[W_j(t) > s] = P[\text{no exit events in }[t,t+s]] = \exp(-\int_0^{s}E_j(t+\tau)d\tau)\\
+&P[W_j(t) < s] = 1 - \exp(-\int_0^{s}E_j(t+\tau)d\tau)
 \end{align*}
 In the case of phylodynamic coalescent this becomes
 \begin{gather}
-W_j(t) \sim 1 - \exp{-\int_0^{s}\frac{g\binom{j}{2}}{Ne(t+\tau)}d\tau}
+P[W_j(t) \leq s] = 1 - \exp(-\int_0^{s}\frac{\binom{j}{2}}{Ne(t+\tau)g}d\tau)
 \end{gather}
 \newpage
 Note, the waiting times a
@@ -120,9 +124,26 @@ By markov property
 P\left[W_j(t) > s+u\mid X(s)=j\right] = P\left[W_j(t+s) > u\right]
 \end{gather}
 \subsection{Homogenous case}
-The sampling process conditioned on sampling times follows a slightly modified gillespie scheme.
-
-
+The sampling process conditioned on sampling times follows a modified gillespie scheme. In order to facilitate the computation of the likelihoods of the individual simulated trees, it is preferred to avoid rejection sampling. As such we require sampling the conditional likelihood \ref{eq:conditional}. This is achieved by inverse transform sampling.
+Let:
+\begin{align*}
+  u\sim& U([0,1])\\
+  T(u) : P[T(u)\leq s] &= \frac{P[T(u) \leq s]}{P[T(u) \leq \Delta t]} \quad\forall s \leq \Delta t
+\end{align*}
+Where $T(u)$ is assumed to be monotone increasing and invertible.
+\begin{align*}
+  &&P[T(u)\leq s] &= P[u\leq T^-1(s)]\\
+  &\Rightarrow& P[u\leq T^{-1}(s)] &= \frac{\int_0^s\lambda\exp(-\lambda t)dt}{\int_0^{\Delta t}\lambda\exp(-\lambda t)dt}\\
+  &\Rightarrow& T^{-1}(s) &= \frac{1-\exp(-\lambda s)}{1-\exp(-\lambda \Delta t)}
+\end{align*}
+Defining $y\triangleq T^{-1}(s)$, we obtain the transform:
+\begin{gather}
+T(y) = \frac{-1}{\lambda}\log[1-y(1-\exp(-\lambda\Delta t))]
+\end{gather}
+The corresponding pdf evaluated at $u$ is
+\begin{gather}
+f_{\mathbf{T}(u)}(T(u)) = \lambda \left(\frac{1}{1-\exp(\lambda\Delta t)}-u\right)
+\end{gather}
 \begin{figure}[h]
   \centering
     \includegraphics[width=0.5\textwidth]{plots/Coalescent_Example.png}
