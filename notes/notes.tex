@@ -21,7 +21,9 @@
 \usepackage{enumitem}
 \usepackage{multicol}
 \usepackage{graphicx}
+
 \usepackage{hyperref}
+\hypersetup{colorlinks=true,}
 \usepackage[parfill]{parskip}
 \usepackage{lipsum}
 \usepackage[export]{adjustbox}
@@ -74,6 +76,12 @@
 \begin{document}
 \maketitle
 \newpage
+\tableofcontents
+\newpage
+\section{Questions}
+\begin{itemize}
+  \item Likelihood - Is my assumption that we are looking for \textit{log-likelihood} of the equivalence class of trees that share the same coalescent times (and sampling times), i.e. likelihood of trees up to the topology?
+\end{itemize}
 \section{Simulation}
 \subsection{Coalescent Preliminaries}
 The coalescent is a CTMC defined on the set $\{1 ... n\}$, parametrised via the coalescent rate, in our case $1/Ne(t)g$, where $g$ is a scale parameter and $Ne(t)$ the population size at time $t$. 
@@ -144,6 +152,7 @@ The corresponding pdf evaluated at $u$ is
 \begin{gather}
 f_{\mathbf{T}(u)}(T(u)) = \lambda \left(\frac{1}{1-\exp(\lambda\Delta t)}-u\right)
 \end{gather}
+\newpage
 \begin{figure}[h]
   \centering
     \includegraphics[width=0.5\textwidth]{plots/Coalescent_Example.png}
@@ -156,6 +165,7 @@ f <- (sampling_times, Ne): //Sampling times in descending order
   future_lineages <- length(sampling_times)-1
   t <- sampling_times[1]
   idx <- 1
+  log_lh <- 0
 
   while extant_lineages > 1 or future_lineages > 0:
     if extant_lineages < 2:
@@ -166,17 +176,32 @@ f <- (sampling_times, Ne): //Sampling times in descending order
     else:
       delta_t <- t-sampling_times[idx+1]
       rate <- binom(extant_lineages,2)/Ne
-      w_t ~ exp(rate)
 
-      if w_t < delta_t:
+      p_coal <- 1-exp(-rate*delta_t)
+      r_c ~ U[0,1] 
+
+      if r_c < p_coal:
+
+        log_lh += log(p_coal)
+
         coalesce_lineages
         extant_lineages--
+
+        r_w ~ U[0,1]
+        w_t <- (-1/rate)*log(1-r_w*(1-exp(-rate*delta_t)))
         t <- t+w_t
+
+        cond_lh <- rate*(1/(1-exp(-rate*delta_t)) - r_w)
+        log_lh += log(cond_lh)
+
       else:
+        log_lh += log(1-p_coal)
         idx++
         t <- sampling_times[idx]
         extant_lineages++
         future_lineages--
+
+    return: coalescent_times, log_lh
 \end{lstlisting}
 
 \subsection{Inhomogenous Case}
@@ -191,4 +216,9 @@ and the transition rates
 \begin{gather}
 \mathbf{s}\to\mathbf{s}-\mathbf{e_j} \quad \binom{s_j}{2}Ne_j(t)+\delta_{s_j, 1}Ne_j(t)\sum_{i\neq j}s_i
 \end{gather}
+
+\section{Previous Work}
+A framework utilising sampling intensity in order to extract more information is proposed in \cite{parag_jointly_nodate}
+\section{Bibliography}
+\printbibliography
 \end{document}
