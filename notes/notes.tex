@@ -134,10 +134,12 @@ P\left[W_j(t) > s+u\mid X(s)=j\right] = P\left[W_j(t+s) > u\right]
 \subsection{Homogenous case}
 The sampling process conditioned on sampling times follows a modified gillespie scheme. In order to facilitate the computation of the likelihoods of the individual simulated trees, it is preferred to avoid rejection sampling. As such we require sampling the conditional likelihood \ref{eq:conditional}. This is achieved by inverse transform sampling.
 Let:
-\begin{align*}
+\begin{gather}\label{eq:cond_timedep}
+\begin{aligned}
   u\sim& U([0,1])\\
   T(u) : P[T(u)\leq s] &= \frac{P[T(u) \leq s]}{P[T(u) \leq \Delta t]} \quad\forall s \leq \Delta t
-\end{align*}
+\end{aligned}
+\end{gather}
 Where $T(u)$ is assumed to be monotone increasing and invertible.
 \begin{align*}
   &&P[T(u)\leq s] &= P[u\leq T^-1(s)]\\
@@ -205,7 +207,14 @@ f <- (sampling_times, Ne): //Sampling times in descending order
 \end{lstlisting}
 
 \subsection{Inhomogenous Case}
-In the inhomogenous case, the scheme is similar, with the key difference that the sampling times now follow a much more complex distribution. As such a sampling scheme such as rejection sampling will be required (?)
+In the inhomogenous case, the scheme is similar, with the key difference that the sampling times now follow a much more complex distribution. We proceed with a modified conditional sampling scheme as in \ref{eq:cond_timedep}. To obtain draws $w_j(t)$, draws from standard coalescent $w_j$ are rescaled, akin to algorithm described in \cite{hein_gene_2004} Pg 98.
+
+Consider the time interval $[t_i, s_i]$ with $s_j = min\left\{s\in S : s>t_i\right\}$
+The probability that no coalescent events happens within this interval is 
+\begin{gather*}
+  P[W_j(t_i) > s_i-t_i] = \exp(-\int_0^{s_i-t_i}\frac{\binom{j}{2}}{Ne(t+\tau)g}d\tau)
+\end{gather*}
+
 \subsection{Multistrain+Inhomogenous Case}
 In this case, coalescent nodes have an added colour property, and each colour coalesces according to a colour specific, time dependent case. Nodes of non-identical colour can coalesce iff at least one of them is the last remaining node of a given colour.\\
 Given $M$ colours, $M$ population size functions $\{Ne_j(t)\}_{1\leq j\leq M}$, and initial population size $N$, Let $Y(t)$ be a CTMC with the state space:

@@ -8,6 +8,14 @@ cond_likelihood <- function(rate, u, delta_t){
         return(rate*(1/(1-exp(-rate*delta_t)) - u))
 }
 
+exp_likelihood <- function(rate, t){
+        return(rate*exp(-rate*t))
+}
+
+poi_0_likelihood <- function(rate, t){
+        return(exp(-rate*t))
+}
+
 simulate <- function(sampling_times, pop_size){
         
         log_lh <- 0
@@ -29,7 +37,8 @@ simulate <- function(sampling_times, pop_size){
                         t <- times_desc[idx]
                 } else {
                         #Pick waiting time
-                        rate <- choose(extant_lineages,2)/pop_size*extant_lineages
+                        rate <- choose(extant_lineages,2)/pop_size
+                        
                         
                         if (idx+1 > length(sampling_times)) {
                                 delta_t <- Inf
@@ -88,12 +97,15 @@ build_coal_tree <- function(sampling_times, coalescent_times){
                 } else {
                         t <- coal_times_desc[coal_idx]
                         coal_node1_idx <- trunc(runif(1,1,length(extant_entries)+1))
+                        
                         coal_node1 <- extant_entries[coal_node1_idx]
-                        extant_entries <- extant_entries[-coal_node1_idx]
                         ct1 <- extant_times[coal_node1_idx]
+                        
                         extant_times <- extant_times[-coal_node1_idx]
+                        extant_entries <- extant_entries[-coal_node1_idx]
+                        
                         br_len_1 <- ct1-t
-                        entry1<-tree_nodes[coal_node1]
+                        entry1 <- tree_nodes[coal_node1]
                         
                         coal_node2_idx <- trunc(runif(1,1,length(extant_entries)+1))
                         coal_node2 <- extant_entries[coal_node2_idx]
@@ -108,10 +120,80 @@ build_coal_tree <- function(sampling_times, coalescent_times){
                                                          entry2,
                                                          ":",br_len_2,
                                                          ")")
-                        extant_times[coal_node2] <- t
+                        extant_times[coal_node2_idx] <- t
                         coal_idx <- coal_idx+1
                 }
         }
         tree_str<-paste0(tree_nodes[extant_entries[1]], ";")
         return(tree_str)
+}
+
+tree_likelihood <- function(sampling_times, coalescent_times, Ne){
+        coal_times_desc <- coalescent_times[order(-coalescent_times)]
+        times_desc <- sampling_times[order(-sampling_times)]
+        
+        n_sample <- length(times_desc)
+        n_coal <- length(coal_times_desc)
+        
+        assertthat::are_equal(n_sample-1, n_coal)
+        
+        coal_idx <- 1
+        sample_idx <- 1
+        
+        t <- times_desc[sample_idx]
+        
+        log_lh <- 0
+        j <- 1
+        
+        while (coal_idx <=  n_coal) {
+             if (sample_idx < n_sample &&
+                 coal_times_desc[coal_idx] < times_desc[sample_idx+1]){
+                     sample_idx <- sample_idx+1
+                     delta_t <- t - times_desc[sample_idx]
+                     rate <- choose(j,2)/Ne
+                     log_lh <- log_lh+log(poi_0_likelihood(rate, delta_t))
+                     
+                     j <- j+1
+                     t <- times_desc[sample_idx]
+             } else {
+                     delta_t <- t - coal_times_desc[coal_idx]
+                     rate <- choose(j,2)/Ne
+                     log_lh <- log_lh+log(exp_likelihood(rate, delta_t))
+                     
+                     j <- j-1
+                     t <- coal_times_desc[coal_idx]
+                     
+                     coal_idx <-coal_idx+1
+             }
+        }
+        return(log_lh)
+}
+
+test_lh<-function(){
+        sam <- c(1,2,3,4,5)
+        coal <- c(0.1, 1.1, 2.1, 3.1)
+        Neg <- 1.2
+        
+        log_lh_gt <- -3.729286
+        log_lh <-tree_likelihood(sam,coal,Neg)
+        
+        print(paste0("The computed log_lh is: ", log_lh))
+        print(paste0("The ground truth log_lh is: ", log_lh_gt))
+        print(paste0("Difference within tolerance: ", abs(log_lh_gt-log_lh)<1e-6))
+}
+
+test_tree_lh<-function(){
+        
+        set.seed(13456789)
+        sam <- c(1,2,3,4,5,7,8,9)*100
+        Neg <- 20
+        
+        co <-simulate(sam, Neg)
+        
+        log_lh_tree <- co$log_likelihood
+        log_lh <- tree_likelihood(sam,co$coalescent_times,Neg)
+        
+        print(paste0("The computed log_lh is: ", log_lh))
+        print(paste0("The log_lh returned by simulate is: ", log_lh_tree))
+        print(paste0("Difference within tolerance: ", abs(log_lh_tree-log_lh)<1e-6))
 }
