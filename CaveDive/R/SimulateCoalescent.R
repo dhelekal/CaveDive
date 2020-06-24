@@ -168,32 +168,3 @@ tree_likelihood <- function(sampling_times, coalescent_times, Ne){
         }
         return(log_lh)
 }
-
-test_lh<-function(){
-        sam <- c(1,2,3,4,5)
-        coal <- c(0.1, 1.1, 2.1, 3.1)
-        Neg <- 1.2
-        
-        log_lh_gt <- -3.729286
-        log_lh <-tree_likelihood(sam,coal,Neg)
-        
-        print(paste0("The computed log_lh is: ", log_lh))
-        print(paste0("The ground truth log_lh is: ", log_lh_gt))
-        print(paste0("Difference within tolerance: ", abs(log_lh_gt-log_lh)<1e-6))
-}
-
-test_tree_lh<-function(){
-        
-        set.seed(13456789)
-        sam <- c(1,2,3,4,5,7,8,9)*100
-        Neg <- 20
-        
-        co <-simulate(sam, Neg)
-        
-        log_lh_tree <- co$log_likelihood
-        log_lh <- tree_likelihood(sam,co$coalescent_times,Neg)
-        
-        print(paste0("The computed log_lh is: ", log_lh))
-        print(paste0("The log_lh returned by simulate is: ", log_lh_tree))
-        print(paste0("Difference within tolerance: ", abs(log_lh_tree-log_lh)<1e-6))
-}
