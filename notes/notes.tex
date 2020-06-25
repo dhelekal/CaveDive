@@ -209,11 +209,33 @@ f <- (sampling_times, Ne): //Sampling times in descending order
 \subsection{Inhomogenous Case}
 In the inhomogenous case, the scheme is similar, with the key difference that the sampling times now follow a much more complex distribution. We proceed with a modified conditional sampling scheme as in \ref{eq:cond_timedep}. To obtain draws $w_j(t)$, draws from standard coalescent $w_j$ are rescaled, akin to algorithm described in \cite{hein_gene_2004} Pg 98.
 
-Consider the time interval $[t_i, s_i]$ with $s_j = min\left\{s\in S : s>t_i\right\}$
+Consider the time interval $[t_i, s_i]$ with $s_j = min\left\{s\in S : s>t_i\right\}$. Define $\Delta t_i \triangleq s_i-t_i$.
 The probability that no coalescent events happens within this interval is 
 \begin{gather*}
-  P[W_j(t_i) > s_i-t_i] = \exp(-\int_0^{s_i-t_i}\frac{\binom{j}{2}}{Ne(t+\tau)g}d\tau)
+  P[W_j(t_i) > \Delta t_i] = \exp(-\int_0^{\Delta t_i}\frac{\binom{j}{2}}{Ne(t+\tau)g}d\tau)
 \end{gather*}
+analogously, the probability of waiting times conditioned on that the waiting time is less than $\Delta t_i$ is:
+\begin{gather}
+  P[W_j(t_i) < s \mid W_j(t_i) < \Delta t_i] =\frac{1-\exp(-\int_0^{s}\frac{\binom{j}{2}}{Ne(t+\tau)g}d\tau)}{1-P[W_j(t_i) > \Delta t_i]}
+\end{gather}
+In order to sample $W_j(t_i)$ we proceed with an inverse transform sampling scheme, derived from the base samples $W_j$. 
+First, assume $W_j$ are distributed according to 
+\begin{gather}
+  P[W_j < s \mid W_j < u] = \frac{1-\exp(-\frac{\binom{j}{2}}{Neg})}{1-P[W_j>u]}
+\end{gather}
+Where $u$ is chosen such that
+\begin{gather}
+P[W_j>u] = P[W_j(t_i) > \Delta t_i]
+\end{gather}
+Then the function
+\begin{gather}
+F(W_j; t_i):\quad P[F(W_j;t_i) < s \mid W_j < u] = P[W_j(t_i) < s \mid W_j(t_i) < \Delta t_i] 
+\end{gather}
+Is given by the inverse with respect to $s$ of
+\begin{gather}
+G(s; t_i) = \int_0^s \frac{Neg}{Ne(t_i+\tau)g}d\tau
+\end{gather}
+Which exists for any biologically sensible choice of $Ne(t)g$
 
 \subsection{Multistrain+Inhomogenous Case}
 In this case, coalescent nodes have an added colour property, and each colour coalesces according to a colour specific, time dependent case. Nodes of non-identical colour can coalesce iff at least one of them is the last remaining node of a given colour.\\
