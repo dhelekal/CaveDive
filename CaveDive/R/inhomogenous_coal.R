@@ -25,20 +25,30 @@ inhomogenous_coal.simulate <- function(sampling_times,
       if (idx + 1 > length(sampling_times)) {
         s <- Inf
       } else {
-        s <- t-times_desc[idx + 1]
+        s <- t - times_desc[idx + 1]
       }
       
-      p_coal <- inhomogenous_exp.prob(function(t,s) c*Neg.rate.int(t,s), t,s)
+      p_coal <-
+        inhomogenous_exp.prob(function(t, s)
+          c * Neg.rate.int(t, s), t, s)
       r <- runif(1, 0, 1)
       
       if (r <= p_coal) {
-        w_t <- inv_t_inhomogenous_exp_conditional(function(t,s) c*Neg.rate.int(t,s),
-                                                  function(t,s) c*Neg.rate.int_inv(t,s),
-                                                  c, t, s)
+        w_t <-
+          inv_t_inhomogenous_exp_conditional(function(t, s)
+            c * Neg.rate.int(t, s),
+            function(t, s)
+              c * Neg.rate.int_inv(t, s),
+            c, t, s)
         
-        log_lh <- log_lh + log(p_coal) + log(inhomogenous_exp.lh(function(s) c*Neg.rate(s),
-                                               function(t,s) c*Neg.rate.int(t,s),
-                                               t, w_t))
+        log_lh <-
+          log_lh + log(p_coal) + log(
+            inhomogenous_exp.lh(function(s)
+              c * Neg.rate(s),
+              function(t, s)
+                c * Neg.rate.int(t, s),
+              t, w_t)
+          )
         
         t <- t - w_t
         extant_lineages <- extant_lineages - 1
@@ -66,7 +76,6 @@ inhomogenous_coal.log_lh <- function(sampling_times,
                                      coalescent_times,
                                      Neg.rate,
                                      Neg.rate.int) {
-  
   coal_times_desc <- coalescent_times[order(-coalescent_times)]
   times_desc <- sampling_times[order(-sampling_times)]
   
@@ -84,19 +93,22 @@ inhomogenous_coal.log_lh <- function(sampling_times,
   j <- 1
   
   while (coal_idx <=  n_coal) {
-    rate.int <- function (t,s) Neg.rate.int(t,s)*choose(j, 2)
+    rate.int <- function (t, s)
+      Neg.rate.int(t, s) * choose(j, 2)
     if (sample_idx < n_sample &&
         coal_times_desc[coal_idx] < times_desc[sample_idx + 1]) {
       sample_idx <- sample_idx + 1
-      s <- t-times_desc[sample_idx]
-      log_lh <- log_lh + log(inhomogenous_poi_0.lh(rate.int,t,s))
+      s <- t - times_desc[sample_idx]
+      log_lh <- log_lh + log(inhomogenous_poi_0.lh(rate.int, t, s))
       
       j <- j + 1
       t <- times_desc[sample_idx]
     } else {
-      s <- t-coal_times_desc[coal_idx]
-      rate <- function(s) Neg.rate(s)*choose(j,2)
-      log_lh <- log_lh + log(inhomogenous_exp.lh(rate, rate.int, t,s))
+      s <- t - coal_times_desc[coal_idx]
+      rate <- function(s)
+        Neg.rate(s) * choose(j, 2)
+      log_lh <-
+        log_lh + log(inhomogenous_exp.lh(rate, rate.int, t, s))
       
       j <- j - 1
       t <- coal_times_desc[coal_idx]
