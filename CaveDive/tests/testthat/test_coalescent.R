@@ -1,15 +1,15 @@
 context("Homogenous Likelihood")
 
 test_that("Computed likelihood matches ground truth", {
-  expect_equal(homogenous_tree_likelihood(c(1,2,3,4,5),c(0.1, 1.1, 2.1, 3.1),1.2), -3.729286, tolerance=1e-6)
+  expect_equal(homogenous_coal.log_lh(c(1,2,3,4,5),c(0.1, 1.1, 2.1, 3.1),1.2), -3.729286, tolerance=1e-6)
 })
 
 test_that("Computed likelihood matches simulation likelihood", {
   sam <- c(1,2,3,4,5,7,8,9)*100
   Neg <- 20
-  co <-simulate_homogenous_coalescent(sam, Neg)
+  co <-homogenous_coal.simulate(sam, Neg)
   log_lh_tree <- co$log_likelihood
-  log_lh <- homogenous_tree_likelihood(sam,co$coalescent_times,Neg)
+  log_lh <- homogenous_coal.log_lh(sam,co$coalescent_times,Neg)
   expect_equal(log_lh_tree,log_lh)
 })
 

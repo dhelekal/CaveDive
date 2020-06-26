@@ -1,17 +1,35 @@
-inv_t_conditional <- function(u,rate,delta_t){
+inv_t_conditional_exp <- function(u,rate,delta_t){
   return((-1/rate)*log(1-u*(1-exp(-rate*delta_t))))
 }
 
-cond_likelihood <- function(rate, u, delta_t){
+cond_exp.lh <- function(rate, u, delta_t){
   return(rate*(1/(1-exp(-rate*delta_t)) - u))
 }
 
-exp_likelihood <- function(rate, t){
+exp.lh <- function(rate, t){
   return(rate*exp(-rate*t))
 }
 
-poi_0_likelihood <- function(rate, t){
+poi_0.lh <- function(rate, t){
   return(exp(-rate*t))
+}
+
+inhomogenous_exp.lh <- function(rate.int, rate, t, s){
+  return(rate(t+s)*exp(-rate.int(t,t+s)))
+}
+
+inhomogenous_exp.prob <- function(rate.int, t, s) {
+  return(1-exp(-rate.int(t,t+s)))
+}
+
+inv_t_inhomogenous_exp_conditional <- function(rate.inv_int, rate.int, exp.rate, t, s){
+  Q <- inhomogenous_exp.prob(rate.int,t,s)
+  wt <- (-1/exp.rate)*log(1-u*Q)
+  return(rate.inv_int(wt, t))
+}
+
+inhomogenous_poi_0.lh <- function(rate.int, t, s){
+  return(exp(-rate.int(t,t+s)))
 }
 
 build_coal_tree <- function(sampling_times, coalescent_times){
