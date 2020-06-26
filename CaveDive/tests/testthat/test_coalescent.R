@@ -1,5 +1,20 @@
-context("Homogenous Likelihood")
+context("Utils")
+  test_that("Homogenous and Inhomogenous exponentials agree for constant rate", {
+    Neg <- 5
+    rate <- 1/Neg
+    s<-2
+    
+    Neg_t <- function (s) return (1/Neg)
+    Neg_t.int <- function (t,s) return(s/Neg)
+    Neg_t.inv_int <- function(t,s) return(s*Neg)
+    
+    expect_equal(exp.lh(rate,s), inhomogenous_exp.lh(Neg_t, Neg_t.int, 0, s))
+    expect_equal(poi_0.lh(rate,s), inhomogenous_poi_0.lh(Neg_t.int, 0, s))
+    expect_equal(exp.prob(rate,s), inhomogenous_exp.prob(Neg_t.int, 0, s))
+    
+  })
 
+context("Homogenous Likelihood")
 test_that("Computed likelihood matches ground truth", {
   expect_equal(homogenous_coal.log_lh(c(1,2,3,4,5),c(0.1, 1.1, 2.1, 3.1),1.2), -3.729286, tolerance=1e-6)
 })
@@ -7,10 +22,40 @@ test_that("Computed likelihood matches ground truth", {
 test_that("Computed likelihood matches simulation likelihood", {
   sam <- c(1,2,3,4,5,7,8,9)*100
   Neg <- 20
-  co <-homogenous_coal.simulate(sam, Neg)
+  co <- homogenous_coal.simulate(sam, Neg)
   log_lh_tree <- co$log_likelihood
   log_lh <- homogenous_coal.log_lh(sam,co$coalescent_times,Neg)
   expect_equal(log_lh_tree,log_lh)
+})
+
+context("Inhomogenous Likelihood")
+test_that("Homogenous process matches inhomogenous process for constant Neg", {
+  sam <- c(1,2,3,4,5,7,8,9)*100
+  Neg <- 20
+  set.seed(1)
+  co <- homogenous_coal.simulate(sam, Neg)
+  gt.log_lh <- co$log_likelihood
+  gt.times <- co$coalescent_times
+
+  Neg_t <- function (s) return (1/Neg)
+  Neg_t.int <- function (t,s) return(s/Neg)
+  Neg_t.inv_int <- function(t,s) return(s*Neg)
+  set.seed(1)
+  in.co <- inhomogenous_coal.simulate(sam, Neg_t, Neg_t.int, Neg_t.inv_int)
+  
+  log_lh <- in.co$log_likelihood
+  times <- in.co$coalescent_times
+  
+  comp_lh <- inhomogenous_coal.log_lh(sam,
+                                      times,
+                                      Neg_t,
+                                      Neg_t.int)
+  
+  comp_lh.gt <- homogenous_coal.log_lh(sam, gt.times, Neg)
+  
+  expect_equal(gt.log_lh, log_lh, tolerance = 1e-2)
+  expect_equal(gt.times, times)
+  expect_equal(comp_lh, comp_lh.gt, tolerance = 1e-2)
 })
 
 context("Trees")

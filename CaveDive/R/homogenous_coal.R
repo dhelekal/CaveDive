@@ -62,8 +62,9 @@ homogenous_coal.simulate <- function(sampling_times, pop_size) {
         return(coal_sample)
 }
 
-homogenous_coal.log_lh <-
-        function(sampling_times, coalescent_times, Ne) {
+homogenous_coal.log_lh <- function(sampling_times,
+                                   coalescent_times,
+                                   Ne) {
                 coal_times_desc <- coalescent_times[order(-coalescent_times)]
                 times_desc <- sampling_times[order(-sampling_times)]
                 

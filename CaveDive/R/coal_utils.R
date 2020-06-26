@@ -10,26 +10,32 @@ exp.lh <- function(rate, t){
   return(rate*exp(-rate*t))
 }
 
+exp.prob <- function(rate, t){
+  return(1-exp(-rate*t))
+}
+
+
 poi_0.lh <- function(rate, t){
   return(exp(-rate*t))
 }
 
-inhomogenous_exp.lh <- function(rate.int, rate, t, s){
-  return(rate(t+s)*exp(-rate.int(t,t+s)))
+inhomogenous_exp.lh <- function(rate, rate.int, t, s){
+  return(rate(t+s)*exp(-rate.int(t,s)))
 }
 
 inhomogenous_exp.prob <- function(rate.int, t, s) {
-  return(1-exp(-rate.int(t,t+s)))
+  return(1-exp(-rate.int(t,s)))
 }
 
-inv_t_inhomogenous_exp_conditional <- function(rate.inv_int, rate.int, exp.rate, t, s){
-  Q <- inhomogenous_exp.prob(rate.int,t,s)
+inv_t_inhomogenous_exp_conditional <- function(rate.int, rate.inv_int , exp.rate, t, s){
+  u <- runif(1,0,1)
+  Q <- inhomogenous_exp.prob(rate.int, t, s)
   wt <- (-1/exp.rate)*log(1-u*Q)
-  return(rate.inv_int(wt, t))
+  return(rate.inv_int(t , wt))
 }
 
 inhomogenous_poi_0.lh <- function(rate.int, t, s){
-  return(exp(-rate.int(t,t+s)))
+  return(exp(-rate.int(t, s)))
 }
 
 build_coal_tree <- function(sampling_times, coalescent_times){
