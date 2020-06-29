@@ -8,26 +8,25 @@ homogenous_coal.simulate <- function(sampling_times, pop_size) {
         extant_lineages <- 1
         coalescent_times <- rep(0, future_lineages)
         t <- 0
+        t0 <- times_desc[1]
         idx <- 1
         coal_idx <- 1
         
         while (future_lineages > 0 || extant_lineages > 1) {
                 if (extant_lineages < 2) {
                         #If one lineage continue to next sampling event
+                        t <- t0 - times_desc[idx+1]
                         idx <- idx + 1
                         extant_lineages <- extant_lineages + 1
                         future_lineages <- future_lineages - 1
-                        t <- times_desc[idx]
                 } else {
                         #Pick waiting time
-                        rate <-
-                                choose(extant_lineages, 2) / pop_size
-                        
+                        rate <- choose(extant_lineages, 2) / pop_size
                         
                         if (idx + 1 > length(sampling_times)) {
                                 delta_t <- Inf
                         } else {
-                                delta_t <- t - times_desc[idx + 1]
+                                delta_t <- t0 - t - times_desc[idx + 1]
                         }
                         
                         p_coal <- 1 - exp(-rate * delta_t)
@@ -35,25 +34,22 @@ homogenous_coal.simulate <- function(sampling_times, pop_size) {
                         
                         if (r <= p_coal) {
                                 r_w <- runif(1, 0, 1)
-                                w_t <-
-                                        inv_t_conditional_exp(r_w, rate, delta_t)
+                                w_t <- inv_t_conditional_exp(r_w, rate, delta_t)
                                 
-                                log_lh <-
-                                        log_lh + log(p_coal) + log(cond_exp.lh(rate, r_w, delta_t))
+                                log_lh <- log_lh +
+                                        log(p_coal) +
+                                        log(cond_exp.lh(rate, r_w, delta_t))
                                 
-                                t <- t - w_t
-                                extant_lineages <-
-                                        extant_lineages - 1
-                                coalescent_times[coal_idx] <- t
+                                t <- t + w_t
+                                extant_lineages <- extant_lineages - 1
+                                coalescent_times[coal_idx] <- t0 - t
                                 coal_idx <- coal_idx + 1
                         } else {
                                 log_lh <- log_lh + log((1 - p_coal))
+                                t <- t0 - times_desc[idx+1]
+                                extant_lineages <- extant_lineages + 1
+                                future_lineages <- future_lineages - 1
                                 idx <- idx + 1
-                                extant_lineages <-
-                                        extant_lineages + 1
-                                future_lineages <-
-                                        future_lineages - 1
-                                t <- times_desc[idx]
                         }
                 }
         }
@@ -79,7 +75,8 @@ homogenous_coal.log_lh <- function(sampling_times,
         coal_idx <- 1
         sample_idx <- 1
         
-        t <- times_desc[sample_idx]
+        t <- 0
+        t0 <- times_desc[1]
         
         log_lh <- 0
         j <- 1
@@ -87,23 +84,22 @@ homogenous_coal.log_lh <- function(sampling_times,
         while (coal_idx <=  n_coal) {
                 if (sample_idx < n_sample &&
                     coal_times_desc[coal_idx] < times_desc[sample_idx + 1]) {
+                        delta_t <- t0 -
+                                t - 
+                                times_desc[sample_idx+1]
                         sample_idx <- sample_idx + 1
-                        delta_t <-
-                                t - times_desc[sample_idx]
                         rate <- choose(j, 2) / Ne
-                        log_lh <-
-                                log_lh + log(poi_0.lh(rate, delta_t))
+                        log_lh <- log_lh + log(poi_0.lh(rate, delta_t))
                         
                         j <- j + 1
-                        t <- times_desc[sample_idx]
+                        t <- t + delta_t
                 } else {
-                        delta_t <- t - coal_times_desc[coal_idx]
+                        delta_t <- t0 - t - coal_times_desc[coal_idx]
                         rate <- choose(j, 2) / Ne
-                        log_lh <-
-                                log_lh + log(exp.lh(rate, delta_t))
+                        log_lh <- log_lh + log(exp.lh(rate, delta_t))
                         
                         j <- j - 1
-                        t <- coal_times_desc[coal_idx]
+                        t <- t + delta_t
                         
                         coal_idx <- coal_idx + 1
                 }
