@@ -32,6 +32,7 @@ inhomogenous_coal.simulate <- function(sampling_times,
         inhomogenous_exp.prob(function(t, s)
           c * Neg.rate.int(t, s), t, s)
       r <- runif(1, 0, 1)
+      assertthat::are_equal(p_coal > 0, TRUE )
       
       if (r <= p_coal) {
         w_t <-
@@ -117,4 +118,18 @@ inhomogenous_coal.log_lh <- function(sampling_times,
     }
   }
   return(log_lh)
+}
+
+plot_exp_growth <- function(sam, lambda) {
+  Neg_t <- function (s)
+    return (exp(-lambda*s))
+  Neg_t.int <- function (t, s)
+    return((-1/lambda)*(exp(-lambda*(t+s)) - exp(-lambda*t)))
+  Neg_t.inv_int <- function(t, s)
+    return((-1/lambda)*log(exp(-lambda*t) - lambda*s) - t)
+  
+  co <- inhomogenous_coal.simulate(sam, Neg_t, Neg_t.int, Neg_t.inv_int)
+  tr<-build_coal_tree(sam, co$coalescent_times)
+  plot(read.tree(text=tr), node.pos=TRUE)
+  return(co)
 }
