@@ -65,7 +65,7 @@ test_that("Homogenous process matches inhomogenous process for constant Neg",
             
             expect_equal(gt.log_lh, log_lh, tolerance = 1e-2)
             expect_equal(gt.times, times)
-            expect_equal(comp_lh, comp_lh.gt, tolerance = 1e-2)
+            expect_equal(comp_lh, comp_lh.gt, tolerance = 1e-3)
           })
 
 context("Trees")
