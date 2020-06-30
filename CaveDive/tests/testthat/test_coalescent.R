@@ -26,7 +26,7 @@ test_that("Computed likelihood matches ground truth", {
 
 test_that("Computed likelihood matches simulation likelihood", {
   sam <- c(1, 2, 3, 4, 5, 7, 8, 9) * 100
-  Neg <- 20
+  Neg <- 2000
   co <- homogenous_coal.simulate(sam, Neg)
   log_lh_tree <- co$log_likelihood
   log_lh <- homogenous_coal.log_lh(sam, co$coalescent_times, Neg)
@@ -34,10 +34,62 @@ test_that("Computed likelihood matches simulation likelihood", {
 })
 
 context("Inhomogenous Likelihood")
+test_that("Computed likelihood matches simulation likelihood with constant Neg", {
+  sam <- seq(1,100,2) * 100
+  Neg <- 2000
+  
+  Neg_t <- function (s)
+    return (1 / Neg)
+  Neg_t.int <- function (t, s)
+    return(s / Neg)
+  Neg_t.inv_int <- function(t, s)
+    return(s * Neg)
+  
+  co <- inhomogenous_coal.simulate(sam, Neg_t, Neg_t.int, Neg_t.inv_int)
+  
+  log_lh <- co$log_likelihood
+  times <- co$coalescent_times
+  comp_lh <- inhomogenous_coal.log_lh(sam,
+                                      times,
+                                      Neg_t,
+                                      Neg_t.int)
+  
+  expect_equal(comp_lh, log_lh, tolerance = 1e-6)
+})
+
+test_that("Computed likelihood matches simulation likelihood with exponential Neg", {
+  
+  sam <- seq(1,100,2) * 100
+  lambda <- 1/100
+  N <- 10000
+  
+  Neg_t <- function (s)
+    return (1/N * exp(lambda*s))
+  Neg_t.int <- function (t, s) {
+      out <- Inf
+      if (!(exp(lambda*(t+s)) == Inf)) {
+        out <- (1/(lambda*N))*(exp(lambda*(t+s)) - exp(lambda*t))
+      }
+    return (out)
+  }
+  Neg_t.inv_int <- function(t, s)
+    return((1/lambda)*log(lambda*N*s*exp(-lambda*t) + 1))
+  
+  co <- inhomogenous_coal.simulate(sam, Neg_t, Neg_t.int, Neg_t.inv_int)
+  log_lh <- co$log_likelihood
+  times <- co$coalescent_times
+  comp_lh <- inhomogenous_coal.log_lh(sam,
+                                      times,
+                                      Neg_t,
+                                      Neg_t.int)
+  
+  expect_equal(comp_lh, log_lh, tolerance = 1e-6)
+})
+
 test_that("Homogenous process matches inhomogenous process for constant Neg",
           {
-            sam <- c(1, 2, 3, 4, 5, 7, 8, 9) * 100
-            Neg <- 20
+            sam <- seq(1,100,2) * 100
+            Neg <- 2000
             set.seed(1)
             co <- homogenous_coal.simulate(sam, Neg)
             gt.log_lh <- co$log_likelihood
@@ -65,7 +117,7 @@ test_that("Homogenous process matches inhomogenous process for constant Neg",
             
             expect_equal(gt.log_lh, log_lh, tolerance = 1e-2)
             expect_equal(gt.times, times)
-            expect_equal(comp_lh, comp_lh.gt, tolerance = 1e-3)
+            expect_equal(comp_lh, comp_lh.gt, tolerance = 1e-6)
           })
 
 context("Trees")

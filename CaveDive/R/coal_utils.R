@@ -1,5 +1,5 @@
 inv_t_conditional_exp <- function(u, rate, delta_t) {
-  return((-1 / rate) * log(1 - u * (1 - exp(-rate * delta_t))))
+  return((-1 / rate) * log(1 - u * exp.prob(rate, delta_t)))
 }
 
 cond_exp.lh <- function(rate, u, delta_t) {
@@ -13,7 +13,6 @@ exp.lh <- function(rate, t) {
 exp.prob <- function(rate, t) {
   return(1 - exp(-rate * t))
 }
-
 
 poi_0.lh <- function(rate, t) {
   return(exp(-rate * t))

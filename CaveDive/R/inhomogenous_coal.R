@@ -32,20 +32,20 @@ inhomogenous_coal.simulate <- function(sampling_times,
       p_coal <-
         inhomogenous_exp.prob(function(t, s)
           c * Neg.rate.int(t, s), t, s)
+      
       r <- runif(1, 0, 1)
-
+      
       if (r <= p_coal) {
-        w_t <- inv_t_inhomogenous_exp_conditional(function(t, s)
-            c * Neg.rate.int(t, s),
+        w_t <- inv_t_inhomogenous_exp_conditional(
+          function(t, s) c * Neg.rate.int(t, s),
             Neg.rate.int_inv,
             c, t, s)
         
-        log_lh <- log_lh + log(p_coal) + log(
-            inhomogenous_exp.lh(function(s)
+        log_lh <- log_lh + log(
+          inhomogenous_exp.lh(function(s)
               c * Neg.rate(s),
               function(t, s)
-                c * Neg.rate.int(t, s),
-              t, w_t)
+                c * Neg.rate.int(t, s), t, w_t)
           )
         
         t <- t + w_t
@@ -126,10 +126,11 @@ plot_exp_growth <- function(sam, lambda, N) {
   Neg_t.int <- function (t, s)
     return((1/(lambda*N))*(exp(lambda*(t+s)) - exp(lambda*t)))
   Neg_t.inv_int <- function(t, s)
-    return((1/lambda)*log(lambda*N*s + exp(lambda*t)) - t)
+    return((1/lambda)*log(lambda*N*s*exp(-lambda*t) + 1))
   
   co <- inhomogenous_coal.simulate(sam, Neg_t, Neg_t.int, Neg_t.inv_int)
   tr <- build_coal_tree(sam, co$coalescent_times)
-  plot(read.tree(text=tr), node.pos=TRUE)
+  plot(read.tree(text=tr), node.pos=2)
+  axisPhylo(side = 1)
   return(co)
 }
