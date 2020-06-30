@@ -60,8 +60,8 @@ test_that("Computed likelihood matches simulation likelihood with constant Neg",
 test_that("Computed likelihood matches simulation likelihood with exponential Neg", {
   
   sam <- seq(1,100,2) * 100
-  lambda <- 1/100
-  N <- 10000
+  lambda <- 1/400
+  N <- 1e6
   
   Neg_t <- function (s)
     return (1/N * exp(lambda*s))
@@ -83,7 +83,7 @@ test_that("Computed likelihood matches simulation likelihood with exponential Ne
                                       Neg_t,
                                       Neg_t.int)
   
-  expect_equal(comp_lh, log_lh, tolerance = 1e-6)
+  expect_equal(comp_lh, log_lh)
 })
 
 test_that("Homogenous process matches inhomogenous process for constant Neg",
@@ -115,9 +115,9 @@ test_that("Homogenous process matches inhomogenous process for constant Neg",
             
             comp_lh.gt <- homogenous_coal.log_lh(sam, gt.times, Neg)
             
-            expect_equal(gt.log_lh, log_lh, tolerance = 1e-2)
+            expect_equal(gt.log_lh, log_lh)
             expect_equal(gt.times, times)
-            expect_equal(comp_lh, comp_lh.gt, tolerance = 1e-6)
+            expect_equal(comp_lh, comp_lh.gt)
           })
 
 context("Trees")

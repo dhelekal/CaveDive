@@ -105,6 +105,14 @@ inhomogenous_coal.log_lh <- function(sampling_times,
       j <- j + 1
       t <- t + s
     } else {
+      
+      if (j<=1) {
+        warning("Number of extant lineages at time of
+                coalescent event less than 2.\n
+                Supplied values not valid coalescent times.\n
+                Numerical precision may have been exhausted")
+      }
+      
       s <- t0 - t - coal_times_desc[coal_idx]
       rate <- function(s)
         Neg.rate(s) * choose(j, 2)
@@ -123,8 +131,13 @@ inhomogenous_coal.log_lh <- function(sampling_times,
 plot_exp_growth <- function(sam, lambda, N) {
   Neg_t <- function (s)
     return (1/N * exp(lambda*s))
-  Neg_t.int <- function (t, s)
-    return((1/(lambda*N))*(exp(lambda*(t+s)) - exp(lambda*t)))
+  Neg_t.int <- function (t, s) {
+    out <- Inf
+    if (!(exp(lambda*(t+s)) == Inf)) {
+      out <- (1/(lambda*N))*(exp(lambda*(t+s)) - exp(lambda*t))
+    }
+    return (out)
+  }
   Neg_t.inv_int <- function(t, s)
     return((1/lambda)*log(lambda*N*s*exp(-lambda*t) + 1))
   
@@ -132,5 +145,6 @@ plot_exp_growth <- function(sam, lambda, N) {
   tr <- build_coal_tree(sam, co$coalescent_times)
   plot(read.tree(text=tr), node.pos=2)
   axisPhylo(side = 1)
+  
   return(co)
 }
