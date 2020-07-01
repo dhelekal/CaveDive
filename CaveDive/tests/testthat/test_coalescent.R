@@ -12,15 +12,17 @@ test_that("Homogenous and Inhomogenous exponentials agree for constant rate",
             Neg_t.inv_int <- function(t, s)
               return(s * Neg)
             
-            expect_equal(exp.lh(rate, s), inhomogenous_exp.lh(Neg_t, Neg_t.int, 0, s))
-            expect_equal(poi_0.lh(rate, s), inhomogenous_poi_0.lh(Neg_t.int, 0, s))
+            expect_equal(exp.loglh(rate, s),
+                         inhomogenous_exp.loglh(Neg_t, Neg_t.int, 0, s))
+            expect_equal(poi_0.loglh(rate, s),
+                         inhomogenous_poi_0.loglh(Neg_t.int, 0, s))
             expect_equal(exp.prob(rate, s), inhomogenous_exp.prob(Neg_t.int, 0, s))
             
           })
 
 context("Homogenous Likelihood")
 test_that("Computed likelihood matches ground truth", {
-  expect_equal(homogenous_coal.log_lh(c(1, 2, 3, 4, 5), c(0.1, 1.1, 2.1, 3.1), 1.2),-3.729286, tolerance =
+  expect_equal(homogenous_coal.log_lh(c(1, 2, 3, 4, 5), c(0.1, 1.1, 2.1, 3.1), 1.2), -3.729286, tolerance =
                  1e-6)
 })
 
@@ -34,61 +36,101 @@ test_that("Computed likelihood matches simulation likelihood", {
 })
 
 context("Inhomogenous Likelihood")
-test_that("Computed likelihood matches simulation likelihood with constant Neg", {
-  sam <- seq(1,100,2) * 100
-  Neg <- 2000
-  
-  Neg_t <- function (s)
-    return (1 / Neg)
-  Neg_t.int <- function (t, s)
-    return(s / Neg)
-  Neg_t.inv_int <- function(t, s)
-    return(s * Neg)
-  
-  co <- inhomogenous_coal.simulate(sam, Neg_t, Neg_t.int, Neg_t.inv_int)
-  
-  log_lh <- co$log_likelihood
-  times <- co$coalescent_times
-  comp_lh <- inhomogenous_coal.log_lh(sam,
-                                      times,
-                                      Neg_t,
-                                      Neg_t.int)
-  
-  expect_equal(comp_lh, log_lh, tolerance = 1e-6)
-})
+test_that("Computed likelihood matches simulation likelihood with constant Neg",
+          {
+            sam <- seq(1, 100, 2) * 100
+            Neg <- 2000
+            
+            Neg_t <- function (s)
+              return (1 / Neg)
+            Neg_t.int <- function (t, s)
+              return(s / Neg)
+            Neg_t.inv_int <- function(t, s)
+              return(s * Neg)
+            
+            co <-
+              inhomogenous_coal.simulate(sam, Neg_t, Neg_t.int, Neg_t.inv_int)
+            
+            log_lh <- co$log_likelihood
+            times <- co$coalescent_times
+            comp_lh <- inhomogenous_coal.log_lh(sam,
+                                                times,
+                                                Neg_t,
+                                                Neg_t.int)
+            
+            expect_equal(comp_lh, log_lh, tolerance = 1e-6)
+          })
 
-test_that("Computed likelihood matches simulation likelihood with exponential Neg", {
-  
-  sam <- seq(1,100,2) * 100
-  lambda <- 1/400
-  N <- 1e6
-  
-  Neg_t <- function (s)
-    return (1/N * exp(lambda*s))
-  Neg_t.int <- function (t, s) {
-      out <- Inf
-      if (!(exp(lambda*(t+s)) == Inf)) {
-        out <- (1/(lambda*N))*(exp(lambda*(t+s)) - exp(lambda*t))
-      }
-    return (out)
-  }
-  Neg_t.inv_int <- function(t, s)
-    return((1/lambda)*log(lambda*N*s*exp(-lambda*t) + 1))
-  
-  co <- inhomogenous_coal.simulate(sam, Neg_t, Neg_t.int, Neg_t.inv_int)
-  log_lh <- co$log_likelihood
-  times <- co$coalescent_times
-  comp_lh <- inhomogenous_coal.log_lh(sam,
-                                      times,
-                                      Neg_t,
-                                      Neg_t.int)
-  
-  expect_equal(comp_lh, log_lh)
-})
+test_that("Computed likelihood matches simulation likelihood with exponential Neg",
+          {
+            sam <- seq(1, 100, 2) * 100
+            lambda <- 1 / 400
+            N <- 1e6
+            
+            Neg_t <- function (s)
+              return (1 / N * exp(lambda * s))
+            Neg_t.int <- function (t, s) {
+              out <- Inf
+              if (!(exp(lambda * (t + s)) == Inf)) {
+                out <- (1 / (lambda * N)) * (exp(lambda * (t + s)) - exp(lambda * t))
+              }
+              return (out)
+            }
+            Neg_t.inv_int <- function(t, s)
+              return((1 / lambda) * log(lambda * N * s * exp(-lambda * t) + 1))
+            
+            co <-
+              inhomogenous_coal.simulate(sam, Neg_t, Neg_t.int, Neg_t.inv_int)
+            log_lh <- co$log_likelihood
+            times <- co$coalescent_times
+            comp_lh <- inhomogenous_coal.log_lh(sam,
+                                                times,
+                                                Neg_t,
+                                                Neg_t.int)
+            
+            expect_equal(comp_lh, log_lh)
+          })
+
+test_that("Inhomogenous process with exponential Neg matches rescaled Homogenous process",
+          {
+            sam <- rep(0, 10)
+            lambda <- 1000
+            N <- 1
+            
+            Neg_t <- function (s)
+              return (1 / N * exp(lambda * s))
+            Neg_t.int <- function (t, s) {
+              out <- Inf
+              if (!(exp(lambda * (t + s)) == Inf)) {
+                out <- (1 / (lambda * N)) * (exp(lambda * (t + s)) - exp(lambda * t))
+              }
+              return (out)
+            }
+            Neg_t.inv_int <- function(t, s)
+              return((1 / lambda) * log(lambda * N * s * exp(-lambda * t) + 1))
+            
+            set.seed(1)
+            co <-
+              inhomogenous_coal.simulate(sam, Neg_t, Neg_t.int, Neg_t.inv_int)
+            log_lh <- co$log_likelihood
+            times <- co$coalescent_times
+            
+            set.seed(1)
+            co.gt <- homogenous_coal.simulate(sam, 1)
+            times.rescaled <-
+              rescale_to_exponential(co.gt$coalescent_times, lambda, 0)
+            log_lh.rescaled <- inhomogenous_coal.log_lh(sam,
+                                                        times.rescaled,
+                                                        Neg_t,
+                                                        Neg_t.int)
+            expect_equal(log_lh.rescaled, log_lh)
+            expect_equal(times.rescaled, times)
+            
+          })
 
 test_that("Homogenous process matches inhomogenous process for constant Neg",
           {
-            sam <- seq(1,100,2) * 100
+            sam <- seq(1, 100, 2) * 100
             Neg <- 2000
             set.seed(1)
             co <- homogenous_coal.simulate(sam, Neg)
@@ -132,7 +174,7 @@ test_that("Coalescent Tree matches precomputed tree", {
     return (paste0("S", x)))
   
   sam <- c(0, 2, 4, 6, 7)
-  co <- c(5, 3, 1, -1)
+  co <- c(5, 3, 1,-1)
   
   set.seed(1)
   tr <- build_coal_tree(sam, co)
