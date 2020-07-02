@@ -162,6 +162,23 @@ test_that("Homogenous process matches inhomogenous process for constant Neg",
             expect_equal(comp_lh, comp_lh.gt)
           })
 
+
+test_that("Linear growth likelihood matches precomputed ground truth",
+          {
+            sam <- c(3,2)
+            times <- c(1)
+
+            Neg_t <- function (t) 1 / (3*2.2 - 2.2*t)
+            Neg_t.int <- function (t,s) -1/2.2*(log(2.2*(3-t-s))-log(2.2*(3-t)))
+
+            comp_lh <- inhomogenous_coal.log_lh(sam,
+                                                times,
+                                                Neg_t,
+                                                Neg_t.int)
+
+            expect_equal(comp_lh, -1.103524, tolerance = 1e-6)
+})
+
 context("Trees")
 test_that("Coalescent Tree matches precomputed tree", {
   set.seed(1)

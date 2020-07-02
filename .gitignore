@@ -49,3 +49,7 @@ vignettes/*.pdf
 *.fdb_latexmk
 *.fls
 *.toc
+*.o
+*.so
+CaveDive/src/RcppExports.cpp
+CaveDive/R/RcppExports.R
