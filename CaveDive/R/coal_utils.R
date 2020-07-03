@@ -108,3 +108,55 @@ rescale_to_exponential <- function(c_t, beta, t0) {
   }
   return(w_t.exp)
 }
+
+transform_to_intervals <-function(sampling_times, coalescent_times) {
+  coal_times_desc <- coalescent_times[order(-coalescent_times)]
+  times_desc <- sampling_times[order(-sampling_times)]
+        
+  n_sample <- length(times_desc)
+  n_coal <- length(coal_times_desc)
+        
+        
+  coal_idx <- 1
+  sample_idx <- 1
+  idx <- 1
+        
+  t <- 0
+  t0 <- times_desc[1]
+
+  j <- 1
+        
+  out.intervals <- rep(0, 2*n_sample-1)
+  out.lineages <- rep(0, 2*n_sample-1)
+
+  while (coal_idx <= n_coal) {
+                if (sample_idx < n_sample &&
+                    coal_times_desc[coal_idx] < times_desc[sample_idx + 1]) {
+                        delta_t <- t0 -
+                                t -
+                                times_desc[sample_idx + 1]
+
+                        out.intervals[idx] <- delta_t
+                        out.lineages[idx] <- j
+
+                        j <- j + 1
+                        t <- t + delta_t
+
+                        idx <- idx + 1
+                        sample_idx <- sample_idx + 1
+
+                } else {
+                        delta_t <- t0 - t - coal_times_desc[coal_idx]
+
+                        out.intervals[idx] <- delta_t
+                        out.lineages[idx] <- j
+                        
+                        j <- j - 1
+                        t <- t + delta_t
+                        
+                        idx <- idx + 1
+                        coal_idx <- coal_idx + 1
+                }
+        }
+        return(list(intervals=out.intervals, lineages=out.lineages))
+}

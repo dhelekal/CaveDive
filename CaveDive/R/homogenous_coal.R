@@ -39,7 +39,7 @@ homogenous_coal.simulate <- function(sampling_times, pop_size) {
                                         inv_t_conditional_exp(r_w, rate, delta_t)
                                 
                                 log_lh <-
-                                        log_lh + exp.loglh(rate, w_t)
+                                        log_lh + exp.loglh(rate, w_t) - log(choose(extant_lineages, 2))
                                 
                                 t <- t + w_t
                                 extant_lineages <-
@@ -101,7 +101,7 @@ homogenous_coal.log_lh <- function(sampling_times,
                 } else {
                         delta_t <- t0 - t - coal_times_desc[coal_idx]
                         rate <- choose(j, 2) / Ne
-                        log_lh <- log_lh + exp.loglh(rate, delta_t)
+                        log_lh <- log_lh + exp.loglh(rate, delta_t) - log(choose(j, 2))
                         
                         j <- j - 1
                         t <- t + delta_t

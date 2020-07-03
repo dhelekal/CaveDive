@@ -32,7 +32,12 @@ test_that("Computed likelihood matches simulation likelihood", {
   co <- homogenous_coal.simulate(sam, Neg)
   log_lh_tree <- co$log_likelihood
   log_lh <- homogenous_coal.log_lh(sam, co$coalescent_times, Neg)
+
+  outcome <-transform_to_intervals(sam, co$coalescent_times)
+  log_lh.native <- coalescent_likelihood(outcome$intervals, outcome$lineages, Neg)
+
   expect_equal(log_lh_tree, log_lh)
+  expect_equal(log_lh_tree, log_lh.native)
 })
 
 context("Inhomogenous Likelihood")
@@ -159,7 +164,7 @@ test_that("Homogenous process matches inhomogenous process for constant Neg",
             
             expect_equal(gt.log_lh, log_lh)
             expect_equal(gt.times, times)
-            expect_equal(comp_lh, comp_lh.gt)
+            expect_equal(comp_lh.gt, comp_lh)
           })
 
 
@@ -177,6 +182,20 @@ test_that("Linear growth likelihood matches precomputed ground truth",
                                                 Neg_t.int)
 
             expect_equal(comp_lh, -1.103524, tolerance = 1e-6)
+})
+
+context("Native Likelihood")
+test_that("Native homogenous likelihood matches simulation likelihood", {
+  sam <- c(1, 2, 3, 4, 5, 7, 8, 9) * 100
+  Neg <- 2000
+  co <- homogenous_coal.simulate(sam, Neg)
+  log_lh_tree <- co$log_likelihood
+  log_lh <- homogenous_coal.log_lh(sam, co$coalescent_times, Neg)
+
+  outcome <-transform_to_intervals(sam, co$coalescent_times)
+  log_lh.native <- coalescent_likelihood(outcome$intervals, outcome$lineages, Neg)
+
+  expect_equal(log_lh_tree, log_lh.native)
 })
 
 context("Trees")

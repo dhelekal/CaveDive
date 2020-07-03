@@ -43,11 +43,10 @@ inhomogenous_coal.simulate <- function(sampling_times,
           t,
           s)
         
-        log_lh <- log_lh +
-          inhomogenous_exp.loglh(function(s)
+        log_lh <- log_lh + inhomogenous_exp.loglh(function(s)
             c * Neg.rate(s),
             function(t, s)
-              c * Neg.rate.int(t, s), t, w_t)
+              c * Neg.rate.int(t, s), t, w_t) - log(c)
         
         
         t <- t + w_t
@@ -81,9 +80,7 @@ inhomogenous_coal.log_lh <- function(sampling_times,
   
   n_sample <- length(times_desc)
   n_coal <- length(coal_times_desc)
-  
-  assertthat::are_equal(n_sample - 1, n_coal)
-  
+    
   coal_idx <- 1
   sample_idx <- 1
   
@@ -120,7 +117,8 @@ inhomogenous_coal.log_lh <- function(sampling_times,
       rate <- function(s)
         Neg.rate(s) * choose(j, 2)
       log_lh <-
-        log_lh + inhomogenous_exp.loglh(rate, rate.int, t, s)
+        log_lh + inhomogenous_exp.loglh(rate, rate.int, t, s) - log(choose(j, 2))
+
       
       j <- j - 1
       t <- t + s
