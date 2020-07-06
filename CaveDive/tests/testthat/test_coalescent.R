@@ -34,10 +34,8 @@ test_that("Computed likelihood matches simulation likelihood", {
   log_lh <- homogenous_coal.log_lh(sam, co$coalescent_times, Neg)
 
   outcome <-transform_to_intervals(sam, co$coalescent_times)
-  log_lh.native <- coalescent_likelihood(outcome$intervals, outcome$lineages, Neg)
 
   expect_equal(log_lh_tree, log_lh)
-  expect_equal(log_lh_tree, log_lh.native)
 })
 
 context("Inhomogenous Likelihood")
@@ -185,18 +183,44 @@ test_that("Linear growth likelihood matches precomputed ground truth",
 })
 
 context("Native Likelihood")
-test_that("Native homogenous likelihood matches simulation likelihood", {
-  sam <- c(1, 2, 3, 4, 5, 7, 8, 9) * 100
+test_that("Native homogenous likelihood matches simulation likelihood", { 
+  sam <- c(1:100) * 100
   Neg <- 2000
   co <- homogenous_coal.simulate(sam, Neg)
   log_lh_tree <- co$log_likelihood
-  log_lh <- homogenous_coal.log_lh(sam, co$coalescent_times, Neg)
 
   outcome <-transform_to_intervals(sam, co$coalescent_times)
-  log_lh.native <- coalescent_likelihood(outcome$intervals, outcome$lineages, Neg)
+  log_lh.native <- coalescent_loglh(outcome$intervals, outcome$lineages, Neg)
 
   expect_equal(log_lh_tree, log_lh.native)
 })
+
+test_that("Native exponential likelihood matches simulation likelihood",
+          {
+            sam <- rep(0, 10)
+            lambda <- 1000
+            N <- 1
+            
+            Neg_t <- function (s)
+              return (1 / N * exp(lambda * s))
+            Neg_t.int <- function (t, s) {
+              out <- Inf
+              if (!(exp(lambda * (t + s)) == Inf)) {
+                out <- (1 / (lambda * N)) * (exp(lambda * (t + s)) - exp(lambda * t))
+              }
+              return (out)
+            }
+            Neg_t.inv_int <- function(t, s)
+              return((1 / lambda) * log(lambda * N * s * exp(-lambda * t) + 1))
+            
+            co <-
+              inhomogenous_coal.simulate(sam, Neg_t, Neg_t.int, Neg_t.inv_int)
+            log_lh_tree <- co$log_likelihood
+            times <- co$coalescent_times
+
+            log_lh.native <- exponential_coalescent_loglh(sam[order(-sam)], times[order(-times)], N, lambda)
+            expect_equal(log_lh_tree, log_lh.native)  
+          })
 
 context("Trees")
 test_that("Coalescent Tree matches precomputed tree", {
