@@ -251,6 +251,31 @@ The log-likelihood is:
 \log\mathcal{L}\left(g\mid Neg\right) 
 = -\sum_{i\in S\setminus 1}{\int_{t_{i-1}}^{t_i}{\frac{\binom{k_i}{2}}{Neg(\tau)d\tau}}} + \sum_{i\in Y}{\log\frac{\binom{k_i}{2}}{Neg(t_i)}}
 \end{gather}
+\subsubsection{\textit{Skygrid} and other families of population functions}
+\textit{Skygrid} is an approach introduced in \cite{gill_improving_2013}. It considers a family of time-dependent effective population size functions specified as follows. Let $T\subset\R$ be the interval in coalescent time. Consider an arbitrary population size function F:
+\begin{gather}
+  F:\quad T\subset\R \rightarrow \R^+
+\end{gather}
+Given a mutually disjoint family of time intervals $\left\{D_i\right\}_{i\in N}\subseteq T$, $D_j = [d_{j-1}, d_{j})$,  with $\bigcup\limits_{i\in N} D_i = T$, the \textit{skygrid} family of functions is then given by 
+\begin{gather}
+F_{skygrid}\triangleq\left\{Neg\in F\mid\forall t \in D_i,\quad Neg(t) = c_i,\quad c_i\in\R^+\right\}
+\end{gather}
+This can be easily extended to any function $G$
+\begin{gather}
+ G(t)\triangleq\sum_{i\in N}{\mathbbm{1}_{D_i}(t)g_i(t)}
+\end{gather}
+Where $g_i(t)$ are arbitrary positive integrable functions.
+Such formulation makes computation of likelihood trivial.
+\begin{gather}
+\begin{aligned}
+\log\mathcal{L}\left(g\mid G(t)\right) 
+=& -\sum_{i\in S\setminus 1}{
+\binom{k_i}{2}\sum_{j\in N}{\mathbbm{1}_{D_j}(t_{i-1})
+\int_{t_{i-1}}^{\min\{d_j, t_i\}}{g^{-1}_j(\tau)d\tau}}}\\
+&+\sum_{i\in Y}{\log\binom{k_i}{2}} - \sum_{i\in Y}{\log{\sum_{j\in N}{\mathbbm{1}_{D_j}(t_i)g_j(t_i)}}}
+\end{aligned}
+\end{gather}
+
 \subsection{Multistrain+Inhomogenous Case}
 In this case, coalescent nodes have an added colour property, and each colour coalesces according to a colour specific, time dependent case. Nodes of non-identical colour can coalesce iff at least one of them is the last remaining node of a given colour.\\
 Given $M$ colours, $M$ population size functions $\{Ne_j(t)\}_{1\leq j\leq M}$, and initial population size $N$, Let $Y(t)$ be a CTMC with the state space:
@@ -261,7 +286,6 @@ and the transition rates
 \begin{gather}
 \mathbf{s}\to\mathbf{s}-\mathbf{e_j} \quad \binom{s_j}{2}Ne_j(t)+\delta_{s_j, 1}Ne_j(t)\sum_{i\neq j}s_i
 \end{gather}
-
 \section{Previous Work}
 A framework utilising sampling intensity in order to extract more information is proposed in \cite{parag_jointly_nodate}
 \section{Bibliography}
