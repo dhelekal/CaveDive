@@ -197,9 +197,9 @@ test_that("Native homogenous likelihood matches simulation likelihood", {
 
 test_that("Native exponential likelihood matches simulation likelihood",
           {
-            sam <- rep(0, 10)
+            sam <- seq(0,0.001, by=0.0001)
             lambda <- 1000
-            N <- 1
+            N <- 10
             
             Neg_t <- function (s)
               return (1 / N * exp(lambda * s))
@@ -218,7 +218,14 @@ test_that("Native exponential likelihood matches simulation likelihood",
             log_lh_tree <- co$log_likelihood
             times <- co$coalescent_times
 
+            log_lh.r <- inhomogenous_coal.log_lh(sam,
+                                                times,
+                                                Neg_t,
+                                                Neg_t.int)
+
             log_lh.native <- exponential_coalescent_loglh(sam[order(-sam)], times[order(-times)], N, lambda)
+
+            expect_equal(log_lh_tree, log_lh.r)  
             expect_equal(log_lh_tree, log_lh.native)  
           })
 

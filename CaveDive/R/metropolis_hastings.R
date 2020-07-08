@@ -1,4 +1,4 @@
-function <- mcmc(model.lh, proposal.cond_lh, proposal.sampler, x0, n_it){
+mcmc <- function(model.lh, proposal.cond_lh, proposal.sampler, x0, n_it){
 	
 	out <- rep(0,  n_it)
 	x_prev <- x_0
@@ -17,7 +17,7 @@ function <- mcmc(model.lh, proposal.cond_lh, proposal.sampler, x0, n_it){
 	return(out)
 }
 
-function <- metropolis_ratio(model.lh, proposal.cond_lh, x_cand, x_prev) {
+metropolis_ratio <- function(model.lh, proposal.cond_lh, x_cand, x_prev) {
 	a <- proposal.cond_lh(x_prev, x_cand)*model.lh(x_cand)
 	b <- proposal.cond_lh(x_cand, x_prev)*model.lh(x_prev)
 	return(min(a/b ,1))

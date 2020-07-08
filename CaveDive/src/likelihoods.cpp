@@ -35,16 +35,16 @@ double exponential_coalescent_loglh(NumericVector sampling_times,
 
   while (c_idx < coalescent_times.length()) {
     double delta_t;
-    if (s_idx+1 < sampling_times.length() && sampling_times[s_idx+1] < coalescent_times[c_idx]){
+    if (s_idx+1 < sampling_times.length() && coalescent_times[c_idx] < sampling_times[s_idx+1]){
         ++s_idx;
         delta_t = t_max - t - sampling_times[s_idx];
-        log_lh += lambda * (t+delta_t) - k*(k-1)/(2*pop_size*lambda)*(std::exp(lambda*(t+delta_t))-std::exp(lambda*t));
+        log_lh += (-k*(k-1)/(2*pop_size*lambda))*(std::exp(lambda*(t+delta_t))-std::exp(lambda*t));
         ++k;
         t += delta_t;
     } else {
         delta_t = t_max - t - coalescent_times[c_idx];
         ++c_idx;
-        log_lh += lambda * (t+delta_t) - k*(k-1)/(2*pop_size*lambda)*(std::exp(lambda*(t+delta_t))-std::exp(lambda*t));
+        log_lh += lambda * (t+delta_t) + (-k*(k-1)/(2*pop_size*lambda))*(std::exp(lambda*(t+delta_t))-std::exp(lambda*t));
         --k;
         t += delta_t;
     }
