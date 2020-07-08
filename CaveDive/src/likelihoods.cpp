@@ -8,7 +8,6 @@ using namespace Rcpp;
 //' @param pop_size effective population size \code{Neg}.
 //' @return the log likelihood for the given parameters.
 //' @export
-
 // [[Rcpp::export]]
 double coalescent_loglh(NumericVector time_intervals,
                                      NumericVector lineage_count,
@@ -34,7 +33,6 @@ double coalescent_loglh(NumericVector time_intervals,
 //' @param pop_size final effective pop_size at time of most recent sample.
 //' @return the log likelihood for the given parameters.
 //' @export
-
 // [[Rcpp::export]]
 double exponential_coalescent_loglh(NumericVector sampling_times,
                                      NumericVector coalescent_times,
