@@ -35,6 +35,13 @@ inhomogenous_poi_0.loglh <- function(rate.int, t, s) {
   return(-rate.int(t, s))
 }
 
+#'Generate a Fenwick string representation of a tree corresponding to a realisation of a coalescent process.
+#' 
+#' @param sampling_times times of leaves.
+#' @param coalescent_times times of coalescent events / internal nodes.
+#' @return a Fenwick string corresponding to the tree.
+#' @export
+
 build_coal_tree <- function(sampling_times, coalescent_times) {
   coal_times_desc <- coalescent_times[order(-coalescent_times)]
   times_desc <- sampling_times[order(-sampling_times)]
@@ -90,6 +97,13 @@ build_coal_tree <- function(sampling_times, coalescent_times) {
   return(tree_str)
 }
 
+#'Rescale a homogenous process to one with exponentially growing population.
+#' 
+#' @param c_t coalescent times.
+#' @param beta growth rate.
+#' @param t0 time of most recent leave.
+#' @return rescaled waiting times.
+#' @export
 rescale_to_exponential <- function(c_t, beta, t0) {
   w_t.exp <- rep(1, length(c_t))
   
@@ -109,6 +123,12 @@ rescale_to_exponential <- function(c_t, beta, t0) {
   return(w_t.exp)
 }
 
+#'Precompute waiting times and lineage counts for intervals between events in a homogenous process.
+#' 
+#' @param sampling_times times of leaves.
+#' @param coalescent_times times of coalescent events / internal nodes.
+#' @return a list of two entries \code{intervals} waiting times, \code{lineages} lineage counts.
+#' @export
 transform_to_intervals <-function(sampling_times, coalescent_times) {
   coal_times_desc <- coalescent_times[order(-coalescent_times)]
   times_desc <- sampling_times[order(-sampling_times)]

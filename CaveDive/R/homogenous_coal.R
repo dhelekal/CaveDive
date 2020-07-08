@@ -1,5 +1,9 @@
-library("ape")
-
+#'Simulate homogenous coalescent,
+#' 
+#' @param sampling_times times of leaves.
+#' @param pop_size Effective population size \code{Neg}.
+#' @return A list consisting of the simulate coalescent times \code{coalescent_times} and the log-likelihood of the simulation \code{log_likelihood}.
+#' @export
 homogenous_coal.simulate <- function(sampling_times, pop_size) {
         log_lh <- 0
         
@@ -65,9 +69,15 @@ homogenous_coal.simulate <- function(sampling_times, pop_size) {
         return(coal_sample)
 }
 
+#'Compute likelihood of a realisation of a homogeneous coalescent.
+#' 
+#' @param sampling_times times of leaves.
+#' @param pop_size Effective population size \code{Neg}.
+#' @return the log likelihood for the given parameters.
+#' @export
 homogenous_coal.log_lh <- function(sampling_times,
                                    coalescent_times,
-                                   Ne) {
+                                   pop_size) {
         coal_times_desc <- coalescent_times[order(-coalescent_times)]
         times_desc <- sampling_times[order(-sampling_times)]
         
@@ -92,7 +102,7 @@ homogenous_coal.log_lh <- function(sampling_times,
                                 t -
                                 times_desc[sample_idx + 1]
                         sample_idx <- sample_idx + 1
-                        rate <- choose(j, 2) / Ne
+                        rate <- choose(j, 2) / pop_size
                         log_lh <-
                                 log_lh + poi_0.loglh(rate, delta_t)
                         
@@ -100,7 +110,7 @@ homogenous_coal.log_lh <- function(sampling_times,
                         t <- t + delta_t
                 } else {
                         delta_t <- t0 - t - coal_times_desc[coal_idx]
-                        rate <- choose(j, 2) / Ne
+                        rate <- choose(j, 2) / pop_size
                         log_lh <- log_lh + exp.loglh(rate, delta_t) - log(choose(j, 2))
                         
                         j <- j - 1

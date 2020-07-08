@@ -223,7 +223,7 @@ test_that("Native exponential likelihood matches simulation likelihood",
                                                 Neg_t,
                                                 Neg_t.int)
 
-            log_lh.native <- exponential_coalescent_loglh(sam[order(-sam)], times[order(-times)], N, lambda)
+            log_lh.native <- exponential_coalescent_loglh(sam[order(-sam)], times[order(-times)], lambda, N)
 
             expect_equal(log_lh_tree, log_lh.r)  
             expect_equal(log_lh_tree, log_lh.native)  

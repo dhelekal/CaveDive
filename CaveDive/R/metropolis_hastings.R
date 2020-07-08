@@ -1,7 +1,15 @@
-mcmc <- function(model.lh, proposal.cond_lh, proposal.sampler, x0, n_it){
+#'Run metropolis-hastings mcmc. 
+#' 
+#' @param model.lh a function for the conditional model likelihood.
+#' @param proposal.cond_lh a function for the conditional proposal likelihood \code{x_{t+1}} given \code{x_t}.
+#' @param x0 initial value for the chain
+#' @param n_it number of iterations
+#' @return A list of mcmc jumps
+#' @export
+run_mcmc <- function(model.lh, proposal.cond_lh, proposal.sampler, x0, n_it){
 	
 	out <- rep(0,  n_it)
-	x_prev <- x_0
+	x_prev <- x0
 
 	for (i in c(1:n_it)) {
 		out[1] <- x_prev

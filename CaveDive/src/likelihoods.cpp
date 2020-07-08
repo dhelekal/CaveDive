@@ -1,6 +1,14 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
+//'Compute likelihood of a realisation of a homogeneous coalescent.
+//' 
+//' @param time_intervals waiting times.
+//' @param lineage_count number of lineages for each waiting time.
+//' @param pop_size effective population size \code{Neg}.
+//' @return the log likelihood for the given parameters.
+//' @export
+
 // [[Rcpp::export]]
 double coalescent_loglh(NumericVector time_intervals,
                                      NumericVector lineage_count,
@@ -18,12 +26,20 @@ double coalescent_loglh(NumericVector time_intervals,
   return(log_lh);
 }
 
+//'Compute likelihood of a realisation of an exponential growth coalescent.
+//' 
+//' @param sampling_times times of leaves.
+//' @param coalescent_times times of coalescent events.
+//' @param lambda growth rate.
+//' @param pop_size final effective pop_size at time of most recent sample.
+//' @return the log likelihood for the given parameters.
+//' @export
+
 // [[Rcpp::export]]
 double exponential_coalescent_loglh(NumericVector sampling_times,
                                      NumericVector coalescent_times,
-                                     double pop_size,
-                                     double lambda
-                                     ) {
+                                     double lambda,
+                                     double pop_size) {
   auto s_idx = 0;
   auto c_idx = 0;
 
@@ -53,3 +69,4 @@ double exponential_coalescent_loglh(NumericVector sampling_times,
   log_lh += -(sampling_times.length()-1)*std::log(pop_size);
   return(log_lh);
 }
+

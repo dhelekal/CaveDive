@@ -1,3 +1,11 @@
+#'Simulate inhomogenous coalescent,
+#' 
+#' @param sampling_times times of leaves.
+#' @param Neg.rate function equal to 1/Neg(t).
+#' @param Neg.rate.int integral of 1/Neg(t) from \code{t} to \code{t+s}.
+#' @param Neg.rate.int_inv function that inverts the integral of 1/Neg(t) from \code{t} to \code{t+s} for \code{s}.
+#' @return A list consisting of the simulate coalescent times \code{coalescent_times} and the log-likelihood of the simulation \code{log_likelihood}.
+#' @export
 inhomogenous_coal.simulate <- function(sampling_times,
                                        Neg.rate,
                                        Neg.rate.int,
@@ -71,6 +79,15 @@ inhomogenous_coal.simulate <- function(sampling_times,
   
 }
 
+
+#'Compute likelihood of a realisation of an inhomogeneous coalescent.
+#' 
+#' @param sampling_times times of leaves.
+#' @param coalescent_times times of coalescent events.
+#' @param Neg.rate function equal to 1/Neg(t).
+#' @param Neg.rate.int integral of 1/Neg(t) from \code{t} to \code{t+s}.
+#' @return the log likelihood for the given parameters.
+#' @export
 inhomogenous_coal.log_lh <- function(sampling_times,
                                      coalescent_times,
                                      Neg.rate,
@@ -128,6 +145,13 @@ inhomogenous_coal.log_lh <- function(sampling_times,
   }
   return(log_lh)
 }
+
+#'Simulate and plot a coalescent process for an exponentially growing population.
+#' @param sampling_times times of leaves.
+#' @param lambda growth rate.
+#' @param N final population size at time 0.
+#' @return A list consisting of the simulate coalescent times \code{coalescent_times} and the log-likelihood of the simulation \code{log_likelihood}.
+#' @export
 
 plot_exp_growth <- function(sam, lambda, N) {
   Neg_t <- function (s)
