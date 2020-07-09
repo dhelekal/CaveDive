@@ -7,9 +7,9 @@
 run_mcmc(model.lh, proposal.cond_lh, proposal.sampler, x0, n_it)
 }
 \arguments{
-\item{model.lh}{a function for the conditional model likelihood.}
+\item{model.lh}{a function for the conditional model log-likelihood.}
 
-\item{proposal.cond_lh}{a function for the conditional proposal likelihood \code{x_{t+1}} given \code{x_t}.}
+\item{proposal.cond_lh}{a function for the conditional proposal log-likelihood \code{x_{t+1}} given \code{x_t}.}
 
 \item{x0}{initial value for the chain}
 
