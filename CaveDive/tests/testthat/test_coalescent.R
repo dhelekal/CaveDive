@@ -229,6 +229,26 @@ test_that("Native exponential likelihood matches simulation likelihood",
             expect_equal(log_lh_tree, log_lh.native)  
           })
 
+test_that("Native exponential likelihood matches simulation likelihood from plot_exp_growth", 
+  {
+    set.seed(1)
+    sam <- runif(100, 0, 10)
+    sam <- sam - max(sam)
+    sam <- sam[order(-sam)]
+
+    N = runif(1, 1, 100)
+    lambda = runif(1, 0.1, 10)
+
+    co <- plot_exp_growth(sam, lambda, N)
+    log_lh <-co$log_likelihood
+    times <- co$coalescent_times
+    times <- times[order(-times)]
+
+    log_lh_native <- exponential_coalescent_loglh(sam, times, lambda, N)
+    expect_equal(log_lh, log_lh_native)
+  })
+
+
 context("Trees")
 test_that("Coalescent Tree matches precomputed tree", {
   set.seed(1)
