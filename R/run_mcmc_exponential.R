@@ -1,12 +1,16 @@
 library(CaveDive)
-library(ape)
 library(rmutil)
 
-gt.N = runif(1, 0, 1000)
-gt.lambda = runif(1, -300, 300)
+set.seed(1)
 
-sam <- rep(0,100)
+sam <- runif(100, 0, 10)
+sam <- sam - max(sam)
 sam <- sam[order(-sam)]
+
+gt.N = runif(1, 1, 100)
+gt.lambda = runif(1, 0.1, 10)
+
+x0 <- c(runif(1,-30, 30), runif(1,0.1,1000))
 
 co <- plot_exp_growth(sam, gt.lambda, gt.N)
 times <- co$coalescent_times
@@ -34,7 +38,6 @@ proposal.cond_lh <-function(x_prev, x_cand){
   return(log(dnorm(x_cand[1],x_prev[1],1)) + log(dnorm(x_cand[2],x_prev[2],1)))
 }
 
-x0 <- c(50,50)
 n_it <- 3000000
 burn_in <-100000
 
