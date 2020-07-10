@@ -26,7 +26,7 @@ log_lh <- function(x){
 
   if (n > 0){
     prior_lambda <- dlaplace(lambda, m=0, s=1, log=TRUE)
-    prior_n <- 0 #dexp(n, rate = 1, log = TRUE)
+    prior_n <- dexp(n, rate = 1, log = TRUE)
     lh <- exponential_coalescent_loglh(sam, times, lambda, n) + prior_lambda + prior_n
   } else {
     lh <- -Inf
