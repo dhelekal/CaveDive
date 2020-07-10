@@ -6,7 +6,7 @@
 #' @param n_it number of iterations
 #' @return A list of mcmc jumps
 #' @export
-run_mcmc <- function(model.lh, proposal.cond_lh, proposal.sampler, x0, n_it){
+run_mcmc <- function(model.log_lh, proposal.cond_log_lh, proposal.sampler, x0, n_it){
 	
 	out <- vector(mode = "list", length = n_it)
 	x_prev <- x0
@@ -14,7 +14,7 @@ run_mcmc <- function(model.lh, proposal.cond_lh, proposal.sampler, x0, n_it){
 	for (i in c(1:n_it)) {
 		out[[i]] <- x_prev
 		x_cand <- proposal.sampler(x_prev)
-		a_prob <- metropolis_ratio(model.lh, proposal.cond_lh, x_cand, x_prev)
+		a_prob <- log_metropolis_ratio(model.log_lh, proposal.cond_log_lh, x_cand, x_prev)
 
 		u <- log(runif(1, 0, 1))
 		if (u<a_prob) {
@@ -25,9 +25,9 @@ run_mcmc <- function(model.lh, proposal.cond_lh, proposal.sampler, x0, n_it){
 	return(out)
 }
 
-metropolis_ratio <- function(model.lh, proposal.cond_lh, x_cand, x_prev) {
-	a <- proposal.cond_lh(x_prev, x_cand)+model.lh(x_cand)
-	b <- proposal.cond_lh(x_cand, x_prev)+model.lh(x_prev)
+log_metropolis_ratio <- function(model.log_lh, proposal.cond_log_lh, x_cand, x_prev) {
+	a <- proposal.cond_log_lh(x_prev, x_cand)+model.log_lh(x_cand)
+	b <- proposal.cond_log_lh(x_cand, x_prev)+model.log_lh(x_prev)
 	return(min(a-b, 0))
 }
 
