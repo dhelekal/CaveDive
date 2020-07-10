@@ -25,14 +25,12 @@ log_lh <- function(x){
   n <- x[2]
 
   if (n > 0){
-    #prior_lambda <- dlaplace(lambda, m=0, s=1, log=TRUE)
-    #prior_n <- dexp(n, rate = 1, log = TRUE)
-    lh <- exponential_coalescent_loglh(sam, times, lambda, n) #+ prior_n + prior_lambda
+    lh <- -exponential_coalescent_loglh(sam, times, lambda, n)
   } else {
-    lh <- -Inf
+    lh <- +Inf
   }
   return(lh)
 }
 
-out<-optim(x0, log_lh, control = list(maxit = 2000000))
+out<-optim(x0, log_lh, control = list(maxit = 2000000)) #method = "L-BFGS-B", lower = c(-100, 1), upper = c(100, 10000),)
 print(out)
