@@ -28,6 +28,6 @@ run_mcmc <- function(model.lh, proposal.cond_lh, proposal.sampler, x0, n_it){
 metropolis_ratio <- function(model.lh, proposal.cond_lh, x_cand, x_prev) {
 	a <- proposal.cond_lh(x_prev, x_cand)+model.lh(x_cand)
 	b <- proposal.cond_lh(x_cand, x_prev)+model.lh(x_prev)
-	return(min(a-b ,1))
+	return(min(a-b, 0))
 }
 
