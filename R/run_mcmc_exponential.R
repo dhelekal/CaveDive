@@ -2,7 +2,7 @@ library(CaveDive)
 library(ggplot2)
 library(rmutil)
 
-set.seed(1)
+set.seed(123)
 
 sam <- runif(100, 0, 10)
 sam <- sam - max(sam)
@@ -34,6 +34,18 @@ log_lh <- function(x){
   return(lh)
 }
 
+mle_log_lh <- function(x){
+  lambda <- x[1]
+  n <- x[2]
+
+  if (n > 0){
+    lh <- exponential_coalescent_loglh(sam, times, lambda, n)
+  } else {
+    lh <- -Inf
+  }
+  return(lh)
+}
+
 prop.sampler <-function (x_prev){
   return(c(rnorm(1, mean=x_prev[1], 1), rnorm(1, mean=x_prev[2], 1)))
 }
@@ -42,42 +54,53 @@ proposal.cond_lh <-function(x_cand, x_prev){
   return(log(dnorm(x_cand[1],x_prev[1],1)) + log(dnorm(x_cand[2],x_prev[2],1)))
 }
 
+
+MLE <- optim(c(1,1), mle_log_lh , control = list(maxit = 2000000, fnscale=-1))
+MAP <- optim(c(1,1), log_lh, control = list(maxit = 2000000, fnscale=-1))
+
 n_it <- 1000000
 burn_in <-30000
 
 o <- run_mcmc(log_lh, proposal.cond_lh, prop.sampler, x0, n_it)
-
 o.df <- as.data.frame(t(as.data.frame(o)))
 
 colnames(o.df) <- c("lambda", "n")
 o.df$iteration <- c(1:nrow(o.df))
 
 png(file="trace.png")
-plt <- ggplot(o.df, aes(x=n, y=lambda, colour=iteration)) +
+plt <- ggplot(o.df, aes(x=n, y=lambda, colour=iteration, alpha = 0.3)) +
        geom_line()+
        geom_point()+
        geom_vline(xintercept = gt.N, colour="red", linetype = "longdash")+
        geom_hline(yintercept = gt.lambda, colour="red", linetype = "longdash")
 plot(plt)
+ggExtra::ggMarginal(plt, type = "histogram")
 dev.off()
 
 o.df <- o.df[burn_in:n_it, ]
 
 pdf(file="lambdahist.pdf")
-hist(o.df$lambda, col="darkgreen", main=paste0("Ground truth = ", gt.lambda))
-abline(v=gt.lambda, col="red", lwd=3, lty=2)
+plt <- ggplot(o.df, aes(x=lambda)) +
+       geom_histogram(colour="darkgreen", binwidth = 0.02) +
+       geom_vline(xintercept = MLE$par[1], colour="orange", linetype = "longdash") +
+       geom_vline(xintercept = MAP$par[1], colour="blue", linetype = "longdash")
+plot(plt)
 dev.off()
 
 pdf(file="nhist.pdf")
-hist(o.df$n, col="darkgreen", main=paste0("Ground truth = ", gt.N))
-abline(v=gt.N, col="red", lwd=3, lty=2)
+plt <- ggplot(o.df, aes(x=n)) + 
+       geom_histogram(colour="darkgreen", binwidth = 1) +
+       geom_vline(xintercept = MLE$par[2], colour="orange", linetype = "longdash") +
+       geom_vline(xintercept = MAP$par[2], colour="blue", linetype = "longdash")
+plot(plt)
 dev.off()
 
 png(file="trace_zoom.png")
-plt <- ggplot(o.df, aes(x=n, y=lambda, colour=iteration)) +
+plt <- ggplot(o.df, aes(x=n, y=lambda, colour=iteration, alpha = 0.3)) +
        geom_line()+
        geom_point()+
        geom_vline(xintercept = gt.N, colour="red", linetype = "longdash")+
        geom_hline(yintercept = gt.lambda, colour="red", linetype = "longdash")
 plot(plt)
+ggExtra::ggMarginal(plt, type = "histogram")
 dev.off()
