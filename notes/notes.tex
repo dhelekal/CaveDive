@@ -79,10 +79,19 @@
 \newpage
 \tableofcontents
 \newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Questions}
 \begin{itemize}
-  \item Likelihood - Is my assumption that we are looking for \textit{log-likelihood} of the equivalence class of trees that share the same coalescent times (and sampling times), i.e. likelihood of trees up to the topology?
+  \item Multi+ The second term in equation \ref{eq:multirate} (i.e. what's the bifurcation rate in the forward process) is likely not correct. Clearly this is inversely proportional to the $Neg$ of the lineage going extinct (or being birthed in the forward process), however presumably it should also be proportional to the $Neg$ of the parent lineage? The reasoning being the larger the population size of the parent lineage the likelier it is for a bifurcation event to occur.
+  \item Note: there are mistakes in section \ref{section:multi}. The combination numbers need to be taken per subtree, and the bifurcation likelihood is just first iteration and needs further consideration.
 \end{itemize}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Simulation}
 \subsection{Coalescent Preliminaries}
 The coalescent is a CTMC defined on the set $\{1 ... n\}$, parametrised via the coalescent rate, in our case $1/Neg(t)$, where $g$ is a scale parameter and $Neg(t)$ the population size at time $t$. 
@@ -132,6 +141,10 @@ By markov property
 \begin{gather}
 P\left[W_j(t) > s+u\mid X(s)=j\right] = P\left[W_j(t+s) > u\right]
 \end{gather}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Homogenous case}
 The sampling process conditioned on sampling times follows a modified gillespie scheme. In order to facilitate the computation of the likelihoods of the individual simulated trees, it is preferred to avoid rejection sampling. As such we require sampling the conditional likelihood \ref{eq:conditional}. This is achieved by inverse transform sampling.
 Let:
@@ -215,6 +228,10 @@ f <- (sampling_times, Ne): //Sampling times in descending order
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Inhomogenous Case}
 In the inhomogenous case, the scheme is similar, with the key difference that the sampling times now follow a much more complex distribution. We proceed with a modified conditional sampling scheme as in \ref{eq:cond_timedep}. To obtain draws $w_j(t)$, draws from standard exponential $w_j$ are rescaled, akin to algorithm described in \cite{hein_gene_2004} Pg 98.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Waiting times distribution}
 Consider the time interval $[t_i, s_i]$ with $s_j = min\left\{s\in S : s>t_i\right\}$. Define $\Delta t_i \triangleq s_i-t_i$.
 The probability that no coalescent events happens within this interval is 
@@ -225,6 +242,10 @@ analogously, the probability of waiting times conditioned on that the waiting ti
 \begin{gather}
   P[W_j(t_i) < s \mid W_j(t_i) < \Delta t_i] =\frac{1-\exp(-\int_0^{s}\frac{\binom{j}{2}}{Neg(t+\tau)}d\tau)}{1-P[W_j(t_i) > \Delta t_i]}
 \end{gather}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Sampling}
 In order to sample $W_j(t_i)$ we proceed with an inverse transform sampling scheme, derived from the base samples $W_j$. 
 First, assume $W_j$ are distributed according to 
@@ -244,7 +265,7 @@ Is given by the inverse with respect to $s$ of
 G(s; t_i) = \int_0^s \frac{Neg}{Neg(t_i+\tau)}d\tau
 \end{gather}
 Which exists for any biologically sensible choice of $Neg(t)$
-\subsubsection{Likelihood}
+\subsubsection{Likelihood}\label{subsection:likelihood}
 Let $\left\{t_i\right\}_{i\in S\subset \N}$ denote the times of events in increasing order. Using notational convention from \cite{drummond_estimating_2002}, let $t_Y\triangleq \left\{t_i\right\}_{i\in Y}$ denote times of coalescent events and $t_I\triangleq \left\{t_i\right\}_{i\in I}$ denote times of sampling events, where $Y$, $I$ are disjoint partitions of the index set $S$ with the property that $S = Y\cup I$.
 The likelihood of a particular genealogy is then given by:
 \begin{gather}
@@ -257,21 +278,25 @@ The log-likelihood is:
 \log\mathcal{L}\left(g\mid Neg\right) 
 = -\sum_{i\in S\setminus 1}{\int_{t_{i-1}}^{t_i}{\frac{\binom{k_i}{2}}{Neg(\tau)d\tau}}} + \sum_{i\in Y}{\log\frac{\binom{k_i}{2}}{Neg(t_i)}}
 \end{gather}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{\textit{Skygrid} and other families of population functions}
-\textit{Skygrid} is an approach introduced in \cite{gill_improving_2013}. It considers a family of time-dependent effective population size functions specified as follows. Let $T\subset\R$ be the interval in coalescent time. Consider an arbitrary population size function F:
+\textit{Skygrid} is an approach introduced in \cite{gill_improving_2013}. It considers a family of time-dependent effective population size functions specified as follows. Let $T\subset\R$ be the interval under consideration in coalescent time. Consider an arbitrary population size function F:
 \begin{gather}
   F:\quad T\subset\R \rightarrow \R^+
 \end{gather}
 Given a mutually disjoint family of time intervals $\left\{D_i\right\}_{i\in N}\subseteq T$, $D_j = [d_{j-1}, d_{j})$,  with $\bigcup\limits_{i\in N} D_i = T$, the \textit{skygrid} family of functions is then given by 
 \begin{gather}
-F_{skygrid}\triangleq\left\{Neg\in F\mid\forall t \in D_i,\quad Neg(t) = c_i,\quad c_i\in\R^+\right\}
+F_{skygrid}\triangleq\left\{Neg\in F\mid\forall i\in N,\quad \forall t \in D_i,\quad Neg(t) = c_i,\quad c_i\in\R^+\right\}
 \end{gather}
 This can be easily extended to any function $G$
 \begin{gather}
  G(t)\triangleq\sum_{i\in N}{\mathbbm{1}_{D_i}(t)g_i(t)}
 \end{gather}
 Where $g_i(t)$ are arbitrary positive integrable functions.
-Such formulation makes computation of likelihood trivial.
+Such formulation makes computation of likelihood straightforward.
 \begin{gather}
 \begin{aligned}
 \log\mathcal{L}\left(g\mid G(t)\right) 
@@ -281,16 +306,59 @@ Such formulation makes computation of likelihood trivial.
 &+\sum_{i\in Y}{\log\binom{k_i}{2}} - \sum_{i\in Y}{\log{\sum_{j\in N}{\mathbbm{1}_{D_j}(t_i)g_j(t_i)}}}
 \end{aligned}
 \end{gather}
-
-\subsection{Multistrain+Inhomogenous Case}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Multistrain+Inhomogenous Case}\label{section:multi}
 In this case, coalescent nodes have an added colour property, and each colour coalesces according to a colour specific, time dependent case. Nodes of non-identical colour can coalesce iff at least one of them is the last remaining node of a given colour.\\
-Given $M$ colours, $M$ population size functions $\{Ne_j(t)\}_{1\leq j\leq M}$, and initial population size $N$, Let $Y(t)$ be a CTMC with the state space:
+Given $M$ colours, $M$ population size functions $\{Neg_j(t)\}_{1\leq j\leq M}$, and initial population size $N$, Let $Y(t)$ be a CTMC with the state space:
 \begin{gather}
-  S = \left\{\mathbf{s}\in \Z_+^{N}:|\mathbf{s}|\leq N, |\mathbf{s}|\geq1\right\}
-\end{gather}
+  \Sigma = \left\{\mathbf{s}\in \Z_+^{N}:|\mathbf{s}|\leq N, |\mathbf{s}|\geq1\right\}
+\end{gather}.
 and the transition rates
+\begin{gather}\label{eq:multirate}
+\mathbf{s}\to\mathbf{s}-\mathbf{e_j} \quad \binom{s_j}{2}Neg_j^{-1}(t)+\delta_{s_j, 1}Neg_j(t)^{-1}\sum_{i\neq j}s_iNeg_i(t)
+\end{gather}
+To derive the likelihood of a genealogy given a colouring with non-zero likelihood and growth functions $\mathbf{Neg}:=\{Neg_j(t)\}_{1\leq j\leq M}$, first assume event notation as used in \ref{subsection:likelihood}.\\
+Define the set of bifurcation events:
 \begin{gather}
-\mathbf{s}\to\mathbf{s}-\mathbf{e_j} \quad \binom{s_j}{2}Ne_j(t)+\delta_{s_j, 1}Ne_j(t)\sum_{i\neq j}s_i
+\Omega \triangleq \{\omega_j\}_{1\leq j\leq K}\subset S\setminus 1
+\end{gather}
+With the property that:
+\begin{gather*}
+\forall i<j \quad \omega_i < \omega_j
+\end{gather*}
+Next define the subtrees of omega
+\begin{gather}
+\begin{aligned}
+\mathbf{W}' &\triangleq \{W'_j\}_{1\leq j\leq K}\\
+W'_j &\triangleq \{i\in S\mid t_i \text{is a descendant of } \omega_j\}
+\end{aligned}
+\end{gather} 
+Finally, we define the subtrees corresponding to individual lineages, associated with a particular $Neg_j$, denoted by $W$:
+\begin{gather}
+\begin{aligned}
+\mathbf{W} &\triangleq \{W_j\}_{1\leq j\leq K}\\
+W_j &\triangleq W_j \setminus \bigcup_{i<j}(W_i\cup\omega_i)
+\end{aligned}
+\end{gather} 
+The total likelihood is equal to:
+\begin{gather}\label{eq:multilh}
+\mathcal{L}(\mathbf{g}\mid \Omega, \mathbf{Neg}) = \prod_{j=1}^{K}\mathcal{L}(\mathbf{g}\cap W_j \mid Neg_j)\prod_{j=1}^{K}\mathcal{L}(\mathbf{g}\cap \omega_j \mid \mathbf{Neg})
+\end{gather}
+This can be understood as the product of the likelihoods of individual subtrees and the product of the likelihoods of the individual bifurcation events.\\
+The first term in equation \ref{eq:multilh} can then be expanded as:
+\begin{gather}
+\prod_{j=1}^{K}\mathcal{L}(\mathbf{g}\cap W_j \mid Neg_j) 
+= \prod_{j=1}^{K}\prod_{i\in S\cap W_j}\left(\mathbbm{1}_Y(i)\frac{\binom{k_i}{2}}{Neg(t_i)}+\mathbbm{1}_I(i)\right)
+\exp(-\int_{t_{i-1}}^{t_i}\frac{\binom{k_i}{2}}{Neg(\tau)}d\tau)
+\end{gather}
+The second term:
+\begin{gather}
+\prod_{j=1}^{K}\mathcal{L}(\mathbf{g}\cap \omega_j \mid \mathbf{Neg})
+= \prod_{i\in\Omega}\left(\frac{k_i}{Neg(t_i)}\right)
+\exp(-\int_{t_{i-1}}^{t_i}\frac{k_i}{Neg(\tau)}d\tau)
 \end{gather}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -332,8 +400,16 @@ One million iterations were used and the first One hundred thousand discarded as
     \includegraphics[width=0.5\textwidth]{../R/tree}
     \caption{The simulated genealogy used for this example.}
 \end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Previous Work}
 A framework utilising sampling intensity in order to extract more information is proposed in \cite{parag_jointly_nodate}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Bibliography}
 \printbibliography
 \end{document}
