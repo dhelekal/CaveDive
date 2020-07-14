@@ -161,7 +161,10 @@ f_{\mathbf{T}(u)}(T(u)) = \lambda \left(\frac{1}{1-\exp(\lambda\Delta t)}-u\righ
     \includegraphics[width=0.5\textwidth]{plots/Coalescent_Example.png}
     \caption{An example simulated coalescent tree}
 \end{figure}
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{lstlisting}
 f <- (sampling_times, Ne): //Sampling times in descending order
   extant_lineages <- 1
@@ -206,7 +209,10 @@ f <- (sampling_times, Ne): //Sampling times in descending order
 
     return: coalescent_times, log_lh
 \end{lstlisting}
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Inhomogenous Case}
 In the inhomogenous case, the scheme is similar, with the key difference that the sampling times now follow a much more complex distribution. We proceed with a modified conditional sampling scheme as in \ref{eq:cond_timedep}. To obtain draws $w_j(t)$, draws from standard exponential $w_j$ are rescaled, akin to algorithm described in \cite{hein_gene_2004} Pg 98.
 \subsubsection{Waiting times distribution}
@@ -286,6 +292,46 @@ and the transition rates
 \begin{gather}
 \mathbf{s}\to\mathbf{s}-\mathbf{e_j} \quad \binom{s_j}{2}Ne_j(t)+\delta_{s_j, 1}Ne_j(t)\sum_{i\neq j}s_i
 \end{gather}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Simulation}
+\subsection{Exponetial Growth}
+An example of a population under exponential growth, $Neg(t) = N*\exp(-\lambda t)$ consisting of 100 sampling events between 0 and 10 years before present has been simulated with a rate parameter $\lambda$ and final size parameter $N$ drawn from a uniform densities on intervals $[0.1, 10]$, and $[1,100]$ respectively.\\
+A Metropolis-Hastings MCMC scheme was then used to infer the parameters $\lambda$ and $N$. A zero-centred laplace distribution with rate equal to one was chosen as the prior for $\lambda$, whereas for $N$ the exponential distribution with rate one was used.\\
+One million iterations were used and the first One hundred thousand discarded as burn in time. To further validate the fit, both a maximum likelihood (MLE) and maximum \textit{a-posteriori} (MAP) estimates were computed and plotted against the posterior marginals inferred by the MCMC.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  \centering
+  \subfloat[]{\label{trace:a}\includegraphics[scale=.25]{../R/trace}}
+  \centering
+  \subfloat[]{\label{trace:b}\includegraphics[scale=.25]{../R/trace_zoom}}
+  \centering
+  \caption{Trace plots for the markov chain. Red lines denote true parameter values. MLE marked by blue lines. MAP marked by orange lines. \ref{trace:a} Shows the entire trace of the chain. \ref{trace:b} Shows the trace with the first 100000 iterations discarded}
+  \label{fig:trace}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  \centering
+  \subfloat[]{\label{hists:a}\includegraphics[scale=.4]{../R/lambdahist}}
+  \centering
+  \subfloat[]{\label{hists:b}\includegraphics[scale=.4]{../R/nhist}}
+  \centering
+  \caption{Histograms of the posterior marginals. MLE marked by blue line. MAP marked by orange line. \ref{hists:a} $\lambda$ marginal \ref{hists:b} $N$ marginal}
+  \label{fig:hists}
+\end{figure}
+\begin{figure}[H]
+  \centering
+    \includegraphics[width=0.5\textwidth]{../R/tree}
+    \caption{The simulated genealogy used for this example.}
+\end{figure}
 \section{Previous Work}
 A framework utilising sampling intensity in order to extract more information is proposed in \cite{parag_jointly_nodate}
 \section{Bibliography}
