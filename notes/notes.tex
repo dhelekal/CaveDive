@@ -312,6 +312,7 @@ Such formulation makes computation of likelihood straightforward.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Multistrain+Inhomogenous Case}\label{section:multi}
 In this case, coalescent nodes have an added colour property, and each colour coalesces according to a colour specific, time dependent case. Nodes of non-identical colour can coalesce iff at least one of them is the last remaining node of a given colour.\\
+\subsubsection{Model}
 Given $M$ colours, $M$ population size functions $\{Neg_j(t)\}_{1\leq j\leq M}$, and initial population size $N$, Let $Y(t)$ be a CTMC with the state space:
 \begin{gather}
   \Sigma = \left\{\mathbf{s}\in \Z_+^{N}:|\mathbf{s}|\leq N, |\mathbf{s}|\geq1\right\}
@@ -320,6 +321,7 @@ and the transition rates
 \begin{gather}\label{eq:multirate}
 \mathbf{s}\to\mathbf{s}-\mathbf{e_j} \quad \binom{s_j}{2}Neg_j^{-1}(t)+\delta_{s_j, 1}Neg_j(t)^{-1}\sum_{i\neq j}s_iNeg_i(t)
 \end{gather}
+\subsubsection{Likelihood}
 To derive the likelihood of a genealogy given a colouring with non-zero likelihood and growth functions $\mathbf{Neg}:=\{Neg_j(t)\}_{1\leq j\leq M}$, first assume event notation as used in \ref{subsection:likelihood}.\\
 Define the set of bifurcation events:
 \begin{gather}
@@ -360,6 +362,9 @@ The second term:
 = \prod_{i\in\Omega}\left(\frac{k_i}{Neg(t_i)}\right)
 \exp(-\int_{t_{i-1}}^{t_i}\frac{k_i}{Neg(\tau)}d\tau)
 \end{gather}
+\subsubsection{Inference}
+Due to the variable nature of the dimensionality of the parameter space, it will be necessary to use Reversible Jump MCMC (rjMCMC) \cite{fan_reversible_2010,green_reversible_1995}.
+Additionally, one will have to consider a suitable prior for bifurcation points. This will likely have to be computed as a function of leaf colouring, possiblt integrating covariate information (geographic location?).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
