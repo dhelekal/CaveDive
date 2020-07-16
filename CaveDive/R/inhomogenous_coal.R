@@ -169,7 +169,7 @@ plot_exp_growth <- function(sam, lambda, N) {
   co <-
     inhomogenous_coal.simulate(sam, Neg_t, Neg_t.int, Neg_t.inv_int)
   tr <- build_coal_tree(sam, co$coalescent_times)
-  plot(read.tree(text = tr))
+  plot(ladderize(read.tree(text = tr)))
   axisPhylo(side = 1)
   
   return(co)

@@ -1,4 +1,4 @@
-\documentclass{article}
+\documentclass{report}
 
 % set font encoding for PDFLaTeX, XeLaTeX, or LuaTeX
 \usepackage{ifxetex,ifluatex}
@@ -83,7 +83,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Questions}
+\chapter{Questions}
 \begin{itemize}
   \item Multi+ The second term in equation \ref{eq:multirate} (i.e. what's the bifurcation rate in the forward process) is likely not correct. Clearly this is inversely proportional to the $Neg$ of the lineage going extinct (or being birthed in the forward process), however presumably it should also be proportional to the $Neg$ of the parent lineage? The reasoning being the larger the population size of the parent lineage the likelier it is for a bifurcation event to occur.
   \item Note: there are mistakes in section \ref{section:multi}. The combination numbers need to be taken per subtree, and the bifurcation likelihood is just first iteration and needs further consideration.
@@ -92,8 +92,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Simulation}
-\subsection{Coalescent Preliminaries}
+\chapter{Methods}
+\section{Coalescent Preliminaries}
 The coalescent is a CTMC defined on the set $\{1 ... n\}$, parametrised via the coalescent rate, in our case $1/Neg(t)$, where $g$ is a scale parameter and $Neg(t)$ the population size at time $t$. 
 The transition rates of the coalescent process are given by 
 \begin{gather*}
@@ -270,13 +270,13 @@ Let $\left\{t_i\right\}_{i\in S\subset \N}$ denote the times of events in increa
 The likelihood of a particular genealogy is then given by:
 \begin{gather}
 \mathcal{L}\left(g\mid Neg\right) 
-= \prod_{i\in S\setminus 1}\left(\mathbbm{1}_Y(i)\frac{\binom{k_i}{2}}{Neg(t_i)}+\mathbbm{1}_I(i)\right)
-\exp(-\int_{t_{i-1}}^{t_i}\frac{\binom{k_i}{2}}{Neg(\tau)}d\tau)
+= \prod_{i\in S\setminus 1}\left(\mathbbm{1}_Y(i)\frac{\binom{k_{i}}{2}}{Neg(t_i)}+\mathbbm{1}_I(i)\right)
+\exp(-\int_{t_{i-1}}^{t_i}\frac{\binom{k_{i}}{2}}{Neg(\tau)}d\tau)
 \end{gather}
 The log-likelihood is:
 \begin{gather}
 \log\mathcal{L}\left(g\mid Neg\right) 
-= -\sum_{i\in S\setminus 1}{\int_{t_{i-1}}^{t_i}{\frac{\binom{k_i}{2}}{Neg(\tau)d\tau}}} + \sum_{i\in Y}{\log\frac{\binom{k_i}{2}}{Neg(t_i)}}
+= -\sum_{i\in S\setminus 1}{\int_{t_{i-1}}^{t_i}{\frac{\binom{k_{i}}{2}}{Neg(\tau)d\tau}}} + \sum_{i\in Y}{\log\frac{\binom{k_{i}}{2}}{Neg(t_i)}}
 \end{gather}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -310,28 +310,93 @@ Such formulation makes computation of likelihood straightforward.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Multistrain+Inhomogenous Case}\label{section:multi}
-In this case, coalescent nodes have an added colour property, and each colour coalesces according to a colour specific, time dependent case. Nodes of non-identical colour can coalesce iff at least one of them is the last remaining node of a given colour.\\
-\subsubsection{Model}
-Given $M$ colours, $M$ population size functions $\{Neg_j(t)\}_{1\leq j\leq M}$, and initial population size $N$, Let $Y(t)$ be a CTMC with the state space:
+\section{Inhomogenous Lineages and Outbreaks}\label{section:multi}
+In this case, coalescent nodes have an added colour property, and each colour coalesces according to a colour specific, time dependent case. Nodes of non-identical colour can coalesce iff at least one of them is the last remaining node of a given colour.
+Different colours correspond to different lineages, each behaving under its own growth function.\\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Model}
+A given genealogy $\mathbf{g}=(V_\mathbf{g}, E_\mathbf{g})$ is an incomplete, empirical sample of the underlying process.\\
+As such, with each edge in $E_\mathbf{g}$ there is an associated unobserved set of individuals descending from one another. At some point along an edge a node of one lineage will undergo colour change and change its type to that of another lineage.\\
+Given $M$ colours, $M$ population size functions $\mathbf{Neg}\triangleq\{Neg_j(t)\}_{1\leq j\leq M}$, and initial population size $N$, Let $Y(t)$ be a CTMC with the state space:
 \begin{gather}
   \Sigma = \left\{\mathbf{s}\in \Z_+^{N}:|\mathbf{s}|\leq N, |\mathbf{s}|\geq1\right\}
 \end{gather}.
 and the transition rates
 \begin{gather}\label{eq:multirate}
-\mathbf{s}\to\mathbf{s}-\mathbf{e_j} \quad \binom{s_j}{2}Neg_j^{-1}(t)+\delta_{s_j, 1}Neg_j(t)^{-1}\sum_{i\neq j}s_iNeg_i(t)
+\begin{align}
+\mathbf{s}&\to\mathbf{s}-\mathbf{e_j} &\quad& \binom{s_j}{2}Neg_j^{-1}(t)&\quad&\forall j\\
+\mathbf{s}&\to\mathbf{s}-\mathbf{e_j}+\mathbf{e_k}&\quad& \delta_{1,j}s_kNeg_j^{-1}(t)&\quad&\forall j,k
+\end{align}
 \end{gather}
-\subsubsection{Likelihood}
-To derive the likelihood of a genealogy given a colouring with non-zero likelihood and growth functions $\mathbf{Neg}:=\{Neg_j(t)\}_{1\leq j\leq M}$, first assume event notation as used in \ref{subsection:likelihood}.\\
-Define the set of bifurcation events:
+The interpretation of this model in backwards (coalescent) time is that each node corresponds to a single specific lineage (colour). Nodes of the same lineage coalesce at i.i.d rates, according to a lineage specific growth functions, until reaching the MRCA of given lineage. The MRCA then changes type (colour) to that of a different lineage. 
+\subsection{Inference}
+In this section, we will assume having a genealogy $\mathbf{g}=(V_\mathbf{g}, E_\mathbf{g})$, indexed by the index set $S$. The colour assigment for individual nodes will be unknown, as will the the per-colour effective population size functions $\mathbf{Neg}$, and the number of colours $M$.\\
+
+In order to assign colourings more efficiently, we shall introduce the notion of conversion events, corresponding to transitions:
+\begin{gather*}
+\mathbf{s}\to\mathbf{s}-\mathbf{e_j}+\mathbf{e_k}
+\end{gather*}
+in equation \ref{eq:multirate}.\\
+
+\begin{definition}[Node Colour]
+Let
 \begin{gather}
-\Omega \triangleq \{\omega_j\}_{1\leq j\leq K}\subset S\setminus 1
+\mathcal{T}(j): S \mapsto \Z
 \end{gather}
-With the property that:
+denote the (unknown) colour assignment for node $t_j$.
+\end{definition}
+
+\begin{definition}[Child set]
+Let $\mathcal{C}(j)$ denote the child set associated with the node $t_j$
+\begin{gather}
+\mathcal{C}(j)\triangleq\{i\in S\mid(t_j, t_i)\in E_{\mathbf{g}},\quad t_j<t_i\}
+\end{gather}
+\end{definition}
+
+
+\begin{definition}[Parent]
+Let $P(j)$ denote the parent of the node $t_j$
+\begin{gather}
+P(j)\triangleq i\in S:(t_i, t_j)\in E_{\mathbf{g}},\quad t_j>t_i\}
+\end{gather}
+\end{definition}
+
+\begin{definition}[Bifurcation event index]
+A bifurcation index $\omega_j\in S$ satisfies the following condition
+\begin{gather}
+\omega\in S:\quad \mathcal{T}(\omega) \neq \mathcal{T}(P(\omega))
+\end{gather}
+\end{definition}
+
+Let $\Omega$ denote the set of all bifurcation event indices associated with a given genealogy.
+\begin{gather}
+\Omega \triangleq \{\omega_j\}_{1\leq j\leq K}\subset S\\
+\end{gather}
+With the additional property that:
 \begin{gather*}
 \forall i<j \quad \omega_i < \omega_j
 \end{gather*}
-Next define the subtrees of omega
+
+The node indexed by $\omega_i$, $t_{\omega_i}$, represents the MRCA of the lineage associated with the colouring $\mathcal{T}(\omega_i)$. Under our assumptions, there is also an unobserved (hidden) conversion event, which we will denote by $\tau^*_{\omega_i}$.\\ The event $\tau^*_{\omega_i}$ takes place somewhere along the edge $(P(\omega_j), \omega_j)$.\\
+The set of all $M-1$ conversion events will be denoted $\tau^*$.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Likelihood}
+We have that the posterior
+\begin{gather}
+\mathcal{L}(\mathbf{Neg}, \tau^*, M\mid\mathbf{g}) \propto 
+\mathcal{L}(\mathbf{g}\mid \tau^*, M, \mathbf{Neg})\mathcal{L}(\tau^*,M)\mathcal{L}(\mathbf{Neg})
+\end{gather}
+To derive the expression for the likelihood 
+\begin{gather*}
+\mathcal{L}(\mathbf{g}\mid \tau^*, M, \mathbf{Neg})
+\end{gather*}
+First define the subtrees of omega
 \begin{gather}
 \begin{aligned}
 \mathbf{W}' &\triangleq \{W'_j\}_{1\leq j\leq K}\\
@@ -345,6 +410,7 @@ Finally, we define the subtrees corresponding to individual lineages, associated
 W_j &\triangleq W_j \setminus \bigcup_{i<j}(W_i\cup\omega_i)
 \end{aligned}
 \end{gather} 
+Let $k_{i,j}$ denote the number of extant individuals corresponding to subtree of $W_j$ at during the time interval $[t_{i-1}, t_i]$.
 The total likelihood is equal to:
 \begin{gather}\label{eq:multilh}
 \mathcal{L}(\mathbf{g}\mid \Omega, \mathbf{Neg}) = \prod_{j=1}^{K}\mathcal{L}(\mathbf{g}\cap W_j \mid Neg_j)\prod_{j=1}^{K}\mathcal{L}(\mathbf{g}\cap \omega_j \mid \mathbf{Neg})
@@ -353,23 +419,24 @@ This can be understood as the product of the likelihoods of individual subtrees 
 The first term in equation \ref{eq:multilh} can then be expanded as:
 \begin{gather}
 \prod_{j=1}^{K}\mathcal{L}(\mathbf{g}\cap W_j \mid Neg_j) 
-= \prod_{j=1}^{K}\prod_{i\in S\cap W_j}\left(\mathbbm{1}_Y(i)\frac{\binom{k_i}{2}}{Neg(t_i)}+\mathbbm{1}_I(i)\right)
-\exp(-\int_{t_{i-1}}^{t_i}\frac{\binom{k_i}{2}}{Neg(\tau)}d\tau)
+= \prod_{j=1}^{K}\prod_{i\in S\cap W_j}\left(\mathbbm{1}_Y(i)\frac{\binom{k_{i,j}}{2}}{Neg(t_i)}+\mathbbm{1}_I(i)\right)
+\exp(-\int_{t_{i-1}}^{t_i}\frac{\binom{k_{i,j}}{2}}{Neg(\tau)}d\tau)
 \end{gather}
 The second term:
 \begin{gather}
 \prod_{j=1}^{K}\mathcal{L}(\mathbf{g}\cap \omega_j \mid \mathbf{Neg})
-= \prod_{i\in\Omega}\left(\frac{k_i}{Neg(t_i)}\right)
-\exp(-\int_{t_{i-1}}^{t_i}\frac{k_i}{Neg(\tau)}d\tau)
+= \prod_{i\in\Omega}\left(\frac{k_{i,j}}{Neg(t_i)}\right)
+\exp(-\int_{t_{i-1}}^{t_i}\frac{k_{i,j}}{Neg(\tau)}d\tau)
 \end{gather}
+\subsubsection{Choice of \textit{Neg}}
 \subsubsection{Inference}
 Due to the variable nature of the dimensionality of the parameter space, it will be necessary to use Reversible Jump MCMC (rjMCMC) \cite{fan_reversible_2010,green_reversible_1995}.
-Additionally, one will have to consider a suitable prior for bifurcation points. This will likely have to be computed as a function of leaf colouring, possiblt integrating covariate information (geographic location?).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Simulation}
+\chapter{Results}
+\section{Simulations}
 \subsection{Exponetial Growth}
 An example of a population under exponential growth, $Neg(t) = N*\exp(-\lambda t)$ consisting of 100 sampling events between 0 and 10 years before present has been simulated with a rate parameter $\lambda$ and final size parameter $N$ drawn from a uniform densities on intervals $[0.1, 10]$, and $[1,100]$ respectively.\\
 A Metropolis-Hastings MCMC scheme was then used to infer the parameters $\lambda$ and $N$. A zero-centred laplace distribution with rate equal to one was chosen as the prior for $\lambda$, whereas for $N$ the exponential distribution with rate one was used.\\
