@@ -330,19 +330,22 @@ Similar models adding colouring to vertices of phylogenies have been used in eco
 \subsection{Model}
 A given genealogy $\mathbf{g}=(V_\mathbf{g}, E_\mathbf{g}, t_\mathbf{g})$ is an incomplete, empirical sample of the underlying process\CITEMISSING.\\
 It consists of nodes $V_\mathbf{g}$, directed edges $E_\mathbf{g}$, and node labels $t_\mathbf{g}$ corresponding to event times.\\
-As in section \ref{subsection:likelihood} $\mathbf{g}$ shall be indexed by an index set $S$, with $Y\subset S$ corresponding to coalescent events and $I\subset S$ corresponding to sampling events.\\
-For convenience, assume that all edges are in the forwards time direction, i.e. 
+As in section \ref{subsection:likelihood} $\mathbf{g}$ shall be indexed by an index set $S=1\leq i \leq N\subset \N$, with $Y\subset S$ corresponding to coalescent events and $I\subset S$ corresponding to sampling events.\\
+For convenience, assume that all edges are in the forwards time direction, i.e.: 
 \begin{gather*}
 \forall k,l \in S: (k,l)\in E_\mathbf{g} \Rightarrow t_k<t_l
 \end{gather*}
-
+Furthermore, all event times are ordered in descending (backwards) time order, i.e.:
+\begin{gather*}
+\forall k,l \in S: k<l \Rightarrow t_k > t_l
+\end{gather*}
 Under the assumption that $\mathbf{g}$ is a genealogy of a given sample, with each edge in $E_\mathbf{g}$ there is an associated unobserved set of individuals descending from one another\CITEMISSING. At some point along an edge a node of one lineage will undergo colour change and change its type to that of another lineage.\\
-We seek a model which will allow
-\begin{definition}[Multiple Lineage Coalescent]
-Given $M$ colours, $M$ population size functions $\mathbf{Neg}\triangleq\{Neg_j(t)\}_{1\leq j\leq M}$, and initial population size $N$, Let $Y(t)$ be a CTMC with the state space:
+We seek a model which enable us to investigate this proposed behaviour.
+\begin{definition}[Multiple Lineage Coalescent]\label{def:model}
+Given $M$ colours, $M$ population size functions $\mathbf{Neg}\triangleq\{Neg_j(t)\}_{1\leq j\leq M}$. Let $Y(t)$ be a CTMC with the state space:
 \begin{gather}
-  \Sigma = \left\{\mathbf{s}\in \Z_+^{N}:|\mathbf{s}|\leq N, |\mathbf{s}|\geq1\right\}
-\end{gather}.
+  \Sigma = \left\{\mathbf{s}\in \Z_+: |\mathbf{s}|\geq1\right\}
+\end{gather}
 and the transition rates
 \begin{gather}\label{eq:multirate}
 \begin{align}
@@ -351,111 +354,64 @@ and the transition rates
 \end{align}
 \end{gather}
 \end{definition}
-The interpretation of this model in backwards (coalescent) time is that each node corresponds to a single specific lineage (colour). Nodes of the same lineage coalesce at i.i.d rates, according to a lineage specific growth functions, until reaching the MRCA of given lineage. The MRCA then changes type (colour) to that of a different lineage. 
+The interpretation of this model in backwards (coalescent) time is that each node corresponds to a single specific lineage (colour). Nodes of the same lineage coalesce at i.i.d rates, according to a lineage specific growth functions, until reaching the MRCA of given lineage. The MRCA then changes type (colour) to that of a different lineage. \\
+Under the hypothesis, along each of the edges from the parent of a lineage MRCA to the MRCA lies a point in time that characterises the time of divergence of the lineage, after which the lineage starts to undergo clonal expansion.
 \subsection{Inference}
-In this section, we will assume having a genealogy $\mathbf{g}=(V_\mathbf{g}, E_\mathbf{g})$, indexed by the index set $S$. The colour assigment for individual nodes will be unknown, as will the the per-colour effective population size functions $\mathbf{Neg}$, and the number of colours $M$.\\
-
-In order to assign colourings more efficiently, we shall introduce the notion of conversion events, corresponding to transitions:
-\begin{gather*}
-\mathbf{s}\to\mathbf{s}-\mathbf{e_j}+\mathbf{e_k}
-\end{gather*}
-in equation \ref{eq:multirate}.\\
-
-\begin{definition}[Node Colour]
-Let
+Assume that we have been given a genealogy as described in previous section. The number of individua lineages $M$, the effective population size functions $\mathbf{Neg}$, the placement and divergence events in descending order $\Xi =\{\xi_i\}_{1\leq i\leq M}$, are unknown. In effect we seek to identify terms in the factorisation of the posterior:
 \begin{gather}
-\mathcal{T}(j): S \mapsto \Z
+\mathcal{L}(\mathbf{Neg}, \Xi, M\mid\mathbf{g}) \propto 
+\mathcal{L}(\mathbf{g}\mid \Xi, M, \mathbf{Neg})\mathcal{L}(\mathbf{Neg}\mid\Xi,M)\mathcal{L}(\Xi,M)
 \end{gather}
-denote the (unknown) colour assignment for node $j$.
+
+\begin{definition}[Divergence Event] A divergence event $\xi$ associated with a lineage is a tuple:
+\begin{gather}
+\xi=\left(e', \tau\right)
+\end{gather}
+where $\tau$ denotes the time of the divergence event, and $e' = (v^{pa}, v^{MRCA})$ denotes the edge along which the divergence event happens, with $v^{MRCA}$ being the MRCA of the newly diverging lineage.
 \end{definition}
+In order to identify the likelihood $\mathcal{L}(\mathbf{g}\mid \Xi, M, \mathbf{Neg})$, the genealogy needs to be first partitinioned into separate subtrees, each corresponding to an individual lineage.
 
-\begin{definition}[Child set]
-Let $\mathcal{C}(j)$ denote the child set associated with the node $t_j$
-\begin{gather}
-\mathcal{C}(j)\triangleq\{i\in S\mid(t_j, t_i)\in E_{\mathbf{g}}\}
-\end{gather}
-\end{definition}
-
-
-\begin{definition}[Parent]
-Let $P(j)$ denote the parent of the node $t_j$
-\begin{gather}
-P(j)\triangleq \{i\in S:(t_i, t_j)\in E_{\mathbf{g}}\}
-\end{gather}
-\end{definition}
-
-\begin{definition}[Bifurcation event]
-A bifurcation index $\omega_j\in S$ satisfies the following condition
-\begin{gather}
-\omega\in S:\quad \mathcal{T}(\omega) \neq \mathcal{T}(P(\omega))
-\end{gather}
-\end{definition}
-
-Let $\Omega$ denote the set of all bifurcation event indices associated with a given genealogy.
-\begin{gather}
-\Omega \triangleq \{\omega_j\}_{1\leq j\leq K}\subset S\\
-\end{gather}
-With the additional property that:
-\begin{gather*}
-\forall i<j \quad t_{\omega_i} < t_{\omega_j}
-\end{gather*}
-
-The node  $\omega_j$, represents the MRCA of the lineage associated with the colouring $\mathcal{T}(\omega_j)$. Under our assumptions, there is also an unobserved (hidden) conversion event, which we will denote by $\tau^*_{\omega_i}$.\\ The event $\tau^*_{\omega_i}$ takes place somewhere along the edge $(P(\omega_j), \omega_j)$.\\
-The set of all $M-1$ conversion events will be denoted $\tau^*$.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Likelihood}
-The posterior is proportional to
-\begin{gather}
-\mathcal{L}(\mathbf{Neg}, \tau^*, M\mid\mathbf{g}) \propto 
-\mathcal{L}(\mathbf{g}\mid \tau^*, M, \mathbf{Neg})\mathcal{L}(\tau^*,M)\mathcal{L}(\mathbf{Neg})
-\end{gather}
-We aim to derive the expression for the likelihood: 
-\begin{gather*}
-\mathcal{L}(\mathbf{g}\mid \tau^*, M, \mathbf{Neg})
-\end{gather*}
 \begin{definition}[Descendant Set]
 \begin{gather}
 \begin{aligned}
-\mathcal{D}(j) &\triangleq \{i\in S\mid i \text{ is a descendant of } j\}
+\mathcal{D}(i) &\triangleq \{j\in S\mid j \text{ is a descendant of } i\}
 \end{aligned}
 \end{gather} 
 \end{definition}
 
 \begin{definition}[Lineage Subtree]
-A subtree $W_j$ for an individual lineage $j$, with the root $\omega_j$,  given the set of bifurcation events $\Omega$ is given by 
+A subtree $W(\xi_i)$ associated with a divergence event $\xi_i$ consists of all vertices, edges and times associated with a given lineage.
 \begin{gather}
-W_j \triangleq \omega_j\cup\mathcal{D}_(\omega_j) \setminus \bigcup_{i<j}(\mathcal{D}(\omega_i)\cup\omega_i)
+W(\xi_i) \triangleq v^{MRCA}_i\cup\mathcal{D}_(v^{pa}_i) \setminus \bigcup_{j<i}(\mathcal{D}(v^{pa}_j))
 \end{gather} 
 \end{definition}
-Denote the set of all lineage subtrees by
-\begin{gather}
-\mathbf{W} \triangleq \{W_j\}_{1\leq j\leq K}
-\end{gather}
+As members of a lineage can only coalesce with one another, the coalescence rate is independent of other lineages, and the time of divergence has been given, the total likelihood is equal to the product of individual lineage specific likelihoods.\\
+A final step before deriving lineage specific likelihoods is required, that is, the divergence times have to be included along with the times contained within the lineage subtree.\\
 
-Let $k_{i,j}$ denote the number of extant individuals corresponding to subtree of $W_j$ at during the time interval $[t_{i-1}, t_i]$.
+Denote the set of all divergence times associated with a Lineage Subtree $W(\xi_j)$ $\tau_{W(\xi_j)}$
+\begin{gather*}
+\tau_{W(\xi_j)} \triangleq \tau_i \in \xi_i : v^{pa}_i \in W(\xi_j), \quad \forall 1\leq i\leq M
+\end{gather*}
+Finally define the set of all times associated with a particular lineage
+$T(\xi_j) = \tau_{W(\xi_j)}\cup t_{W(\xi_j)}$, indexed by set $S_{T(\xi_j)}=\{1 ... |T(\xi_j)|\}$ such that
+\begin{gather*}
+\forall t_k, t_l \in T(\xi_j),\quad k>l \Rightarrow t_k \geq t_l
+\end{gather*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Let $k_{i,\xi_j}$ denote the number of extant individuals corresponding to subtree lineage $\xi_j$ at during the time interval $[t_{i-1}, t_i]$.
 The total likelihood is equal to:
-\begin{gather}\label{eq:multilh}
-\mathcal{L}(\mathbf{g}\mid \tau^*, M, \mathbf{Neg})
- = \mathcal{L}(\tau^*_{\omega_j})\prod_{j=1}^{K}\mathcal{L}(\mathbf{g}\cap W_j \mid Neg_j)
-\end{gather}
-This can be understood as the product of the likelihoods of individual subtrees and the product of the likelihoods of the individual bifurcation events.\\ 
-The first term in equation \ref{eq:multilh} can then be expanded as:
 \begin{gather}
-\prod_{j=1}^{K}\mathcal{L}(\mathbf{g}\cap W_j \mid Neg_j) 
-= \prod_{j=1}^{K}\prod_{i\in S\cap W_j}\left(\mathbbm{1}_Y(i)\frac{\binom{k_{i,j}}{2}}{Neg(t_i)}+\mathbbm{1}_I(i)\right)
+\begin{aligned}
+\mathcal{L}(\mathbf{g}\mid \Xi, M, \mathbf{Neg}) &= \prod_{j=1}^{M}\mathcal{L}(T(\xi_j) \mid Neg_j) \\
+\mathcal{L}(T(\xi_j) \mid Neg_j) &= \prod_{t_i\in T(\xi_j)}\left(\mathbbm{1}_{t_Y\cup\tau_{W(\xi_j)}}(t_i) \frac{\binom{k_{i,\xi_j}}{2}}{Neg(t_i)}+\mathbbm{1}_{t_I}(t_i)\right)
 \exp(-\int_{t_{i-1}}^{t_i}\frac{\binom{k_{i,j}}{2}}{Neg(\tau)}d\tau)
+\end{aligned}
 \end{gather}
-The second term:
-\begin{gather}
-\prod_{j=1}^{K}\mathcal{L}(\mathbf{g}\cap \omega_j \mid \mathbf{Neg})
-= \prod_{i\in\Omega}\left(\frac{k_{i,j}}{Neg(t_i)}\right)
-\exp(-\int_{t_{i-1}}^{t_i}\frac{k_{i,j}}{Neg(\tau)}d\tau)
-\end{gather} 
 \subsubsection{Choice of \textit{Neg}}
-\subsubsection{Inference}
+\subsubsection{Priors}
 Due to the variable nature of the dimensionality of the parameter space, it will be necessary to use Reversible Jump MCMC (rjMCMC) \cite{fan_reversible_2010,green_reversible_1995}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
