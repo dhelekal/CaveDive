@@ -97,14 +97,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Methods}
 \section{Coalescent Preliminaries}
-The coalescent is a CTMC defined on the set $\{1 ... n\}$, parametrised via the coalescent rate, in our case $1/Neg(t)$, where $g$ is a scale parameter and $Neg(t)$ the population size at time $t$. 
+The coalescent is a CTMC defined on the set $\{1 ... n\}$, parametrised via the coalescent rate, in our case $1/Neg(t)$, where $g$ is a scale parameter and $Neg(t)$ the effective population size at time $t$. Define $\alpha = Neg$
 The transition rates of the coalescent process are given by 
 \begin{gather*}
-\rho(j, j-1) = \binom{j}{2}\cdot\frac{1}{Neg(t)}
+\lambda(j, j-1) = \binom{j}{2}\cdot\frac{1}{\alpha(t)}
 \end{gather*}
 The waiting times in the homogenous case are exponentially distributed
 \begin{gather*}
-P[W_j \leq s] = 1-\exp(-s\frac{\binom{j}{2}}{Neg(t)})
+P[W_j \leq s] = 1-\exp(-s\frac{\binom{j}{2}}{\alpha(t)})
 \end{gather*}
 Furthermore, the waiting times for individual coalescent events, conditioned on being less than the time between two consecutive sampling events $\Delta t$ are distributed as follows
 \begin{gather}\label{eq:conditional}
@@ -123,20 +123,18 @@ W_j(t) = \inf\{s:X(t+s)\neq j \mid X(t) = j\}
 \end{gather}
 As such
 \begin{gather}
-W_j(t) > s \Rightarrow \forall \tau\in[t, t+s] X(\tau) = j
+W_j(t) > s \Rightarrow \forall \tau\in[t, t+s]\quad X(\tau) = j
 \end{gather}
-Furthermore the above relation doesn't hold iff an exit event has occured in the time interval $[t,t+s]$. As such:
+Furthermore the above relation holds iff no exit event have occured in the time interval $[t,t+s]$. As such:
 \begin{align*}
 &P[W_j(t) > s] = P[\text{no exit events in }[t,t+s]] = \exp(-\int_0^{s}E_j(t+\tau)d\tau)\\
 &P[W_j(t) < s] = 1 - \exp(-\int_0^{s}E_j(t+\tau)d\tau)
 \end{align*}
 In the case of phylodynamic coalescent this becomes
 \begin{gather}
-P[W_j(t) \leq s] = 1 - \exp(-\int_0^{s}\frac{\binom{j}{2}}{Neg(t+\tau)}d\tau)
+P[W_j(t) \leq s] = 1 - \exp(-\int_0^{s}\frac{\binom{j}{2}}{\alpha(t+\tau)}d\tau)
 \end{gather}
-\newpage
-Note, the waiting times a
-re still memoryless:
+Note, the waiting times are still memoryless:
 \begin{gather}
 P\left[W_j(t) > s+u\mid W_j(t)>s \right] = P\left[W_j(t) > s+u\mid X(s)=j\right]
 \end{gather}
@@ -149,7 +147,7 @@ P\left[W_j(t) > s+u\mid X(s)=j\right] = P\left[W_j(t+s) > u\right]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Homogenous case}
-The sampling process conditioned on sampling times follows a modified gillespie scheme. In order to facilitate the computation of the likelihoods of the individual simulated trees, it is preferred to avoid rejection sampling. As such we require sampling the conditional likelihood \ref{eq:conditional}. This is achieved by inverse transform sampling.
+The simulation of the coalescent process conditioned on sampling times follows a modified gillespie scheme. In order to facilitate the computation of the likelihoods of the individual simulated trees, it is preferred to avoid rejection sampling. As such we require sampling the conditional likelihood \ref{eq:conditional}. This is achieved by inverse transform sampling.
 Let:
 \begin{gather}\label{eq:cond_timedep}
 \begin{aligned}
@@ -159,7 +157,7 @@ Let:
 \end{gather}
 Where $T(u)$ is assumed to be monotone increasing and invertible.
 \begin{align*}
-  &&P[T(u)\leq s] &= P[u\leq T^-1(s)]\\
+  &&P[T(u)\leq s] &= P[u\leq T^{-1}(s)]\\
   &\Rightarrow& P[u\leq T^{-1}(s)] &= \frac{\int_0^s\lambda\exp(-\lambda t)dt}{\int_0^{\Delta t}\lambda\exp(-\lambda t)dt}\\
   &\Rightarrow& T^{-1}(s) &= \frac{1-\exp(-\lambda s)}{1-\exp(-\lambda \Delta t)}
 \end{align*}
@@ -239,21 +237,21 @@ In the inhomogenous case, the scheme is similar, with the key difference that th
 Consider the time interval $[t_i, s_i]$ with $s_j = min\left\{s\in S : s>t_i\right\}$. Define $\Delta t_i \triangleq s_i-t_i$.
 The probability that no coalescent events happens within this interval is 
 \begin{gather*}
-  P[W_j(t_i) > \Delta t_i] = \exp(-\int_0^{\Delta t_i}\frac{\binom{j}{2}}{Neg(t+\tau)}d\tau)
+  P[W_j(t_i) > \Delta t_i] = \exp(-\int_0^{\Delta t_i}\frac{\binom{j}{2}}{\alpha(t+\tau)}d\tau)
 \end{gather*}
 analogously, the probability of waiting times conditioned on that the waiting time is less than $\Delta t_i$ is:
 \begin{gather}
-  P[W_j(t_i) < s \mid W_j(t_i) < \Delta t_i] =\frac{1-\exp(-\int_0^{s}\frac{\binom{j}{2}}{Neg(t+\tau)}d\tau)}{1-P[W_j(t_i) > \Delta t_i]}
+  P[W_j(t_i) < s \mid W_j(t_i) < \Delta t_i] =\frac{1-\exp(-\int_0^{s}\frac{\binom{j}{2}}{\alpha(t+\tau)}d\tau)}{1-P[W_j(t_i) > \Delta t_i]}
 \end{gather}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Sampling}
-In order to sample $W_j(t_i)$ we proceed with an inverse transform sampling scheme, derived from the base samples $W_j$. 
+\subsubsection{Simulating}
+In order to simulate $W_j(t_i)$ we proceed with an inverse transform sampling scheme, derived from the base samples $W_j$. 
 First, assume $W_j$ are distributed according to 
 \begin{gather}
-  P[W_j < s \mid W_j < u] = \frac{1-\exp(-\frac{\binom{j}{2}}{Neg})}{1-P[W_j>u]}
+  P[W_j < s \mid W_j < u] = \frac{1-\exp(-\frac{\binom{j}{2}}{\alpha})}{1-P[W_j>u]}
 \end{gather}
 Where $u$ is chosen such that
 \begin{gather}
@@ -265,21 +263,21 @@ F(W_j; t_i):\quad P[F(W_j;t_i) < s \mid W_j < u] = P[W_j(t_i) < s \mid W_j(t_i) 
 \end{gather}
 Is given by the inverse with respect to $s$ of
 \begin{gather}
-G(s; t_i) = \int_0^s \frac{Neg}{Neg(t_i+\tau)}d\tau
+G(s; t_i) = \int_0^s \frac{\alpha}{\alpha(t_i+\tau)}d\tau
 \end{gather}
-Which exists for any biologically sensible choice of $Neg(t)$
-\subsection{Likelihood}\label{subsection:likelihood}
+Which exists for any biologically sensible choice of $\alpha(t)$
+\subsubsection{Likelihood}\label{subsection:likelihood}
 Let $\left\{t_i\right\}_{i\in S\subset \N}$ denote the times of events in increasing order. Using notational convention from \cite{drummond_estimating_2002}, let $t_Y\triangleq \left\{t_i\right\}_{i\in Y}$ denote times of coalescent events and $t_I\triangleq \left\{t_i\right\}_{i\in I}$ denote times of sampling events, where $Y$, $I$ are disjoint partitions of the index set $S$ with the property that $S = Y\cup I$.
 The likelihood of a particular genealogy is then given by:
 \begin{gather}
-\mathcal{L}\left(g\mid Neg\right) 
-= \prod_{i\in S\setminus 1}\left(\mathbbm{1}_Y(i)\frac{\binom{k_{i}}{2}}{Neg(t_i)}+\mathbbm{1}_I(i)\right)
-\exp(-\int_{t_{i-1}}^{t_i}\frac{\binom{k_{i}}{2}}{Neg(\tau)}d\tau)
+\mathcal{L}\left(g\mid \alpha\right) 
+= \prod_{i\in S\setminus 1}\left(\mathbbm{1}_Y(i)\frac{\binom{k_{i}}{2}}{\alpha(t_i)}+\mathbbm{1}_I(i)\right)
+\exp(-\int_{t_{i-1}}^{t_i}\frac{\binom{k_{i}}{2}}{\alpha(\tau)}d\tau)
 \end{gather}
 The log-likelihood is:
 \begin{gather}
-\log\mathcal{L}\left(g\mid Neg\right) 
-= -\sum_{i\in S\setminus 1}{\int_{t_{i-1}}^{t_i}{\frac{\binom{k_{i}}{2}}{Neg(\tau)d\tau}}} + \sum_{i\in Y}{\log\frac{\binom{k_{i}}{2}}{Neg(t_i)}}
+\log\mathcal{L}\left(g\mid \alpha\right) 
+= -\sum_{i\in S\setminus 1}{\int_{t_{i-1}}^{t_i}{\frac{\binom{k_{i}}{2}}{\alpha(\tau)d\tau}}} + \sum_{i\in Y}{\log\frac{\binom{k_{i}}{2}}{\alpha(t_i)}}
 \end{gather}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -292,7 +290,7 @@ The log-likelihood is:
 \end{gather}
 Given a mutually disjoint family of time intervals $\left\{D_i\right\}_{i\in N}\subseteq T$, $D_j = [d_{j-1}, d_{j})$,  with $\bigcup\limits_{i\in N} D_i = T$, the \textit{skygrid} family of functions is then given by 
 \begin{gather}
-F_{skygrid}\triangleq\left\{Neg\in F\mid\forall i\in N,\quad \forall t \in D_i,\quad Neg(t) = c_i,\quad c_i\in\R^+\right\}
+F_{skygrid}\triangleq\left\{\alpha\in F\mid\forall i\in N,\quad \forall t \in D_i,\quad \alpha(t) = c_i,\quad c_i\in\R^+\right\}
 \end{gather}
 This can be easily extended to any function $G$
 \begin{gather}
@@ -342,25 +340,25 @@ Furthermore, all event times are ordered in descending (backwards) time order, i
 Under the assumption that $\mathbf{g}$ is a genealogy of a given sample, with each edge in $E_\mathbf{g}$ there is an associated unobserved set of individuals descending from one another\CITEMISSING. At some point along an edge a node of one lineage will undergo colour change and change its type to that of another lineage.\\
 We seek a model which enable us to investigate this proposed behaviour.
 \begin{definition}[Multiple Lineage Coalescent]\label{def:model}
-Given $M$ colours, $M$ population size functions $\mathbf{Neg}\triangleq\{Neg_j(t)\}_{1\leq j\leq M}$. Let $Y(t)$ be a CTMC with the state space:
+Given $M$ colours, $M$ population size functions $\mathbf{\alpha}\triangleq\{\alpha_j(t)\}_{1\leq j\leq M}$. Let $Y(t)$ be a CTMC with the state space:
 \begin{gather}
   \Sigma = \left\{\mathbf{s}\in \Z_+: |\mathbf{s}|\geq1\right\}
 \end{gather}
 and the transition rates
 \begin{gather}\label{eq:multirate}
 \begin{align}
-\mathbf{s}&\to\mathbf{s}-\mathbf{e_j} &\quad& \binom{s_j}{2}Neg_j^{-1}(t)&\quad&\forall j\\
-\mathbf{s}&\to\mathbf{s}-\mathbf{e_j}+\mathbf{e_k}&\quad& \delta_{1,j}s_kNeg_j^{-1}(t)&\quad&\forall j,k
+\mathbf{s}&\to\mathbf{s}-\mathbf{e_j} &\quad& \binom{s_j}{2}\alpha_j^{-1}(t)&\quad&1\leq j\leq M\\
+\mathbf{s}&\to\mathbf{s}-\mathbf{e_j}+\mathbf{e_k}&\quad& \delta_{1,j}s_k&\quad&1\leq j,k\leq M
 \end{align}
 \end{gather}
 \end{definition}
 The interpretation of this model in backwards (coalescent) time is that each node corresponds to a single specific lineage (colour). Nodes of the same lineage coalesce at i.i.d rates, according to a lineage specific growth functions, until reaching the MRCA of given lineage. The MRCA then changes type (colour) to that of a different lineage. \\
 Under the hypothesis, along each of the edges from the parent of a lineage MRCA to the MRCA lies a point in time that characterises the time of divergence of the lineage, after which the lineage starts to undergo clonal expansion.
 \subsection{Inference}
-Assume that we have been given a genealogy as described in previous section. The number of individua lineages $M$, the effective population size functions $\mathbf{Neg}$, the placement and divergence events in descending order $\Xi =\{\xi_i\}_{1\leq i\leq M}$, are unknown. In effect we seek to identify terms in the factorisation of the posterior:
+Assume that we have been given a genealogy as described in previous section. The number of individua lineages $M$, the effective population size functions $\mathbf{\alpha}$, the placement and divergence events in descending order $\Xi =\{\xi_i\}_{1\leq i\leq M}$, are unknown. In effect we seek to identify terms in the factorisation of the posterior:
 \begin{gather}
-\mathcal{L}(\mathbf{Neg}, \Xi, M\mid\mathbf{g}) \propto 
-\mathcal{L}(\mathbf{g}\mid \Xi, M, \mathbf{Neg})\mathcal{L}(\mathbf{Neg}\mid\Xi,M)\mathcal{L}(\Xi,M)
+\mathcal{L}(\mathbf{\alpha}, \Xi, M\mid\mathbf{g}) \propto 
+\mathcal{L}(\mathbf{g}\mid \Xi, M, \mathbf{\alpha})\mathcal{L}(\mathbf{\alpha}\mid\Xi,M)\mathcal{L}(\Xi,M)
 \end{gather}
 
 \begin{definition}[Divergence Event] A divergence event $\xi$ associated with a lineage is a tuple:
@@ -369,7 +367,7 @@ Assume that we have been given a genealogy as described in previous section. The
 \end{gather}
 where $\tau$ denotes the time of the divergence event, and $e' = (v^{pa}, v^{MRCA})$ denotes the edge along which the divergence event happens, with $v^{MRCA}$ being the MRCA of the newly diverging lineage.
 \end{definition}
-In order to identify the likelihood $\mathcal{L}(\mathbf{g}\mid \Xi, M, \mathbf{Neg})$, the genealogy needs to be first partitinioned into separate subtrees, each corresponding to an individual lineage.
+In order to identify the likelihood $\mathcal{L}(\mathbf{g}\mid \Xi, M, \mathbf{\alpha})$, the genealogy needs to be first partitinioned into separate subtrees, each corresponding to an individual lineage.
 
 \begin{definition}[Descendant Set]
 \begin{gather}
@@ -382,7 +380,7 @@ In order to identify the likelihood $\mathcal{L}(\mathbf{g}\mid \Xi, M, \mathbf{
 \begin{definition}[Lineage Subtree]
 A subtree $W(\xi_i)$ associated with a divergence event $\xi_i$ consists of all vertices, edges and times associated with a given lineage.
 \begin{gather}
-W(\xi_i) \triangleq v^{MRCA}_i\cup\mathcal{D}_(v^{pa}_i) \setminus \bigcup_{j<i}(\mathcal{D}(v^{pa}_j))
+W(\xi_i) \triangleq \mathcal{D}(v^{pa}_i) \setminus \bigcup_{j<i}(\mathcal{D}(v^{pa}_j))
 \end{gather} 
 \end{definition}
 As members of a lineage can only coalesce with one another, the coalescence rate is independent of other lineages, and the time of divergence has been given, the total likelihood is equal to the product of individual lineage specific likelihoods.\\
@@ -405,13 +403,29 @@ Let $k_{i,\xi_j}$ denote the number of extant individuals corresponding to subtr
 The total likelihood is equal to:
 \begin{gather}
 \begin{aligned}
-\mathcal{L}(\mathbf{g}\mid \Xi, M, \mathbf{Neg}) &= \prod_{j=1}^{M}\mathcal{L}(T(\xi_j) \mid Neg_j) \\
-\mathcal{L}(T(\xi_j) \mid Neg_j) &= \prod_{t_i\in T(\xi_j)}\left(\mathbbm{1}_{t_Y\cup\tau_{W(\xi_j)}}(t_i) \frac{\binom{k_{i,\xi_j}}{2}}{Neg(t_i)}+\mathbbm{1}_{t_I}(t_i)\right)
-\exp(-\int_{t_{i-1}}^{t_i}\frac{\binom{k_{i,j}}{2}}{Neg(\tau)}d\tau)
+\mathcal{L}(\mathbf{g}\mid \Xi, M, \mathbf{\alpha}) &= \prod_{j=1}^{M}\mathcal{L}(T(\xi_j) \mid \alpha_j) \\
+\mathcal{L}(T(\xi_j) \mid \alpha_j) &= \prod_{t_i\in T(\xi_j)}\left(\mathbbm{1}_{t_Y\cup\tau_{W(\xi_j)}}(t_i) \frac{\binom{k_{i,\xi_j}}{2}}{\alpha(t_i)}+\mathbbm{1}_{t_I}(t_i)\right)
+\exp(-\int_{t_{i-1}}^{t_i}\frac{\binom{k_{i,j}}{2}}{\alpha(\tau)}d\tau)
 \end{aligned}
 \end{gather}
-\subsubsection{Choice of \textit{Neg}}
+\subsubsection{Choice of $\alpha$}
+The dynamics of an immunity non-confering pathogen with the host population constant can be described by the SIS model:
+\begin{gather}
+\frac{dI}{dt} = (N-I)\beta I/N -\gamma I
+\end{gather}
+This equation admits a solution of the form
+\begin{gather}
+I(t) = \frac{1-\frac{1}{R_0}N}{1+\frac{1}{I_0}(1-\frac{1}{R_0}N)\exp((\beta-\gamma)t)}
+\end{gather}
+with $R_0 = \beta/\gamma$ 
+
 \subsubsection{Priors}
+As a prior for change points $\mathcal{L}(\Xi,M)$ a Poisson Point Process is used. Denote by $B$ the total branch length of the genealogy. Then
+\begin{gather}
+M\sim\frac{(\lambda B)^M}{M!}\exp(-\lambda B)
+\end{gather}
+and 
+\subsubsection{MCMC}
 Due to the variable nature of the dimensionality of the parameter space, it will be necessary to use Reversible Jump MCMC (rjMCMC) \cite{fan_reversible_2010,green_reversible_1995}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -420,7 +434,7 @@ Due to the variable nature of the dimensionality of the parameter space, it will
 \chapter{Results}
 \section{Simulations}
 \subsection{Exponetial Growth}
-An example of a population under exponential growth, $Neg(t) = N*\exp(-\lambda t)$ consisting of 100 sampling events between 0 and 10 years before present has been simulated with a rate parameter $\lambda$ and final size parameter $N$ drawn from a uniform densities on intervals $[0.1, 10]$, and $[1,100]$ respectively.\\
+An example of a population under exponential growth, $\alpha(t) = N*\exp(-\lambda t)$ consisting of 100 sampling events between 0 and 10 years before present has been simulated with a rate parameter $\lambda$ and final size parameter $N$ drawn from a uniform densities on intervals $[0.1, 10]$, and $[1,100]$ respectively.\\
 A Metropolis-Hastings MCMC scheme was then used to infer the parameters $\lambda$ and $N$. A zero-centred laplace distribution with rate equal to one was chosen as the prior for $\lambda$, whereas for $N$ the exponential distribution with rate one was used.\\
 One million iterations were used and the first One hundred thousand discarded as burn in time. To further validate the fit, both a maximum likelihood (MLE) and maximum \textit{a-posteriori} (MAP) estimates were computed and plotted against the posterior marginals inferred by the MCMC.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
