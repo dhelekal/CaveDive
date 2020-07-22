@@ -354,6 +354,7 @@ and the transition rates
 \end{definition}
 The interpretation of this model in backwards (coalescent) time is that each node corresponds to a single specific lineage (colour). Nodes of the same lineage coalesce at i.i.d rates, according to a lineage specific growth functions, until reaching the MRCA of given lineage. The MRCA then changes type (colour) to that of a different lineage. \\
 Under the hypothesis, along each of the edges from the parent of a lineage MRCA to the MRCA lies a point in time that characterises the time of divergence of the lineage, after which the lineage starts to undergo clonal expansion.
+
 \subsection{Inference}
 Assume that we have been given a genealogy as described in previous section. The number of individua lineages $M$, the effective population size functions $\mathbf{\alpha}$, the placement and divergence events in descending order $\Xi =\{\xi_i\}_{1\leq i\leq M}$, are unknown. In effect we seek to identify terms in the factorisation of the posterior:
 \begin{gather}
@@ -395,10 +396,6 @@ $T(\xi_j) = \tau_{W(\xi_j)}\cup t_{W(\xi_j)}$, indexed by set $S_{T(\xi_j)}=\{1 
 \begin{gather*}
 \forall t_k, t_l \in T(\xi_j),\quad k>l \Rightarrow t_k \geq t_l
 \end{gather*}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Let $k_{i,\xi_j}$ denote the number of extant individuals corresponding to subtree lineage $\xi_j$ at during the time interval $[t_{i-1}, t_i]$.
 The total likelihood is equal to:
 \begin{gather}
@@ -408,8 +405,9 @@ The total likelihood is equal to:
 \exp(-\int_{t_{i-1}}^{t_i}\frac{\binom{k_{i,j}}{2}}{\alpha(\tau)}d\tau)
 \end{aligned}
 \end{gather}
-\subsubsection{Choice of $\alpha$}
-The dynamics of an immunity non-confering pathogen with the host population constant can be described by the SIS model:
+\subsection{Choice of Population Size Functions}
+\subsubsection{SIS Model}
+The dynamics of an immunity non-confering pathogen with the host population constant can be described by the SIS model\cite{keeling_introduction_2008}:
 \begin{gather}
 \frac{dI}{dt} = (N-I)\beta I/N -\gamma I
 \end{gather}
@@ -417,9 +415,14 @@ This equation admits a solution of the form
 \begin{gather}
 I(t) = \frac{1-\frac{1}{R_0}N}{1+\frac{1}{I_0}(1-\frac{1}{R_0}N)\exp((\beta-\gamma)t)}
 \end{gather}
-with $R_0 = \beta/\gamma$ 
-
-\subsubsection{Priors}
+with $R_0 = \beta/\gamma$\\
+Setting $\alpha(t) = I(t)$
+\begin{gather}
+\int_t^{t+s}{\alpha^{-1}(\tau)\,d\tau} = \left[\frac{\tau}{1-\frac{1}{R_0}N} + \frac{1}{(I_0)(\beta-\gamma)}\exp((\beta-\gamma)t)\right]_t^{t+s}  
+\end{gather}
+As our hypothesis posutlates that a divergence event is a new lineage being born and undergoing rapid growth, $I_0$ starts near zero, and is a fixed hyperparameter. This leaves us with a population size function with two free parameters
+\subsubsection{Gompertz Curve}
+\subsection{Priors}
 As a prior for change points $\mathcal{L}(\Xi,M)$ a Poisson Point Process is used. Denote by $B$ the total branch length of the genealogy. Then
 \begin{gather}
 M\sim\frac{(\lambda B)^M}{M!}\exp(-\lambda B)
