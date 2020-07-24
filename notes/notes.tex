@@ -313,14 +313,14 @@ Such formulation makes computation of likelihood straightforward.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Inhomogenous Lineages and Outbreaks}\label{section:multi}
 Suppose we sample genomes of a set of pathogenic bacterial samples. 
-At an unknow point in time a particular strain acquires a mutation conferring it resistance to a widely used antibiotic. This increases the particular strains fitness and enables it to undergo a period of rapid growth leading to a clonal expansion. If we assume that this increase in fitness occurs in a short time span, the lineage of this strain will behave differently in the phylogenetic tree, having a coalescent rate corresponding to a rapidly expanding population, starting from a very small number of individuals\CITEMISSING.\\
+At an unknow point in time a particular strain acquires a mutation conferring it resistance to a widely used antibiotic. This increases the particular strains fitness and enables it to undergo a period of rapid growth leading to a clonal expansion. If we assume that this increase in fitness occurs in a short time span, the lineage of this strain will behave differently in the phylogenetic tree, having a coalescent rate corresponding to a rapidly expanding population, starting from a very small number of individuals\CITEMISSING. This problem of identifying hidden population structure has been proposed in \cite{volz_identification_nodate}, where a testing based approach was used to indentify structure in a phylogeny.\\
 
 We seek a modification to the coalescent model that will allow for change points located on the branches of the phylogeny, marking the event when a particular lineage starts behaving according to a different population size function than its parent lineage.\\
 
 In this model, coalescent nodes have an added colour property, and each colour coalesces according to a colour specific, time dependent case. Nodes of non-identical colour can coalesce iff at least one of them is the last remaining node of a given colour.
 Different colours correspond to different lineages, each behaving under its own growth function.\\
 
-Similar models adding colouring to vertices of phylogenies have been used in ecology \CITEMISSING, and epidemiology to track transmission chains \cite{didelot_genomic_2017}.
+Similar models, refered to as Structured Coalescent, adding colouring to vertices of phylogenies have been used in epidemiology to track outbreaks \cite{maio_scotti_2016}, or transmission chains \cite{didelot_genomic_2017}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -401,7 +401,7 @@ The total likelihood is equal to:
 \begin{gather}
 \begin{aligned}
 \mathcal{L}(\mathbf{g}\mid \Xi, M, \mathbf{\alpha}) &= \prod_{j=1}^{M}\mathcal{L}(T(\xi_j) \mid \alpha_j) \\
-\mathcal{L}(T(\xi_j) \mid \alpha_j) &= \prod_{t_i\in T(\xi_j)}\left(\mathbbm{1}_{t_Y\cup\tau_{W(\xi_j)}}(t_i) \frac{\binom{k_{i,\xi_j}}{2}}{\alpha(t_i)}+\mathbbm{1}_{t_I}(t_i)\right)
+\mathcal{L}(T(\xi_j) \mid \alpha_j) &= \prod_{t_i\in T(\xi_j)}\left(\mathbbm{1}_{t_Y}(t_i) \frac{\binom{k_{i,\xi_j}}{2}}{\alpha(t_i)}+\mathbbm{1}_{t_I\cup\tau_{W(\xi_j)}}(t_i)\right)
 \exp(-\int_{t_{i-1}}^{t_i}\frac{\binom{k_{i,j}}{2}}{\alpha(\tau)}d\tau)
 \end{aligned}
 \end{gather}
@@ -411,14 +411,14 @@ The dynamics of an immunity non-confering pathogen with the host population cons
 \begin{gather}
 \frac{dI}{dt} = (N-I)\beta I/N -\gamma I
 \end{gather}
+By defining $A=\beta-\gamma$ and $B=\beta/N$, we obtain the solution 
 This equation admits a solution of the form
 \begin{gather}
-I(t) = \frac{1-\frac{1}{R_0}N}{1+\frac{1}{I_0}(1-\frac{1}{R_0}N)\exp((\beta-\gamma)t)}
+I(t) = \frac{A}{B+(A/I(0)-B)\exp(-tA)}
 \end{gather}
-with $R_0 = \beta/\gamma$\\
 Setting $\alpha(t) = I(t)$
 \begin{gather}
-\int_t^{t+s}{\alpha^{-1}(\tau)\,d\tau} = \left[\frac{\tau}{1-\frac{1}{R_0}N} + \frac{1}{(I_0)(\beta-\gamma)}\exp((\beta-\gamma)t)\right]_t^{t+s}  
+\int_t^{t+s}{\alpha^{-1}(\tau)\,d\tau} = \left[\frac{\tau B}{A} + \frac{A/I_0-B}{A*A}\exp(-\tau A)\right]_t^{t+s}  
 \end{gather}
 As our hypothesis posutlates that a divergence event is a new lineage being born and undergoing rapid growth, $I_0$ starts near zero, and is a fixed hyperparameter. This leaves us with a population size function with two free parameters
 \subsubsection{Gompertz Curve}
