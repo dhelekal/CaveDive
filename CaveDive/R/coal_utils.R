@@ -1,3 +1,14 @@
+rejection_sampling <- function(proposal, M, p, q) {
+  while (True) {
+    r <- runif(1,0,1)
+    x <- proposal()
+
+    if (r < p(x)/(M*q(x))) {
+      return(x)
+    }
+  }
+}
+
 inv_t_conditional_exp <- function(u, rate, delta_t) {
   return((-1 / rate) * log(1 - u * exp.prob(rate, delta_t)))
 }

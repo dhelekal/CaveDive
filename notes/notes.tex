@@ -412,15 +412,20 @@ The dynamics of an immunity non-confering pathogen with the host population cons
 \frac{dI}{dt} = (N-I)\beta I/N -\gamma I
 \end{gather}
 By defining $A=\beta-\gamma$ and $B=\beta/N$, we obtain the solution 
-This equation admits a solution of the form
+This equation admits a solution of the form:
 \begin{gather}
-I(t) = \frac{A}{B+(A/I(0)-B)\exp(-tA)}
+I(t) = \frac{A}{B+(A/I_0-B)\exp(-tA)}
 \end{gather}
-Setting $\alpha(t) = I(t)$
+We assume $I_0$ = 1.
+This can be rearranged and contrasted with standard logistic growth with carrying capacity equal to $A/B$ and growth rate equal to $A$: 
 \begin{gather}
-\int_t^{t+s}{\alpha^{-1}(\tau)\,d\tau} = \left[\frac{\tau B}{A} + \frac{A/I_0-B}{A*A}\exp(-\tau A)\right]_t^{t+s}  
+I(t) = \frac{A/B}{1+(A/B - 1)\exp(-tA)}
 \end{gather}
-As our hypothesis posutlates that a divergence event is a new lineage being born and undergoing rapid growth, $I_0$ starts near zero, and is a fixed hyperparameter. This leaves us with a population size function with two free parameters
+As our hypothesis posutlates that a divergence event is a new lineage being born and undergoing rapid growth, we require $\alpha(0) = 0$. Hence we take $\alpha(t) = I(t)-1$.
+\begin{gather}
+\int_t^{t+s}{\alpha^{-1}(\tau)\,d\tau} = \left[\frac{\tau B}{A} + \frac{1-B/A}{A}\exp(-\tau A)\right]_t^{t+s}  
+\end{gather}
+
 \subsubsection{Gompertz Curve}
 \subsection{Priors}
 As a prior for change points $\mathcal{L}(\Xi,M)$ a Poisson Point Process is used. Denote by $B$ the total branch length of the genealogy. Then
