@@ -409,21 +409,70 @@ The total likelihood is equal to:
 \subsubsection{SIS Model}
 The dynamics of an immunity non-confering pathogen with the host population constant can be described by the SIS model\cite{keeling_introduction_2008}:
 \begin{gather}
-\frac{dI}{dt} = (N-I)\beta I/N -\gamma I
+\frac{dI}{dt'} = (N-I)\beta I/N -\gamma I
 \end{gather}
 By defining $A=\beta-\gamma$ and $B=\beta/N$, we obtain the solution 
 This equation admits a solution of the form:
 \begin{gather}
-I(t) = \frac{A}{B+(A/I_0-B)\exp(-tA)}
+I(t') = \frac{A}{B+(A/I_0-B)\exp(-t'A)}
 \end{gather}
 We assume $I_0$ = 1.
 This can be rearranged and contrasted with standard logistic growth with carrying capacity equal to $A/B$ and growth rate equal to $A$: 
 \begin{gather}
-I(t) = \frac{A/B}{1+(A/B - 1)\exp(-tA)}
+I(t') = \frac{A/B}{1+(A/B - 1)\exp(-t'A)}
 \end{gather}
-As our hypothesis posutlates that a divergence event is a new lineage being born and undergoing rapid growth, we require $\alpha(0) = 0$. Hence we take $\alpha(t) = I(t)-1$.
+As our hypothesis posutlates that a divergence event is a new lineage being born and undergoing rapid growth, we require $\alpha(0) = 0$. Hence we take $\alpha(t') = I(t')-1$.\\
+Finally in order to convert into population decline in coalescent time, perform the change of variables $-t'+T_{max} - T_{div} = \tau$, while also defining $K=A/B$:
 \begin{gather}
-\int_t^{t+s}{\alpha^{-1}(\tau)\,d\tau} = \left[\frac{\tau B}{A} + \frac{1-B/A}{A}\exp(-\tau A)\right]_t^{t+s}  
+\begin{aligned}
+  \alpha(\tau) &= \frac{K}{1+(K - 1)\exp((\tau-T_{max}+T_{div})A)}-1\\
+               &= \frac{(K-1)- (K - 1)\exp((\tau-T_{max}+T_{div})A)}{1+(K - 1)\exp((\tau-T_{max}+T_{div})A)}
+\end{aligned}
+\end{gather}
+And
+\begin{gather}
+\begin{aligned}
+&\alpha^{-1}(\tau) &=&  \frac{1+(K - 1)\exp((\tau-T_{max}+T_{div})A)}{(K-1)- (K - 1)\exp((\tau-T_{max}+T_{div})A)}\\
+&\Rightarrow&& \frac{1}{(K-1)(1-\exp((\tau-T_{max}+T_{div})A))}\\
+&&+& \frac{1}{\exp(-(\tau-T_{max}+T_{div})A)-1}
+\end{aligned}
+\end{gather}
+As such:
+\begin{gather}
+\begin{aligned}
+&\int_t^{t+s}{\alpha^{-1}(\tau)\,d\tau}&=& \left[\frac{-1}{(K-1)A}\log(\exp(-(\tau-T_{max}+T_{div})A)-1)\right]_t^{t+s}\\
+&&+&\left[\frac{1}{A}\log(1-\exp((\tau-T_{max}+T_{div})A))\right]_t^{t+s}\\
+&\Rightarrow&&\left[\frac{K-2}{(K-1)A}\log(\frac{1-\exp((\tau-T_{max}+T_{div})A)}{\exp(-(\tau-T_{max}+T_{div})A)-1})\right]_t^{t+s}
+\end{aligned}
+\end{gather}
+Define $Q=\frac{K-2}{(K-1)A}$, $T = T_{max}+T_{div}$, expanding the integral:
+\begin{gather}
+\begin{aligned}
+&Q\left[\log(\frac{1-\exp((t+s-T)A)}{\exp(-(t+s-T)A)-1})-\log(\frac{1-\exp((t-T)A)}{\exp(-(t-T)A)-1})\right]\\
+=&Q\left[\log(\frac{(1-\exp((t+s-T)A))(\exp(-(t-T)A)-1)}{(\exp(-(t+s-T)A)-1)(1-\exp((t-T)A))})\right]\\
+=&Q\left[\log(\frac{\exp(-(t-T)A) - \exp(sA) + \exp((t+s-T)A)) - 1 }{-\exp(-sA) + \exp((t-T)A) + \exp(-(t+s-T)A) - 1})\right]\\
+=&Q\left[\log(\frac{\exp(sA)(\exp((t-T)A) - 1)+\exp(-(t-T)A)-1}{\exp(-sA)(\exp(-(t-T)A) - 1)+\exp((t-T)A)-1})\right]\\
+=&Q\left[\log(\frac{\exp(sA)(\exp((t-T)A) - 1) - \exp(-(t-T)A)(\exp((t-T)A)-1)}{\exp(-sA)(\exp(-(t-T)A) - 1) - \exp((t-T)A)(\exp(-(t-T)A)-1)})\right]\\
+=&Q\left[\log(\frac{(\exp((t-T)A)-1)(\exp(sA)-\exp(-(t-T)A))}{(\exp(-(t-T)A)-1)(\exp(-sA)-\exp((t-T)A))})\right]\\
+=&Q\left[\log(\frac{(\exp((t-T)A)-1)}{\exp(-(t-T)A)-1})+\log(\frac{\exp(sA)-\exp(-(t-T)A)}{\exp(-sA)-\exp((t-T)A)})\right]
+\end{aligned}
+\end{gather}
+Set $\rho=\frac{(\exp((t-T)A)-1)}{\exp(-(t-T)A)-1}$, $Y=\int_t^{t+s}{\alpha^{-1}(\tau)\,d\tau}$, $\phi=-\exp(Y/Q-\log(\rho)), \psi = \exp((t-T)A))-\exp(-(t-T)A)$
+\begin{gather}
+\begin{aligned}
+Y/Q - \log(\rho) &= \log(\frac{\exp(sA)-\exp(-(t-T)A)}{\exp(-sA)-\exp((t-T)A)})\\
+\exp(Y/Q-\log(\rho)) &= \frac{\exp(sA)-\exp(-(t-T)A)}{\exp(-sA)-\exp((t-T)A)}\\
+-\phi(\exp(-sA)-\exp((t-T)A)) &= \exp(sA)-\exp(-(t-T)A)\\
+\exp(sA) + \psi + \phi(\exp(-sA) &= 0\\
+\exp(2sA) + \psi\exp(sA) + \phi &= 0
+\end{aligned}
+\end{gather}
+By defining $x=\exp(sA)$, this becomes a quadratic equation. yielding the solution:
+\begin{gather}
+\begin{aligned}
+&&x_{1,2} &= \frac{-\psi \pm \sqrt{\psi^2 - 4\phi}}{2}\\
+&\Rightarrow& s &= \frac{1}{A}\log(x)
+\end{aligned}
 \end{gather}
 
 \subsubsection{Gompertz Curve}
