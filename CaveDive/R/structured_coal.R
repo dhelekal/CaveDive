@@ -66,19 +66,26 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
 
             if (r<=p_coal) { 
                 ### choose which event happens and compute waiting time.
-                i <- choose_reaction(rates) 
-                log_lh + log(rates[i])-log(sum(rates))
+
+                inv_int <- function(t, Fs) {
+                    func <- function(s) rate_sum_int(Neg.rate.ints, comb_ns)(t,s)
+                    return(inv_rates(func, Fs))
+                }
 
                 w_t <- inv_t_inhomogenous_exp_conditional(function(t, s)
-                                                            comb_ns[i] * Neg.rate.ints[[i]](t, s),
-                                                            Neg.rate.int_inv[[i]],
-                                                            comb_ns[i],
+                                                            inv_int(t, s),
+                                                            rate_sum_int(Neg.rate.ints, comb_ns),
+                                                            sum(comb_ns),
                                                             t,
                                                             s)
-                log_lh <- log_lh - log(comb_ns[i]) + inhomogenous_exp.loglh(function(s)
-                                                            comb_ns[[i]] * Neg.rates[[i]](s),
-                                                            function(t, s)
-                                                            comb_ns[[i]] * Neg.rate.ints[[i]](t, s), t, w_t)
+
+                i <- choose_reaction(rates) 
+                loh_lh <- log_lh + log(rates[i])-log(sum(rates))
+
+                
+                log_lh <- log_lh - log(comb_ns[i]) + inhomogenous_exp.loglh(
+                                                            function(s) sum(sapply(c(1:n_col), function (x) if(comb_ns[x] == 0) 0 else comb_ns[x]*Neg.rates(s))),
+                                                            rate_sum_int(Neg.rate.ints, comb_ns), t, w_t)
                                                         
         
                 t <- t + w_t
@@ -117,7 +124,7 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
     }
 }
 
-choose_reaction(rates) {
+choose_reaction <- function(rates) {
     total_rate <- sum(rates)
     r <- runif(1, 0, rates)
 
@@ -128,4 +135,36 @@ choose_reaction(rates) {
         rate_sum <- rate_sum-rates[i]
     }
     return(i)
+}
+
+inv_rates <- function(func, N){    
+    f <- function(x) func(x) - N
+    b <- bisect(f, 1e-6, 1e6, maxiter = 20)
+    out <- b$root
+    if (b$f.root > 1e-8) {
+        n <- newtonRaphson(f, df)
+        if (n$f.root >  1e-8) {
+            warning(paste0("Function root suspiciously large, please revise. f.root: ", n$f.root))
+        }
+        out <-n$root
+    }
+    return(out)
+}
+
+rate_sum_int <- function(rate_ints, comb_ns) {
+    return(function(t,s) sum(sapply(c(1:n_col), function (x) if(comb_ns[x] == 0) 0 else comb_ns[x]*rate_ints[[x]](t, s))))
+}
+
+inv_int_rate <- function(rates, comb_ns){    
+    f <- function(x) func(x) - N
+    b <- bisect(f, 1e-6, 1e6, maxiter = 20)
+    out <- b$root
+    if (b$f.root > 1e-8) {
+        n <- newtonRaphson(f, df)
+        if (n$f.root >  1e-8) {
+            warning(paste0("Function root suspiciously large, please revise. f.root: ", n$f.root))
+        }
+        out <-n$root
+    }
+    return(out)
 }
