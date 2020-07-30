@@ -248,7 +248,6 @@ test_that("Native exponential likelihood matches simulation likelihood from plot
     expect_equal(log_lh, log_lh_native)
   })
 
-
 context("Trees")
 test_that("Coalescent Tree matches precomputed tree", {
   set.seed(1)
@@ -276,4 +275,28 @@ test_that("Coalescent Tree matches precomputed tree", {
   
   gt_tr <- paste0(gt_str, ";")
   expect_identical(tr, gt_tr)
+})
+
+context("Structured Coalescent")
+test_that("Simulation runs", {
+    set.seed(1)
+    
+    sam <- runif(100, 0, 10)
+    
+    colours <- floor(runif(100, 1, 4))
+
+    N <- 1000
+    
+    A <- c(0.3, 0.5)
+    
+    K <- c(10,100)
+
+    div_times <- c(-15, -30, -Inf)
+    div_cols <- c(3, 2, 1)
+
+    rates <- list(function (s) constant.rate(s, N), function (s) logistic.rate(s, K[1], A[1]), function (s) logistic.rate(s, K[2], A[2]))
+    rate.ints <- list(function(t,s) constant.rate.int(t,s,N), function(t,s) logistic.rate.int(t, s, K[1], A[1]), function(t,s) logistic.rate.int(t, s, K[2], A[2]))
+
+    co <- structured_coal.simulate(sam, colours, div_times, div_cols, rates, rate.ints)
+    print(co)
 })

@@ -4,16 +4,16 @@
 \alias{run_mcmc}
 \title{Run metropolis-hastings mcmc.}
 \usage{
-run_mcmc(model.lh, proposal.cond_lh, proposal.sampler, x0, n_it)
+run_mcmc(model.log_lh, proposal.cond_log_lh, proposal.sampler, x0, n_it)
 }
 \arguments{
-\item{model.lh}{a function for the conditional model log-likelihood.}
-
-\item{proposal.cond_lh}{a function for the conditional proposal log-likelihood \code{x_{t+1}} given \code{x_t}.}
-
 \item{x0}{initial value for the chain}
 
 \item{n_it}{number of iterations}
+
+\item{model.lh}{a function for the conditional model log-likelihood.}
+
+\item{proposal.cond_lh}{a function for the conditional proposal log-likelihood \code{x_{t+1}} given \code{x_t}.}
 }
 \value{
 A list of mcmc jumps
