@@ -26,6 +26,7 @@
 
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,}
+
 \usepackage[parfill]{parskip}
 \usepackage{lipsum}
 \usepackage[export]{adjustbox}
@@ -36,7 +37,7 @@
 \usepackage{xparse} 
 \usepackage{float}
 
-\usepackage{biblatex} 
+\usepackage[sorting=none]{biblatex} 
 
 %%%%%This is an image table command, can likely be deleted
 \newcommand{\subf}[2]{
@@ -86,18 +87,29 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Motivation}
+Clonal expansions are a process in which a particular subsest of a given bacterial strain undergoes explosive population growth, that can be traced back to a particular individual \cite{smith_how_1993}. clonal expansions in bacterial populations that has been of long-standing interest and that is implicated in epidemic processes, were an outbreak can be traced to a single ancestor \cite{smith_how_1993,spratt_displaying_2004,fraser_neutral_2005,ledda_re-emergence_2017}. This often happens when a particular strain or individual obtains a variant of a particular gene that confers evolutionary advantange, for example, antibiotic resistance \cite{holden_genomic_2013,hsu_evolutionary_2015, ledda_re-emergence_2017}.\\
+The presence of clonal expansions leaves an imprint in the overall population structure of the particular bacterial strain, the particular topology often being referred to as star-like \cite{smith_how_1993,spratt_displaying_2004}.
+The problem of detecting hidden population structure corresponding to clonal expansions has become a problem of interest in epidemiology and outbreak surveillance \cite{volz_identification_nodate}.\\
+While methods to detect inhomogeneities in the population structure and size have been of interest since the early days of genetic sequencing \cite{smith_how_1993,spratt_displaying_2004}, the interest in the problem increased with whole genome sequencing becoming more accessible and affordable \cite{holden_genomic_2013,dearlove_measuring_2015,eldholm_four_2015}.\\
+While the problem of inferring population size from a genealogy and detecting heterogeneities in the population size of the entire population being intrinsically tied, all but one method \cite{volz_identification_nodate} to our knowledge rely either on manual detection or indirect detection. We aim to propose a simulation for the formation of clonal expansions in genealogy using the structured coalescent process, and devise a fully bayesian method for joint estimation and detection of relative population size and clonal expansions.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Questions}
-\begin{itemize}
-  \item Multi+ The second term in equation \ref{eq:multirate} (i.e. what's the bifurcation rate in the forward process) is likely not correct. Clearly this is inversely proportional to the $Neg$ of the lineage going extinct (or being birthed in the forward process), however presumably it should also be proportional to the $Neg$ of the parent lineage? The reasoning being the larger the population size of the parent lineage the likelier it is for a bifurcation event to occur.
-  \item Note: there are mistakes in section \ref{section:multi}. The combination numbers need to be taken per subtree, and the bifurcation likelihood is just first iteration and needs further consideration.
+\begin{itemize}{}
+  \item
 \end{itemize}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%,%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Methods}
 \section{Coalescent Preliminaries}
-The coalescent is a CTMC defined on the set $\{1 ... n\}$, parametrised via the coalescent rate, in our case $1/Neg(t)$, where $g$ is a scale parameter and $Neg(t)$ the effective population size at time $t$. Define $\alpha = Neg$
+We shall begin with an overview of the standard Kingman's Coalescent process\cite{kingman_coalescent_1982}. This process is often used to characterise evolutionary histories of populations \cite{drummond_estimating_2002,hein_gene_2004,ho_skyline-plot_2011}.
+The coalescent is a CTMC defined on the set $\{1 ... n\}$, parametrised via the coalescent rate, in our case $1/Neg(t)$, where $g$ is a scale parameter and $Neg(t)$ the effective population size at time $t$ \cite{drummond_estimating_2002,hein_gene_2004}. Define $\alpha = Neg$
 The transition rates of the coalescent process are given by 
 \begin{gather*}
 \lambda(j, j-1) = \binom{j}{2}\cdot\frac{1}{\alpha(t)}
@@ -110,7 +122,7 @@ Furthermore, the waiting times for individual coalescent events, conditioned on 
 \begin{gather}\label{eq:conditional}
 P[W_j \leq s\mid W_j \leq \Delta t ] = \frac{P[W_j \leq s]}{P[W_j \leq \Delta t]} \quad\forall s \leq \Delta t
 \end{gather}
-In the inhomogenous case, the waiting times can be derived as follows:
+In the case of time-inhomogenous effective population size, the waiting times can be derived as follows:
 For an inhomogenous CTMC, let $E_j(t)$ be the total exit rate from state $j$ at time $t$.
 By the markov property individual exit events from a given state only depend on the state and given time, i.e. they form a time-inhomogenous poisson process.
 As such the probability of no events in an interval $[t,t+s]\quad s\in \R^+$ is 
@@ -228,7 +240,7 @@ f <- (sampling_times, Ne): //Sampling times in descending order
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Inhomogenous Case}
-In the inhomogenous case, the scheme is similar, with the key difference that the sampling times now follow a much more complex distribution. We proceed with a modified conditional sampling scheme as in \ref{eq:cond_timedep}. To obtain draws $w_j(t)$, draws from standard exponential $w_j$ are rescaled, akin to algorithm described in \cite{hein_gene_2004} Pg 98.
+In the inhomogenous case, the scheme is similar, with the key difference that the sampling times now follow a much more complex distribution. We proceed with a modified conditional sampling scheme as in \ref{eq:cond_timedep}. In order to obtain draws $w_j(t)$, several approaches exist. While draws from standard exponential $w_j$ are rescaled, akin to algorithm described in \cite{hein_gene_2004} Pg 98., we instead proceed by deriving the appropriate distributions and simulation schemes thereof.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -284,6 +296,7 @@ The log-likelihood is:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{\textit{Skygrid} and other families of population functions}
+\colorbox{BurntOrange}{Following subsection NOT CURRENTLY RELEVANT for project}\\
 \textit{Skygrid} is an approach introduced in \cite{gill_improving_2013}. It considers a family of time-dependent effective population size functions specified as follows. Let $T\subset\R$ be the interval under consideration in coalescent time. Consider an arbitrary population size function F:
 \begin{gather}
   F:\quad T\subset\R \rightarrow \R^+
@@ -481,7 +494,6 @@ As a prior for change points $\mathcal{L}(\Xi,M)$ a Poisson Point Process is use
 \begin{gather}
 M\sim\frac{(\lambda B)^M}{M!}\exp(-\lambda B)
 \end{gather}
-and 
 \subsubsection{MCMC}
 Due to the variable nature of the dimensionality of the parameter space, it will be necessary to use Reversible Jump MCMC (rjMCMC) \cite{fan_reversible_2010,green_reversible_1995}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
