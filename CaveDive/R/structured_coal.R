@@ -14,9 +14,9 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
 
     sam_ord <- order(-sampling_times)
     times_desc <- sampling_times[sam_ord]
-    colours <- colours[sam_ord]
+    colours_desc <- colours[sam_ord]
 
-    n_col <- length(unique(colours))
+    n_col <- length(unique(colours_desc))
 
     if (n_col != length(div_times)) {
         warning("Number of divergence events does not match number of unique colours")
@@ -25,7 +25,8 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
 
     extant_lineages <- rep(0, n_col)
 
-    future_lineages <- sapply(div_events, function (x) sum(colours==x)) ###maybe wrong????
+    future_lineages <- sapply(div_events, function (x) sum(colours_desc==x)) ###maybe wrong????
+    future_lineages <- future_lineages[order(div_events)]
 
     coalescent_times <- rep(0, sum(future_lineages))
     coalescent_cols <- rep(0, sum(future_lineages))
@@ -37,25 +38,23 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
     coal_idx <- 1
     sam_idx <- 2
 
-    extant_lineages[colours[1]] <- 1
-    future_lineages[colours[1]] <- future_lineages[colours[1]] - 1
+    extant_lineages[colours_desc[1]] <- 1
+    future_lineages[colours_desc[1]] <- future_lineages[colours_desc[1]] - 1
 
     log_lh <- 0
 
     while (max(future_lineages) > 0 || sum(extant_lineages) > 1) {
-        print(t)
-        print(paste0("future lineages: ", future_lineages))
-        print(paste0("extant lineages: ", extant_lineages))
         if (max(extant_lineages) < 2) {
             ### If no lineage has more than 1 member continue to next divergence or sampling event
             if(sam_idx <= length(times_desc) && (div_idx > length(div_times) || div_times[div_idx] < times_desc[sam_idx])) {
                 t <- t0 - times_desc[sam_idx]
 
-                which_colour <- colours[sam_idx]
+                which_colour <- colours_desc[sam_idx]
 
                 extant_lineages[which_colour] <- extant_lineages[which_colour] + 1    
                 future_lineages[which_colour] <- future_lineages[which_colour] - 1
                 sam_idx <- sam_idx + 1
+
             } else {
                 t <- t0 - div_times[div_idx]
 
@@ -87,8 +86,11 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
             } else {
                 s <- t0 - t - max(times_desc[sam_idx], div_times[div_idx])
             }
+
+            print(paste0("S: ", s, "T: ", t))
             ### Compute rates for each lineage
             rates <- sapply(c(1:n_col), function (x) if(comb_ns[x] == 0) 0 else comb_ns[x]*Neg.rate.ints[[x]](t, s))
+            print(paste0("rates: ", rates))
             ### Decide if an coalescent event happens in this interval
             p_coal <- 1-exp(-sum(rates))
             r <- runif(1,0,1)
@@ -128,7 +130,7 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                 if(sam_idx <= length(times_desc) && (div_idx > (length(div_times)-1) || div_times[div_idx] < times_desc[sam_idx])) {
                     t <- t0 - times_desc[sam_idx]
 
-                    which_colour <- colours[sam_idx]
+                    which_colour <- colours_desc[sam_idx]
 
                     extant_lineages[which_colour] <- extant_lineages[which_colour] + 1    
                     future_lineages[which_colour] <- future_lineages[which_colour] - 1

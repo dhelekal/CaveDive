@@ -455,7 +455,7 @@ As such:
 \begin{aligned}
 &\int_t^{t+s}{\alpha^{-1}(\tau)\,d\tau}&=& \left[\frac{-1}{(K-1)A}\log(\exp(-(\tau-T_{max}+T_{div})A)-1)\right]_t^{t+s}\\
 &&+&\left[\frac{1}{A}\log(1-\exp((\tau-T_{max}+T_{div})A))\right]_t^{t+s}\\
-&\Rightarrow&&\left[\frac{K-2}{(K-1)A}\log(\frac{1-\exp((\tau-T_{max}+T_{div})A)}{\exp(-(\tau-T_{max}+T_{div})A)-1})\right]_t^{t+s}
+&\Rightarrow&&\frac{1}{A}\left[\log(\frac{1-\exp((\tau-T_{max}+T_{div})A)}{(\exp(-(\tau-T_{max}+T_{div})A)-1)^{\frac{1}{k-1}}})\right]_t^{t+s}
 \end{aligned}
 \end{gather}
 Define $Q=\frac{K-2}{(K-1)A}$, $T = T_{max}+T_{div}$, expanding the integral:
