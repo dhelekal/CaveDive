@@ -13,11 +13,11 @@ set.seed(1)
 
     N <- 100
     
-    A <- c(1, 1.3)
+    A <- c(1.1, 0.3)
     
-    K <- c(100,200)
+    K <- c(100,150)
 
-    div_times <- c(-15, -30, -Inf)
+    div_times <- c(-25, -40, -Inf)
     div_cols <- c(1, 2, 3)
 
     rates <- list(function (s) half_log.rate(s, K[1], A[1], div_times[1]), function (s) half_log.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
@@ -25,3 +25,5 @@ set.seed(1)
 
     co <- structured_coal.simulate(sam, colours, div_times, div_cols, rates, rate.ints)
     print(co)
+
+    tree_str <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, co$div_from)

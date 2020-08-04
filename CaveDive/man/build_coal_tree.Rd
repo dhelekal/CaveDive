@@ -2,9 +2,10 @@
 % Please edit documentation in R/coal_utils.R
 \name{build_coal_tree}
 \alias{build_coal_tree}
-\title{Generate a Fenwick string representation of a tree corresponding to a realisation of a coalescent process.}
+\title{Generate a Newick string representation of a tree corresponding to a realisation of a coalescent process.}
 \usage{
-build_coal_tree(sampling_times, coalescent_times)
+build_coal_tree(sampling_times, coalescent_times, leaf_names = NULL,
+  node_name_prefix = "N", terminate_string = TRUE)
 }
 \arguments{
 \item{sampling_times}{times of leaves.}
@@ -12,8 +13,8 @@ build_coal_tree(sampling_times, coalescent_times)
 \item{coalescent_times}{times of coalescent events / internal nodes.}
 }
 \value{
-a Fenwick string corresponding to the tree.
+a Newick string corresponding to the tree.
 }
 \description{
-Generate a Fenwick string representation of a tree corresponding to a realisation of a coalescent process.
+Generate a Newick string representation of a tree corresponding to a realisation of a coalescent process.
 }

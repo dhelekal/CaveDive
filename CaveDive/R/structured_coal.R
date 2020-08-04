@@ -30,6 +30,7 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
 
     coalescent_times <- rep(0, sum(future_lineages))
     coalescent_cols <- rep(0, sum(future_lineages))
+    div_from <- rep(0, n_col-1)
 
     t <- 0
     t0 <- times_desc[1]
@@ -70,6 +71,8 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                 n_nodes <- sum(extant_lineages)
                 extant_lineages[i] <- extant_lineages[i] + 1    
 
+                div_from[div_idx] <- i
+ 
                 div_idx <- div_idx + 1     
 
                 log_lh <- log(extant_lineages[i])-log(n_nodes) 
@@ -170,7 +173,7 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
             }
         }
     }
-    return(list(times=coalescent_times, colours=coalescent_cols, log_lh=log_lh))
+    return(list(times=coalescent_times, colours=coalescent_cols, div_from=div_from, log_lh=log_lh))
 }
 
 choose_reaction <- function(rates) {
@@ -199,21 +202,32 @@ inv_rates <- function(func, N, dfun=NULL){
     print("Numerically inverting function")
     print(paste0("With N = ", N))
     f <- function(x) func(x) - N
-    lo <- 1e-3
-    hi <- 1e3
-    while (sign(f(lo)) == sign(f(hi))){
-        lo <- lo/10
-        hi <- hi*10
-        if (lo < 1e-20) {
-            warning("Cannot find initial bisection search interval")
-            break
+    lo <- 0
+    hi <- 1e0
+    if (sign(f(lo)) == sign(f(hi))){
+
+        sg <- sign(f(lo))
+
+        min_hi <- 1
+        while(sign(f(hi*(10^(min_hi)))) == sg && min_hi < 20){
+            min_hi <- min_hi+1
         }
+
+        if (sign(f(hi*(10^(min_hi)))) == sg) {
+            warning(paste0("Cannot find initial bisection search interval. ", "min_lo: ", min_lo, " min_hi: ", min_hi))
+        }
+
+
+        hi <- hi*(10^(min_hi))
     }
 
-    b <- bisect(f, lo, 1e6, maxiter = 100)
+    print("initiating BSS")
+    b <- bisect(f, lo, hi, maxiter = 50)
 
     out <- b$root
+
     if (b$f.root > 1e-8) {
+        print("initiating newtonRaphson")
         n <- newtonRaphson(f,out,dfun=dfun)
         if (n$f.root >  1e-8) {
             warning(paste0("Function root suspiciously large, please revise. f.root: ", n$f.root))
