@@ -121,8 +121,10 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                                                             t,
                                                             s)
 
-                i <- choose_reaction(rates) 
-                log_lh <- log_lh + log(rates[i])-log(sum(rates))
+                i <- choose_reaction(rates)
+                if (rates[i]!=Inf) { 
+                    log_lh <- log_lh + log(rates[i])-log(sum(rates))
+                }
 
                 
                 log_lh <- log_lh - log(comb_ns[i]) + inhomogenous_exp.loglh(
