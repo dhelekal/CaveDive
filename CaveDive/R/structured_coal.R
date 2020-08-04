@@ -76,7 +76,7 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
             }
         } else {
             comb_ns <- sapply(extant_lineages, function (x) choose(x, 2))
-
+            print(paste0("Extant Lineages: ", extant_lineages))
             if (sam_idx > length(times_desc) && div_idx > (length(div_times)-1)) {
                 s <- Inf
             } else if(sam_idx > length(times_desc)){
@@ -87,7 +87,18 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                 s <- t0 - t - max(times_desc[sam_idx], div_times[div_idx])
             }
 
-            print(paste0("S: ", s, "T: ", t))
+
+            if (t > t+s) {
+                print("next time step must be greater than current time")
+                return(-1)
+            }
+
+            if (!all(comb_ns >= 0)){
+                print("combination numbers must be positive")
+                return(-1)
+            }
+
+            print(paste0("S: ", s, " T: ", t))
             ### Compute rates for each lineage
             rates <- sapply(c(1:n_col), function (x) if(comb_ns[x] == 0) 0 else comb_ns[x]*Neg.rate.ints[[x]](t, s))
             print(paste0("rates: ", rates))
@@ -100,12 +111,13 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
 
                 inv_int <- function(t, Fs) {
                     func <- function(s) rate_sum_int(Neg.rate.ints, comb_ns, n_col)(t,s)
-                    return(inv_rates(func, Fs))
+                    dfun <- function(s) sum(sapply(c(1:n_col), function (x) if(comb_ns[x] == 0) 0 else comb_ns[x]*Neg.rates[[x]](t+s)))
+                    return(inv_rates(func, Fs, dfun))
                 }
 
-                w_t <- inv_t_inhomogenous_exp_conditional(function(t, s) inv_int(t, s),
-                                                            rate_sum_int(Neg.rate.ints, comb_ns, n_col),
-                                                            sum(comb_ns),
+                w_t <- inv_t_inhomogenous_exp_conditional(rate_sum_int(Neg.rate.ints, comb_ns, n_col),
+                                                            function(t, s) inv_int(t, s),
+                                                            1,
                                                             t,
                                                             s)
 
@@ -160,24 +172,47 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
 }
 
 choose_reaction <- function(rates) {
-    total_rate <- sum(rates)
-    r <- runif(1, 0, total_rate)
 
-    i <- 0 
-    rate_sum <- total_rate
-    while (rate_sum > r) {
-        i <- i+1
-        rate_sum <- rate_sum-rates[i]
+    if (sum(rates==Inf) > 1) {
+        warning("More than one entry equal to infinity. This should not happen")
+    } else if (!all(rates != Inf)) {
+        which_inf <- which(rates==Inf)
+        return(which_inf[runif(1,1,length(which_inf+1))])
+    } else {
+
+        total_rate <- sum(rates)
+        r <- runif(1, 0, total_rate)
+
+        i <- 0 
+        rate_sum <- total_rate
+        while (rate_sum > r) {
+            i <- i+1
+            rate_sum <- rate_sum-rates[i]
+        }
+        return(i)
     }
-    return(i)
 }
 
-inv_rates <- function(func, N){    
+inv_rates <- function(func, N, dfun=NULL){   
+    print("Numerically inverting function")
+    print(paste0("With N = ", N))
     f <- function(x) func(x) - N
-    b <- bisect(f, 1e-6, 1e6, maxiter = 20)
+    lo <- 1e-3
+    hi <- 1e3
+    while (sign(f(lo)) == sign(f(hi))){
+        lo <- lo/10
+        hi <- hi*10
+        if (lo < 1e-20) {
+            warning("Cannot find initial bisection search interval")
+            break
+        }
+    }
+
+    b <- bisect(f, lo, 1e6, maxiter = 100)
+
     out <- b$root
     if (b$f.root > 1e-8) {
-        n <- newtonRaphson(f,out)
+        n <- newtonRaphson(f,out,dfun=dfun)
         if (n$f.root >  1e-8) {
             warning(paste0("Function root suspiciously large, please revise. f.root: ", n$f.root))
         }

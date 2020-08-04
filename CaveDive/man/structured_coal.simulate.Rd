@@ -14,7 +14,7 @@ structured_coal.simulate(sampling_times, colours, div_times, div_events,
 
 \item{colours}{Nx1 colour assignment of leaves}
 
-\item{div_times}{Kx1 divergence times for colours, neutral colour must diverge at -Inf.}
+\item{div_times}{Kx1 divergence times for colours, neutral colour must diverge at -Inf. MUST BE IN DESCENDING ORDER}
 
 \item{div_events}{Kx1 colour assignment for divergence times, i.e. which colour corresponds to which divergence time}
 

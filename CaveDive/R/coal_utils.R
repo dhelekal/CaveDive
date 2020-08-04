@@ -34,8 +34,7 @@ inhomogenous_exp.prob <- function(rate.int, t, s) {
   return(1 - exp(-rate.int(t, s)))
 }
 
-inv_t_inhomogenous_exp_conditional <-
-  function(rate.int, rate.inv_int , exp.rate, t, s) {
+inv_t_inhomogenous_exp_conditional <- function(rate.int, rate.inv_int , exp.rate, t, s) {
     u <- runif(1, 0, 1)
     Q <- inhomogenous_exp.prob(rate.int, t, s)
     wt <- (-1 / exp.rate) * log(1 - u * Q)
