@@ -6,8 +6,14 @@
 Population size must be locally smooth around divergence time and must reach 0 at divergence time !!
 Note: This simulation relies on inverse transform sampling and numerical inverses of Neg.rate.ints}
 \usage{
-structured_coal.simulate(sampling_times, colours, div_times, div_events,
-  Neg.rates, Neg.rate.ints)
+structured_coal.simulate(
+  sampling_times,
+  colours,
+  div_times,
+  div_events,
+  Neg.rates,
+  Neg.rate.ints
+)
 }
 \arguments{
 \item{sampling_times}{Nx1 times of leaves.}

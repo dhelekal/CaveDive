@@ -13,4 +13,4 @@ LinkingTo: Rcpp
 Imports: 
     Rcpp,
     ape
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1

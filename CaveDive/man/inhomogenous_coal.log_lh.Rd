@@ -4,8 +4,12 @@
 \alias{inhomogenous_coal.log_lh}
 \title{Compute likelihood of a realisation of an inhomogeneous coalescent.}
 \usage{
-inhomogenous_coal.log_lh(sampling_times, coalescent_times, Neg.rate,
-  Neg.rate.int)
+inhomogenous_coal.log_lh(
+  sampling_times,
+  coalescent_times,
+  Neg.rate,
+  Neg.rate.int
+)
 }
 \arguments{
 \item{sampling_times}{times of leaves.}

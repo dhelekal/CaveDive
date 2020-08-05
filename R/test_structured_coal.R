@@ -1,4 +1,9 @@
 library(CaveDive)
+library(ape)
+library(ggtree)
+library(ggplot2)
+library(treeio)
+library(viridis)
 
 set.seed(1)
     
@@ -26,4 +31,35 @@ set.seed(1)
     co <- structured_coal.simulate(sam, colours, div_times, div_cols, rates, rate.ints)
     print(co)
 
-    tree_str <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, co$div_from)
+    tr <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from)
+    
+    tree <-read.tree(text = tr$full)
+
+    labs <- c(tree$node.label, tree$tip.label)
+    n_lineages <- 3
+
+    lineages <- lapply(c(1:n_lineages), function (x) labs[grep(paste0("[N,X,S]_",LETTERS[x]), labs)])
+
+    lin_names <- c("expansion 1", "expansion 2", "neutral")
+
+    lineage_labs <- unlist(lineages)
+    membership <- unlist(lapply(c(1:length(lineages)), function (x) rep(lin_names[x], length(lineages[[x]]))))
+    type <- sapply(lineage_labs, 
+        function (x) if (length(grep("X_", x, value="FALSE"))>0) "Divergence" else if(length(grep("N_", x, value="FALSE"))>0) "Coalescent" else "Sampling")
+
+    ldf <- data.frame(node = nodeid(tree, lineage_labs), lineage = membership, type=type)
+    ldf$node <- as.numeric(ldf$node)
+    ldf$lineage <- as.factor(ldf$lineage)
+    ldf$type <- as.factor(ldf$type)
+
+    tree <- full_join(tree, ldf, by = 'node')
+
+    pdf("structured_tree.pdf")
+    plt<-ggtree(tree, aes(color=lineage), ladderize=TRUE) +
+                    geom_point(aes(shape=type, size=type)) +
+                    scale_size_manual(values=c(1,4,1)) +
+                    scale_shape_manual(values=c(1,8,2)) +
+                    theme_tree2()#+ 
+                    #scale_colour_viridis(discrete = TRUE, option = "plasma")
+    plot(plt)
+    dev.off()

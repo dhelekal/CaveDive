@@ -28,8 +28,8 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
     future_lineages <- sapply(div_events, function (x) sum(colours_desc==x)) ###maybe wrong????
     future_lineages <- future_lineages[order(div_events)]
 
-    coalescent_times <- rep(0, sum(future_lineages))
-    coalescent_cols <- rep(0, sum(future_lineages))
+    coalescent_times <- rep(0, sum(future_lineages)-1)
+    coalescent_cols <- rep(0, sum(future_lineages)-1)
     div_from <- rep(0, n_col-1)
 
     t <- 0
@@ -166,6 +166,9 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
 
                     n_nodes <- sum(extant_lineages)
                     extant_lineages[i] <- extant_lineages[i] + 1    
+
+                    div_from[div_idx] <- i
+
                     div_idx <- div_idx + 1     
 
                     log_lh <- log_lh + log(extant_lineages[i])-log(n_nodes) 

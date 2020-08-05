@@ -4,8 +4,15 @@
 \alias{build_coal_tree.structured}
 \title{Generate a Newick string representation of a tree corresponding to a realisation of a structured,linage-based coalescent process.}
 \usage{
-build_coal_tree.structured(sampling_times, coalescent_times, leaf_colours,
-  coalescent_colours, div_times, div_from)
+build_coal_tree.structured(
+  sampling_times,
+  coalescent_times,
+  leaf_colours,
+  coalescent_colours,
+  div_times,
+  div_events,
+  div_from
+)
 }
 \arguments{
 \item{sampling_times}{times of leaves.}
@@ -18,9 +25,9 @@ build_coal_tree.structured(sampling_times, coalescent_times, leaf_colours,
 
 \item{div_times}{times of lineage divergence events.}
 
-\item{div_from}{numeric vector identifying the parent of the j-th diverging lineage}
-
 \item{div_events}{a numeric vector where number at j-th position indicates that the j-th divergence time corresponds to j-th lineage}
+
+\item{div_from}{numeric vector identifying the parent of the j-th diverging lineage}
 }
 \value{
 a list with the Newick string corresponding to the tree, and a list of leaf colouring assignments

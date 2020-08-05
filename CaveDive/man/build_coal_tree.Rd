@@ -4,8 +4,13 @@
 \alias{build_coal_tree}
 \title{Generate a Newick string representation of a tree corresponding to a realisation of a coalescent process.}
 \usage{
-build_coal_tree(sampling_times, coalescent_times, leaf_names = NULL,
-  node_name_prefix = "N", terminate_string = TRUE)
+build_coal_tree(
+  sampling_times,
+  coalescent_times,
+  leaf_names = NULL,
+  node_name_prefix = "N",
+  terminate_string = TRUE
+)
 }
 \arguments{
 \item{sampling_times}{times of leaves.}

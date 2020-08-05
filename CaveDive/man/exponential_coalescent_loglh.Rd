@@ -4,8 +4,12 @@
 \alias{exponential_coalescent_loglh}
 \title{Compute likelihood of a realisation of an exponential growth coalescent.}
 \usage{
-exponential_coalescent_loglh(sampling_times, coalescent_times, lambda,
-  pop_size)
+exponential_coalescent_loglh(
+  sampling_times,
+  coalescent_times,
+  lambda,
+  pop_size
+)
 }
 \arguments{
 \item{sampling_times}{times of leaves.}

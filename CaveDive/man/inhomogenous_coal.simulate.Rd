@@ -4,8 +4,12 @@
 \alias{inhomogenous_coal.simulate}
 \title{Simulate inhomogenous coalescent,}
 \usage{
-inhomogenous_coal.simulate(sampling_times, Neg.rate, Neg.rate.int,
-  Neg.rate.int_inv)
+inhomogenous_coal.simulate(
+  sampling_times,
+  Neg.rate,
+  Neg.rate.int,
+  Neg.rate.int_inv
+)
 }
 \arguments{
 \item{sampling_times}{times of leaves.}
