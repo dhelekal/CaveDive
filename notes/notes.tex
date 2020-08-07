@@ -452,43 +452,20 @@ And
 \end{gather}
 As such:
 \begin{gather}
-\begin{aligned}
+\begin{aligned}\label{eq:sis_int}
 &\int_t^{t+s}{\alpha^{-1}(\tau)\,d\tau}&=& \left[\frac{-1}{(K-1)A}\log(\exp(-(\tau-T_{max}+T_{div})A)-1)\right]_t^{t+s}\\
-&&+&\left[\frac{1}{A}\log(1-\exp((\tau-T_{max}+T_{div})A))\right]_t^{t+s}\\
-&\Rightarrow&&\frac{1}{A}\left[\log(\frac{1-\exp((\tau-T_{max}+T_{div})A)}{(\exp(-(\tau-T_{max}+T_{div})A)-1)^{\frac{1}{k-1}}})\right]_t^{t+s}
+&&+&\left[\frac{1}{A}\log(1-\exp((\tau-T_{max}+T_{div})A))\right]_t^{t+s}
 \end{aligned}
 \end{gather}
-Define $Q=\frac{K-2}{(K-1)A}$, $T = T_{max}+T_{div}$, expanding the integral:
+In practice, equation \ref{eq:sis_int} exhibits severe numerical stability issues. As such we are forced to simplify the model, using an euqation of the following form instead.
+\begin{gather}\label{eq:loggrowth}
+\alpha(t) = K(1-\exp(-rt))
+\end{gather}
+After change of time variables as in the case of the SIS model, the corresponding integral is
 \begin{gather}
-\begin{aligned}
-&Q\left[\log(\frac{1-\exp((t+s-T)A)}{\exp(-(t+s-T)A)-1})-\log(\frac{1-\exp((t-T)A)}{\exp(-(t-T)A)-1})\right]\\
-=&Q\left[\log(\frac{(1-\exp((t+s-T)A))(\exp(-(t-T)A)-1)}{(\exp(-(t+s-T)A)-1)(1-\exp((t-T)A))})\right]\\
-=&Q\left[\log(\frac{\exp(-(t-T)A) - \exp(sA) + \exp((t+s-T)A)) - 1 }{-\exp(-sA) + \exp((t-T)A) + \exp(-(t+s-T)A) - 1})\right]\\
-=&Q\left[\log(\frac{\exp(sA)(\exp((t-T)A) - 1)+\exp(-(t-T)A)-1}{\exp(-sA)(\exp(-(t-T)A) - 1)+\exp((t-T)A)-1})\right]\\
-=&Q\left[\log(\frac{\exp(sA)(\exp((t-T)A) - 1) - \exp(-(t-T)A)(\exp((t-T)A)-1)}{\exp(-sA)(\exp(-(t-T)A) - 1) - \exp((t-T)A)(\exp(-(t-T)A)-1)})\right]\\
-=&Q\left[\log(\frac{(\exp((t-T)A)-1)(\exp(sA)-\exp(-(t-T)A))}{(\exp(-(t-T)A)-1)(\exp(-sA)-\exp((t-T)A))})\right]\\
-=&Q\left[\log(\frac{(\exp((t-T)A)-1)}{\exp(-(t-T)A)-1})+\log(\frac{\exp(sA)-\exp(-(t-T)A)}{\exp(-sA)-\exp((t-T)A)})\right]
-\end{aligned}
+\int_{t}^{t+s}\alpha^{-1}(\tau)\,d\tau = \left[\frac{-1}{rK}\log(\exp(-r(\tau-T_{max}+T_{div})) - 1)\right]_{t}^{t+s}
 \end{gather}
-Set $\rho=\frac{(\exp((t-T)A)-1)}{\exp(-(t-T)A)-1}$, $Y=\int_t^{t+s}{\alpha^{-1}(\tau)\,d\tau}$, $\phi=-\exp(Y/Q-\log(\rho)), \psi = \exp((t-T)A))-\exp(-(t-T)A)$
-\begin{gather}
-\begin{aligned}
-Y/Q - \log(\rho) &= \log(\frac{\exp(sA)-\exp(-(t-T)A)}{\exp(-sA)-\exp((t-T)A)})\\
-\exp(Y/Q-\log(\rho)) &= \frac{\exp(sA)-\exp(-(t-T)A)}{\exp(-sA)-\exp((t-T)A)}\\
--\phi(\exp(-sA)-\exp((t-T)A)) &= \exp(sA)-\exp(-(t-T)A)\\
-\exp(sA) + \psi + \phi(\exp(-sA) &= 0\\
-\exp(2sA) + \psi\exp(sA) + \phi &= 0
-\end{aligned}
-\end{gather}
-By defining $x=\exp(sA)$, this becomes a quadratic equation. yielding the solution:
-\begin{gather}
-\begin{aligned}
-&&x_{1,2} &= \frac{-\psi \pm \sqrt{\psi^2 - 4\phi}}{2}\\
-&\Rightarrow& s &= \frac{1}{A}\log(x)
-\end{aligned}
-\end{gather}
-
-\subsubsection{Gompertz Curve}
+In our inference scenario we will assume the following. There exists a neutral population with constant population size. This can be interpreted as the parent populatio{}n of the pathogen being at steady state. All diverging populations follow the growth function \ref{eq:loggrowth}.
 \subsection{Priors}
 As a prior for change points $\mathcal{L}(\Xi,M)$ a Poisson Point Process is used. Denote by $B$ the total branch length of the genealogy. Then
 \begin{gather}

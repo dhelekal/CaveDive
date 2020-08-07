@@ -179,6 +179,43 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
     return(list(times=coalescent_times, colours=coalescent_cols, div_from=div_from, log_lh=log_lh))
 }
 
+structured_coal.preprocess_phylo <- function(phy){
+    labs <- c(tree$node.label, tree$tip.label)
+    nodes <- nodeid(phy, labs)
+    is_tip <- c(rep(FALSE, length(tree$node.label)), rep(TRUE, length(tree$tip.label)))
+
+    times <- node.depth.edgelength(phy)
+    times <- times - max(times)
+    times <- times[nodes]
+
+    edges.parent<- phy$edge[1]
+    edges.child <- phy$edge[2]
+    edges.len <- phy$edge.length
+
+    nodes.df <- data.frame(id=nodes, times=times, is_tip=is_tip)
+    edges.df <- data.frame(parent=edges.parent, child=edges.child, length=edge.length)
+
+    nodes.df <- nodes.df[order(nodes),]
+    edges.df <- edges.df[order(parent),]
+
+    clades.list <- lapply(nodes.df$nodes, function(x) extract.clade(phy, x))
+
+    return(list(phy=phy, nodes.df = nodes.df, edges.df = edges.df, clades.list = clades.list))
+}
+
+structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.times,  Neg.rates, Neg.rate.ints){
+    subtrees <- lapply(div.MRCA.nodes, function (x) phylo.preprocessed$clades.list[[x]]) 
+    times.ord <- order(div.times)
+    k_div <- length(div.times)
+
+    lineage.trees <- lapply(c(1:k_div),
+        function(x) drop.tip(subtrees[[times.ord[x]]], nodeid(subtrees[[times.ord[x]]], unlist(lapply(c(x:k_div),
+            function (y) subtrees[[times.ord[y]]]$tip.label
+            )))))
+
+    
+}
+
 choose_reaction <- function(rates) {
 
     if (sum(rates==Inf) > 1) {
