@@ -33,8 +33,6 @@ test_that("Computed likelihood matches simulation likelihood", {
   log_lh_tree <- co$log_likelihood
   log_lh <- homogenous_coal.log_lh(sam, co$coalescent_times, Neg)
 
-  outcome <-transform_to_intervals(sam, co$coalescent_times)
-
   expect_equal(log_lh_tree, log_lh)
 })
 
@@ -185,12 +183,12 @@ test_that("Linear growth likelihood matches precomputed ground truth",
 context("Native Likelihood")
 test_that("Native homogenous likelihood matches simulation likelihood", { 
   sam <- c(1:100) * 100
+  sam <- sam[order(-sam)]
   Neg <- 2000
   co <- homogenous_coal.simulate(sam, Neg)
   log_lh_tree <- co$log_likelihood
 
-  outcome <-transform_to_intervals(sam, co$coalescent_times)
-  log_lh.native <- coalescent_loglh(outcome$intervals, outcome$lineages, Neg)
+  log_lh.native <- coalescent_loglh(sam, co$coalescent_times, Neg)
 
   expect_equal(log_lh_tree, log_lh.native)
 })
@@ -270,7 +268,7 @@ test_that("Coalescent Tree matches precomputed tree", {
     s <- c(1:2)
     s[ord[i - 1]] <- paste0(gt_str, ":2")
     s[3 - ord[i - 1]] <- paste0(nodes[i], ":1")
-    gt_str <- paste0("(", s[1], ",", s[2], ")")
+    gt_str <- paste0("(", s[1], ",", s[2], ")","N", i-1)
   }
   
   gt_tr <- paste0(gt_str, ";")

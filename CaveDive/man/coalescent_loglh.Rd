@@ -4,14 +4,14 @@
 \alias{coalescent_loglh}
 \title{Compute likelihood of a realisation of a homogeneous coalescent.}
 \usage{
-coalescent_loglh(time_intervals, lineage_count, pop_size)
+coalescent_loglh(sampling_times, coalescent_times, pop_size)
 }
 \arguments{
+\item{pop_size}{effective population size \code{Neg}.}
+
 \item{time_intervals}{waiting times.}
 
 \item{lineage_count}{number of lineages for each waiting time.}
-
-\item{pop_size}{effective population size \code{Neg}.}
 }
 \value{
 the log likelihood for the given parameters.

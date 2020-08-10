@@ -11,7 +11,8 @@ build_coal_tree.structured(
   coalescent_colours,
   div_times,
   div_events,
-  div_from
+  div_from,
+  include_div_nodes = TRUE
 )
 }
 \arguments{

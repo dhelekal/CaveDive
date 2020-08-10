@@ -203,17 +203,33 @@ structured_coal.preprocess_phylo <- function(phy){
     return(list(phy=phy, nodes.df = nodes.df, edges.df = edges.df, clades.list = clades.list))
 }
 
-structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.times,  Neg.rates, Neg.rate.ints){
+structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.times, Neg.rates, Neg.rate.ints){
     subtrees <- lapply(div.MRCA.nodes, function (x) phylo.preprocessed$clades.list[[x]]) 
     times.ord <- order(div.times)
     k_div <- length(div.times)
+
+    log_lh <- 0
 
     lineage.trees <- lapply(c(1:k_div),
         function(x) drop.tip(subtrees[[times.ord[x]]], nodeid(subtrees[[times.ord[x]]], unlist(lapply(c(x:k_div),
             function (y) subtrees[[times.ord[y]]]$tip.label
             )))))
 
-    
+    for (i in c(1:length(lineage.trees))) {
+        coal.times <- nodes.df[nodeid(phylo.preprocessed$phy, lineage.trees[[i]]$node.label)]$times
+        sam.times <- nodes.df[nodeid(phylo.preprocessed$phy, lineage.trees[[i]]$tip.label)]$times
+
+        for (j in c(1:length(div.MRCA.nodes))) {
+            if (binary_search(nodeid(phylo.preprocessed$phy, subtrees[[j]]$node.label), div.MRCA.nodes[j])){
+                sam.times <- c(sam.times, div.times[j])
+            }
+        }
+
+        coal.times <- coal.times[order(-coal.times)]
+        sam.times <- sam.times[order(-sam.times)]
+
+        log_lh <= log_lh + logexp_coalescent_loglh(sampling_times, coalescent_times)
+    }
 }
 
 choose_reaction <- function(rates) {
@@ -279,4 +295,24 @@ inv_rates <- function(func, N, dfun=NULL){
 
 rate_sum_int <- function(rate_ints, comb_ns, n_col) {
     return(function(t,s) sum(sapply(c(1:n_col), function (x) if(comb_ns[x] == 0) 0 else comb_ns[x]*rate_ints[[x]](t, s))))
+}
+
+binary_search <- function(vec, val) {
+    a = 1
+    b = length(vec)+1
+    i = trunc((a-b)/2)
+
+    ret <- FALSE
+
+    while((a-b) > 0 && ret==FALSE) {
+        if (vec[i] == val) {
+            ret <- TRUE 
+        } else if (vec[i] < val) {
+            a <- i
+        } else if (vec[i] > val) {
+            b <- (i+1)
+        } 
+    }
+
+    return(ret)
 }
