@@ -52,10 +52,10 @@ set.seed(1)
     ldf$lineage <- as.factor(ldf$lineage)
     ldf$type <- as.factor(ldf$type)
 
-    tree <- full_join(tree, ldf, by = 'node')
+    tree.full <- full_join(tree, ldf, by = 'node')
 
     pdf("structured_tree.pdf")
-    plt<-ggtree(tree, aes(color=lineage), ladderize=TRUE) +
+    plt<-ggtree(tree.full, aes(color=lineage), ladderize=TRUE) +
                     geom_point(aes(shape=type, size=type)) +
                     scale_size_manual(values=c(1,4,1)) +
                     scale_shape_manual(values=c(1,8,2)) +
@@ -63,3 +63,7 @@ set.seed(1)
                     #scale_colour_viridis(discrete = TRUE, option = "plasma")
     plot(plt)
     dev.off()
+
+    pre <- structured_coal.preprocess_phylo(tree)
+    structured_coal.likelihood(pre, (nodeid(tree,c("X_A","X_B","NC32"))-100), div_times, A, K, N)
+

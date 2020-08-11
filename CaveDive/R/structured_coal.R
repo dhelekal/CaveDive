@@ -179,6 +179,11 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
     return(list(times=coalescent_times, colours=coalescent_cols, div_from=div_from, log_lh=log_lh))
 }
 
+#' Preprocess phylogeny to speed up likelihood computation
+#'
+#' @param phy phylogeny
+#' @return preprocessed phylogeny
+#' @export
 structured_coal.preprocess_phylo <- function(phy){
     labs <- c(tree$node.label, tree$tip.label)
     nodes <- nodeid(phy, labs)
@@ -188,22 +193,32 @@ structured_coal.preprocess_phylo <- function(phy){
     times <- times - max(times)
     times <- times[nodes]
 
-    edges.parent<- phy$edge[1]
-    edges.child <- phy$edge[2]
+    edges.parent<- phy$edge[,1]
+    edges.child <- phy$edge[,2]
     edges.len <- phy$edge.length
 
     nodes.df <- data.frame(id=nodes, times=times, is_tip=is_tip)
-    edges.df <- data.frame(parent=edges.parent, child=edges.child, length=edge.length)
+    edges.df <- data.frame(node.parent=edges.parent, node.child=edges.child, length=edges.len)
 
-    nodes.df <- nodes.df[order(nodes),]
-    edges.df <- edges.df[order(parent),]
+    nodes.df <- nodes.df[order(nodes.df$id), ]
+    edges.df <- edges.df[order(edges.df$node.parent), ]
 
-    clades.list <- lapply(nodes.df$nodes, function(x) extract.clade(phy, x))
+    clades.list <- lapply(nodes.df$id[which(nodes.df$is_tip==FALSE)], function(x) extract.clade(phy, x))
 
     return(list(phy=phy, nodes.df = nodes.df, edges.df = edges.df, clades.list = clades.list))
 }
 
-structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.times, Neg.rates, Neg.rate.ints){
+#' Compute likelihood for preprocessed phylogeny 
+#'
+#' @param phylo.preprocessed preprocessed phylogeny
+#' @param div.MRCA.nodes MRCA nodes of diverging lineages
+#' @param div.times absolute divergence times
+#' @param diverging.rates growth rates for diverging lineages
+#' @param diverging.sizes asymptotic size for diverging lineages
+#' @param neutral.size size of neutral phylogeny
+#' @return Log-likelihood
+#' @export
+structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.times, diverging.rates, diverging.sizes, neutral.size){
     subtrees <- lapply(div.MRCA.nodes, function (x) phylo.preprocessed$clades.list[[x]]) 
     times.ord <- order(div.times)
     k_div <- length(div.times)
@@ -215,7 +230,7 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.t
             function (y) subtrees[[times.ord[y]]]$tip.label
             )))))
 
-    for (i in c(1:length(lineage.trees))) {
+    for (i in c(1:k_div)) {
         coal.times <- nodes.df[nodeid(phylo.preprocessed$phy, lineage.trees[[i]]$node.label)]$times
         sam.times <- nodes.df[nodeid(phylo.preprocessed$phy, lineage.trees[[i]]$tip.label)]$times
 
@@ -228,8 +243,13 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.t
         coal.times <- coal.times[order(-coal.times)]
         sam.times <- sam.times[order(-sam.times)]
 
-        log_lh <= log_lh + logexp_coalescent_loglh(sampling_times, coalescent_times)
+         if (i < k_div) {
+            log_lh <- log_lh + logexp_coalescent_loglh(sampling_times, coalescent_times, diverging.rates[i], diverging.sizes[i])
+        } else {
+            log_lh <- log_lh + coalescent_loglh(sampling_times, coalescent_times, neutral.size)
+        }
     }
+    return(log_lh)
 }
 
 choose_reaction <- function(rates) {
