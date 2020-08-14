@@ -16,7 +16,7 @@ structured_coal.likelihood(
 \arguments{
 \item{phylo.preprocessed}{preprocessed phylogeny}
 
-\item{div.MRCA.nodes}{MRCA nodes of diverging lineages}
+\item{div.MRCA.nodes}{labels of MRCA nodes of diverging lineages}
 
 \item{div.times}{absolute divergence times}
 

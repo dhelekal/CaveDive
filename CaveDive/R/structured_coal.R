@@ -25,7 +25,7 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
 
     extant_lineages <- rep(0, n_col)
 
-    future_lineages <- sapply(div_events, function (x) sum(colours_desc==x)) ###maybe wrong????
+    future_lineages <- sapply(div_events, function (x) sum(colours_desc==x))
     future_lineages <- future_lineages[order(div_events)]
 
     coalescent_times <- rep(0, sum(future_lineages)-1)
@@ -74,12 +74,9 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                 div_from[div_idx] <- i
  
                 div_idx <- div_idx + 1     
-
-                log_lh <- log(extant_lineages[i])-log(n_nodes) 
             }
         } else {
             comb_ns <- sapply(extant_lineages, function (x) choose(x, 2))
-            print(paste0("Extant Lineages: ", extant_lineages))
             if (sam_idx > length(times_desc) && div_idx > (length(div_times)-1)) {
                 s <- Inf
             } else if(sam_idx > length(times_desc)){
@@ -90,23 +87,18 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                 s <- t0 - t - max(times_desc[sam_idx], div_times[div_idx])
             }
 
-
             if (t > t+s) {
-                print("next time step must be greater than current time")
+                warning("next time step must be greater than current time")
                 return(-1)
             }
 
             if (!all(comb_ns >= 0)){
-                print("combination numbers must be positive")
+                warning("combination numbers must be positive")
                 return(-1)
             }
 
-            print(paste0("S: ", s, " T: ", t))
-            ### Compute rates for each lineage
-            rates <- sapply(c(1:n_col), function (x) if(comb_ns[x] == 0) 0 else comb_ns[x]*Neg.rate.ints[[x]](t, s))
-            print(paste0("rates: ", rates))
             ### Decide if an coalescent event happens in this interval
-            p_coal <- 1-exp(-sum(rates))
+            p_coal <- 1-exp(-rate_sum_int(Neg.rate.ints, comb_ns, n_col)(t,s))
             r <- runif(1,0,1)
 
             if (r<=p_coal) { 
@@ -123,10 +115,12 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                                                             1,
                                                             t,
                                                             s)
-
+                ### Compute rates for each lineage
+                rates <- sapply(c(1:n_col), function (x) if(comb_ns[x] == 0) 0 else comb_ns[x]*Neg.rates[[x]](t+w_t))
                 i <- choose_reaction(rates)
+
                 if (rates[i]!=Inf) { 
-                    log_lh <- log_lh + log(rates[i])-log(sum(rates))
+                    log_lh <- log_lh + log(rates[i]) - log(sum(rates))
                 }
 
                 
@@ -144,7 +138,7 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                 log_lh <- log_lh + log(1 - p_coal)
                 ### determine whether sampling or divergence event comes next
                 ### If no lineage has more than 1 member continue to next divergence or sampling event
-                if(sam_idx <= length(times_desc) && (div_idx > (length(div_times)-1) || div_times[div_idx] < times_desc[sam_idx])) {
+                if(sam_idx <= length(times_desc) && (div_idx > (length(div_times)-1) || div_times[div_idx] < times_desc[sam_idx])) { ##FIX ME -- potentially NAs in if
                     t <- t0 - times_desc[sam_idx]
 
                     which_colour <- colours_desc[sam_idx]
@@ -170,8 +164,6 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                     div_from[div_idx] <- i
 
                     div_idx <- div_idx + 1     
-
-                    log_lh <- log_lh + log(extant_lineages[i])-log(n_nodes) 
                 } 
             }
         }
@@ -185,9 +177,9 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
 #' @return preprocessed phylogeny
 #' @export
 structured_coal.preprocess_phylo <- function(phy){
-    labs <- c(tree$node.label, tree$tip.label)
+    labs <- c(phy$node.label, phy$tip.label)
     nodes <- nodeid(phy, labs)
-    is_tip <- c(rep(FALSE, length(tree$node.label)), rep(TRUE, length(tree$tip.label)))
+    is_tip <- c(rep(FALSE, length(phy$node.label)), rep(TRUE, length(phy$tip.label)))
 
     times <- node.depth.edgelength(phy)
     times <- times - max(times)
@@ -205,13 +197,13 @@ structured_coal.preprocess_phylo <- function(phy){
 
     clades.list <- lapply(nodes.df$id[which(nodes.df$is_tip==FALSE)], function(x) extract.clade(phy, x))
 
-    return(list(phy=phy, nodes.df = nodes.df, edges.df = edges.df, clades.list = clades.list))
+    return(list(phy=phy, nodes.df = nodes.df, edges.df = edges.df, clades.list = clades.list, n_tips=length(phy$tip.label)))
 }
 
 #' Compute likelihood for preprocessed phylogeny 
 #'
 #' @param phylo.preprocessed preprocessed phylogeny
-#' @param div.MRCA.nodes MRCA nodes of diverging lineages
+#' @param div.MRCA.nodes labels of MRCA nodes of diverging lineages
 #' @param div.times absolute divergence times
 #' @param diverging.rates growth rates for diverging lineages
 #' @param diverging.sizes asymptotic size for diverging lineages
@@ -219,37 +211,62 @@ structured_coal.preprocess_phylo <- function(phy){
 #' @return Log-likelihood
 #' @export
 structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.times, diverging.rates, diverging.sizes, neutral.size){
-    subtrees <- lapply(div.MRCA.nodes, function (x) phylo.preprocessed$clades.list[[x]]) 
+    n_tips <- phylo.preprocessed$n_tips
+    MRCA.idx <- nodeid(phylo.preprocessed$phy, div.MRCA.nodes)-n_tips
+    subtrees <- lapply(c(1:length(div.MRCA.nodes)), function (x) phylo.preprocessed$clades.list[[MRCA.idx[x]]]) 
+    k_div <- length(subtrees)
+    log_lh <- 0
+
+    times <- extract_lineage_times(phylo.preprocessed, subtrees, div.MRCA.nodes, div.times)
+
+
+    for (i in c(1:(k_div-1))){
+        log_lh <- log_lh + logexp_coalescent_loglh(times$sam.times[[i]], times$coal.times[[i]], div.times[i], diverging.rates[i], diverging.sizes[i])
+    }
+
+    log_lh <- log_lh + coalescent_loglh(times$sam.times[[k_div]], times$coal.times[[k_div]], neutral.size)
+
+    return(log_lh)
+}
+
+#' Extracts Lineage times from a parent phylogeny based on provided divergence MRCA nodes and times. 
+#'
+#' @param phylo.preprocessed preprocessed phylogeny
+#' @param div.MRCA.nodes labels of MRCA nodes of diverging lineages
+#' @param div.times absolute divergence times
+#' @return A list containing lists of sampling time vectors sam.times and coalescent time vectors coal.times for each lineage.
+#' @export
+extract_lineage_times <- function(phylo.preprocessed, subtrees, div.MRCA.nodes, div.times) {
     times.ord <- order(div.times)
     k_div <- length(div.times)
 
-    log_lh <- 0
-
-    lineage.trees <- lapply(c(1:k_div),
-        function(x) drop.tip(subtrees[[times.ord[x]]], nodeid(subtrees[[times.ord[x]]], unlist(lapply(c(x:k_div),
-            function (y) subtrees[[times.ord[y]]]$tip.label
-            )))))
-
+    coal.times <- list()
+    sam.times <- list()
+    
     for (i in c(1:k_div)) {
-        coal.times <- nodes.df[nodeid(phylo.preprocessed$phy, lineage.trees[[i]]$node.label)]$times
-        sam.times <- nodes.df[nodeid(phylo.preprocessed$phy, lineage.trees[[i]]$tip.label)]$times
+        ii <- times.ord[i]
 
-        for (j in c(1:length(div.MRCA.nodes))) {
-            if (binary_search(nodeid(phylo.preprocessed$phy, subtrees[[j]]$node.label), div.MRCA.nodes[j])){
-                sam.times <- c(sam.times, div.times[j])
+        node.labs <- subtrees[[ii]]$node.label
+        leaf.labs <-subtrees[[ii]]$tip.label
+
+        leaf.times <- c()
+        for (j in which(c(1:k_div) > i)) {
+            if (!is.na(nodeid(subtrees[[ii]], div.MRCA.nodes[times.ord[j]]))){
+                jj <- times.ord[j]
+                node.labs <- node.labs[which(is.na(nodeid(subtrees[[jj]], node.labs)))]
+                leaf.labs <- leaf.labs[which(is.na(nodeid(subtrees[[jj]], leaf.labs)))]
+                leaf.times <- c(leaf.times, div.times[jj])
             }
         }
 
-        coal.times <- coal.times[order(-coal.times)]
-        sam.times <- sam.times[order(-sam.times)]
 
-         if (i < k_div) {
-            log_lh <- log_lh + logexp_coalescent_loglh(sampling_times, coalescent_times, diverging.rates[i], diverging.sizes[i])
-        } else {
-            log_lh <- log_lh + coalescent_loglh(sampling_times, coalescent_times, neutral.size)
-        }
+        leaf.times <- c(leaf.times, phylo.preprocessed$nodes.df$times[nodeid(phylo.preprocessed$phy, leaf.labs)])
+        node.times <- phylo.preprocessed$nodes.df$times[nodeid(phylo.preprocessed$phy, node.labs)]
+
+        sam.times[[ii]] <- leaf.times[order(-leaf.times)]
+        coal.times[[ii]] <- node.times[order(-node.times)]
     }
-    return(log_lh)
+    return(list(sam.times=sam.times, coal.times=coal.times))
 }
 
 choose_reaction <- function(rates) {
@@ -275,8 +292,6 @@ choose_reaction <- function(rates) {
 }
 
 inv_rates <- function(func, N, dfun=NULL){   
-    print("Numerically inverting function")
-    print(paste0("With N = ", N))
     f <- function(x) func(x) - N
     lo <- 0
     hi <- 1e0
@@ -297,13 +312,11 @@ inv_rates <- function(func, N, dfun=NULL){
         hi <- hi*(10^(min_hi))
     }
 
-    print("initiating BSS")
     b <- bisect(f, lo, hi, maxiter = 50)
 
     out <- b$root
 
     if (b$f.root > 1e-8) {
-        print("initiating newtonRaphson")
         n <- newtonRaphson(f,out,dfun=dfun)
         if (n$f.root >  1e-8) {
             warning(paste0("Function root suspiciously large, please revise. f.root: ", n$f.root))

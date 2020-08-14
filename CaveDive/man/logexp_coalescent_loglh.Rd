@@ -4,12 +4,14 @@
 \alias{logexp_coalescent_loglh}
 \title{Compute likelihood of a realisation of an half/logistic growth coalescent.}
 \usage{
-logexp_coalescent_loglh(sampling_times, coalescent_times, r, N)
+logexp_coalescent_loglh(sampling_times, coalescent_times, t0, r, N)
 }
 \arguments{
 \item{sampling_times}{times of leaves.}
 
 \item{coalescent_times}{times of coalescent events.}
+
+\item{t0}{time of divergence.}
 
 \item{N}{asymptotic population size.}
 

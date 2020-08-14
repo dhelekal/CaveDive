@@ -39,5 +39,11 @@ half_log.rate.int <- function(t, s, K, rate, t0) {
         out <- Inf
     }
     return(out)
+}
+
+#' @export
+half_log.rate.int_inv <- function(t, F, K, rate, t0) {
+
+    return( (-1/rate)*log(exp(-rate*K*F)*(exp(-rate*(t+t0))-1) + 1) - (t+t0))
 
 }

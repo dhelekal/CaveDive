@@ -1,12 +1,18 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-double half_log_int(double r, double N, double t0, double delta_t){
-  return ((-1/(r*N))*(std::log(std::exp(-r*(t0+delta_t))-1)-std::log(std::exp(-r*(t0))-1)));
+double half_log_int(double r, double N, double t0, double t, double delta_t){
+
+  double out = std::numeric_limits<double>::infinity();
+  if (t+t0 < 0 && t+delta_t+t0 < 0) {
+    out =  ((-1/(r*N))*(std::log(std::exp(-r*(t0+t+delta_t))-1)-std::log(std::exp(-r*(t0+t))-1)));
+  } 
+
+  return out;
 }
 
-double half_log_rate(double r, double N, double t){
-  return 1/(N*(1-exp(r*(t))));
+double half_log_rate(double r, double N, double t0, double t){
+  return 1/(N*(1-exp(r*(t+t0))));
 }
 
 double const_int(double N, double t0, double delta_t){
@@ -113,6 +119,7 @@ double exponential_coalescent_loglh(NumericVector sampling_times,
 //' 
 //' @param sampling_times times of leaves.
 //' @param coalescent_times times of coalescent events.
+//' @param t0 time of divergence.
 //' @param growth rate.
 //' @param N asymptotic population size.
 //' @return the log likelihood for the given parameters.
@@ -120,8 +127,10 @@ double exponential_coalescent_loglh(NumericVector sampling_times,
 // [[Rcpp::export]]
 double logexp_coalescent_loglh(NumericVector sampling_times,
                                      NumericVector coalescent_times,
+                                     const double t0,
                                      const double r,
-                                     const double N) {
+                                     const double N
+                                     ) {
   auto s_idx = 0;
   auto c_idx = 0;
 
@@ -137,14 +146,14 @@ double logexp_coalescent_loglh(NumericVector sampling_times,
         //Sampling
         ++s_idx;
         delta_t = t_max - t - sampling_times[s_idx];
-        log_lh += (-k*(k-1)/(2))*half_log_int(r, N , t, delta_t);
+        log_lh += (-k*(k-1)/(2))*half_log_int(r, N, t0, t, delta_t);
         ++k;
         t += delta_t;
     } else {
         //Coalescent
         delta_t = t_max - t - coalescent_times[c_idx];
         ++c_idx;
-        log_lh += std::log(half_log_rate(r,N,t+delta_t)) + (-k*(k-1)/(2))*half_log_int(r, N , t, delta_t);
+        log_lh += std::log(half_log_rate(r, N, t0, t+delta_t)) + (-k*(k-1)/(2))*half_log_int(r, N, t0, t, delta_t);
         --k;
         t += delta_t;
     }

@@ -273,6 +273,8 @@ build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_co
 
     subtrees[i] <- tree
   }
+  
+  subtrees.ret <- sapply(subtrees, function (x) paste0(x,";"))
 
   ### Next build the combined tree
   for(i in c(1:(length(div_events)-1))){
@@ -286,5 +288,5 @@ build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_co
   }
 
   tree_str <- paste0(subtrees[length(subtrees)], ";")
-  return(list(full=tree_str, subtrees=subtrees))
+  return(list(full=tree_str, subtrees=subtrees.ret))
 }

@@ -64,6 +64,20 @@ set.seed(1)
     plot(plt)
     dev.off()
 
-    pre <- structured_coal.preprocess_phylo(tree)
-    structured_coal.likelihood(pre, (nodeid(tree,c("X_A","X_B","NC32"))-100), div_times, A, K, N)
+    tr.nodiv <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from, include_div_nodes = FALSE)
+    tree.nodiv <- read.tree(text = tr.nodiv$full)
+
+    times.nodiv <- node.depth.edgelength(tree.nodiv)
+    times.nodiv <- times.nodiv-max(times.nodiv)
+    times.nodiv <- times.nodiv[101:length(times.nodiv)]
+    times.ord <- order(-times.nodiv)
+    times.nodiv <- times.nodiv[times.ord]
+
+    MRCAs.idx <- sapply(c(1:3), function (x) (which(co$colours==x)[which.min(times.nodiv[which(co$colours==x)])])) 
+    MRCAs<- sapply(MRCAs.idx, function (x) tree.nodiv$node.label[times.ord[x]])
+
+    pre <- structured_coal.preprocess_phylo(tree.nodiv)
+    lh.comp <-  structured_coal.likelihood(pre, MRCAs, div_times, A, K, N)
+
+    print(lh.comp)
 
