@@ -18,23 +18,23 @@ inhomogenous_coal.simulate <- function(sampling_times,
   coalescent_times <- rep(0, future_lineages)
   t <- 0
   t0 <- times_desc[1]
-  idx <- 1
+  idx <- 2
   coal_idx <- 1
   
   while (future_lineages > 0 || extant_lineages > 1) {
     if (extant_lineages < 2) {
       #If one lineage continue to next sampling event
-      t <- t0 - times_desc[idx + 1]
-      idx <- idx + 1
+      t <- t0 - times_desc[idx]
       extant_lineages <- extant_lineages + 1
       future_lineages <- future_lineages - 1
+      idx <- idx + 1
     } else {
       #Pick waiting time
       c <- choose(extant_lineages, 2)
-      if (idx + 1 > length(sampling_times)) {
+      if (idx> length(sampling_times)) {
         s <- Inf
       } else {
-        s <- t0 - t - times_desc[idx + 1]
+        s <- t0 - t - times_desc[idx]
       }
       
       p_coal <-
@@ -63,7 +63,7 @@ inhomogenous_coal.simulate <- function(sampling_times,
         coal_idx <- coal_idx + 1
       } else {
         log_lh <- log_lh + log(1 - p_coal)
-        t <- t0 - times_desc[idx + 1]
+        t <- t0 - times_desc[idx]
         extant_lineages <- extant_lineages + 1
         future_lineages <- future_lineages - 1
         idx <- idx + 1
