@@ -4,7 +4,7 @@
 \alias{coalescent_loglh}
 \title{Compute likelihood of a realisation of a homogeneous coalescent.}
 \usage{
-coalescent_loglh(sampling_times, coalescent_times, pop_size)
+coalescent_loglh(sampling_times, coalescent_times, pop_size, t_max)
 }
 \arguments{
 \item{pop_size}{effective population size \code{Neg}.}

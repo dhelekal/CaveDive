@@ -10,7 +10,8 @@ structured_coal.likelihood(
   div.times,
   diverging.rates,
   diverging.sizes,
-  neutral.size
+  neutral.size,
+  type = "Log-Exp"
 )
 }
 \arguments{

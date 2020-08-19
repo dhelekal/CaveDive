@@ -225,6 +225,7 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.t
                 log_lh <- log_lh + sat_coalescent_loglh(times$sam.times[[i]], times$coal.times[[i]], div.times[i], diverging.rates[i], diverging.sizes[i], t_max)
             } else {
                 warning(paset0("Unrecognised likelihood option: ", type))
+                return(NA)
             }
         
     }

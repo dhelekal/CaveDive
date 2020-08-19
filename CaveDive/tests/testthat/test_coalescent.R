@@ -368,7 +368,7 @@ test_that("Simulation Likelihood matches product of colour specific likelihoods"
     colours <- trunc(runif(100, 1, 4))
     
     N <- 100
-    A <- c(1.1, 0.3)
+    A <- c(0.7, 0.3)
     K <- c(100,150)
 
     div_times <- c(-25, -40, -Inf)
@@ -411,6 +411,8 @@ test_that("Simulation Likelihood matches product of colour specific likelihoods"
       expect_equal(coal.gt, comp$coal.times[[i]])
       if (i < length(div_cols)){
         log_lh <- log_lh + logexp_coalescent_loglh(sam.gt, coal.gt, div_times[i], A[i], K[i], 0)
+        expect_equal(logexp_coalescent_loglh(sam.gt, coal.gt, div_times[i], A[i], K[i], 0), 
+                      logexp_coalescent_loglh(comp$sam.times[[i]], comp$coal.times[[i]], div_times[i], A[i], K[i], 0))
       } else {
         log_lh <- log_lh + coalescent_loglh(sam.gt, coal.gt, N, 0)
       }
@@ -431,21 +433,18 @@ test_that("Simulation Likelihood matches product of colour specific likelihoods2
     sam <- sam - tmax
     sam.ord <- order(-sam)
     sam <- sam[sam.ord]
-    colours <- c(1,1,2,2,rep(3,96))
-    print(colours)
-    colours <- colours[sam.ord] 
+    colours <- trunc(runif(100, 1, 4))
     
     N <- 100
-    A <- c(1.1, 0.3)
+    A <- c(5.1, 0.3)
     K <- c(100,100)
 
-    div_times <- c(-25, -40, -Inf)
+    div_times <- c(-25, -80, -Inf)
     div_cols <- c(1, 2, 3)
     rates <- list(function (s) sat.rate(s, K[1], A[1], div_times[1]), function (s) sat.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
     rate.ints <- list(function(t,s) sat.rate.int(t, s, K[1], A[1], div_times[1]), function(t,s) sat.rate.int(t, s, K[2], A[2], div_times[2]), function(t,s) constant.rate.int(t,s,N))
 
     co <- structured_coal.simulate(sam, colours, div_times, div_cols, rates, rate.ints)
-    print(co)
 
     tr.nodiv <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from, include_div_nodes = FALSE)
     tree.nodiv <- read.tree(text = tr.nodiv$full)
@@ -460,7 +459,7 @@ test_that("Simulation Likelihood matches product of colour specific likelihoods2
     MRCAs <- sapply(MRCAs.idx, function (x) tree.nodiv$node.label[times.ord[x]])
 
     pre <- structured_coal.preprocess_phylo(tree.nodiv)
-    comp <- structured_coal.likelihood(pre, MRCAs, div_times, A, K, N)
+    comp <- structured_coal.likelihood(pre, MRCAs, div_times, A, K, N, type="Sat")
     log_lh <- 0
     for (i in div_cols){
       sam.gt <- sam[which(colours==i)]
@@ -476,17 +475,21 @@ test_that("Simulation Likelihood matches product of colour specific likelihoods2
       sam.gt <- sam.gt[order(-sam.gt)]
       coal.gt <- coal.gt[order(-coal.gt)]
 
-      #expect_equal(sam.gt, comp$sam.times[[i]])
-      #expect_equal(coal.gt, comp$coal.times[[i]])
+      expect_equal(sam.gt, comp$sam.times[[i]])
+      expect_equal(coal.gt, comp$coal.times[[i]])
       if (i < length(div_cols)){
         log_lh <- log_lh + sat_coalescent_loglh(sam.gt, coal.gt, div_times[i], A[i], K[i], 0)
+        expect_equal(sat_coalescent_loglh(sam.gt, coal.gt, div_times[i], A[i], K[i], 0),
+                      sat_coalescent_loglh(comp$sam.times[[i]], comp$coal.times[[i]], div_times[i], A[i], K[i], 0))
       } else {
         log_lh <- log_lh + coalescent_loglh(sam.gt, coal.gt, N, 0)
+        expect_equal(coalescent_loglh(sam.gt, coal.gt, N, 0),
+                      coalescent_loglh(comp$sam.times[[i]], comp$coal.times[[i]], N, 0))
       }
 
     }
 
 
     expect_equal(log_lh, co$log_lh)
-    expect_equal(comp$log_lh, co$log_lh, type="Sat")
+    expect_equal(comp$log_lh, co$log_lh)
 })

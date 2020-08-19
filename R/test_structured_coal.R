@@ -16,17 +16,14 @@ set.seed(1)
     
     colours <- trunc(runif(100, 1, 4))
 
-    N <- 500
-    
-    A <- c(1, 2.3)
-    
-    K <- c(300,400)
+    N <- 30
+    A <- c(0.6, 0.3)
+    K <- c(50,50)
 
-    div_times <- c(-50, -100, -Inf)
+    div_times <- c(-15, -20, -Inf)
     div_cols <- c(1, 2, 3)
-
-    rates <- list(function (s) half_log.rate(s, K[1], A[1], div_times[1]), function (s) half_log.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
-    rate.ints <- list(function(t,s) half_log.rate.int(t, s, K[1], A[1], div_times[1]), function(t,s) half_log.rate.int(t, s, K[2], A[2],div_times[2]), function(t,s) constant.rate.int(t,s,N))
+    rates <- list(function (s) sat.rate(s, K[1], A[1], div_times[1]), function (s) sat.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
+    rate.ints <- list(function(t,s) sat.rate.int(t, s, K[1], A[1], div_times[1]), function(t,s) sat.rate.int(t, s, K[2], A[2], div_times[2]), function(t,s) constant.rate.int(t,s,N))
 
     co <- structured_coal.simulate(sam, colours, div_times, div_cols, rates, rate.ints)
     print(co)
