@@ -180,15 +180,17 @@ structured_coal.preprocess_phylo <- function(phy){
     times <- times - max(times)
     times <- times[nodes]
 
-    edges.parent<- phy$edge[,1]
+    edges.parent <- phy$edge[,1]
     edges.child <- phy$edge[,2]
     edges.len <- phy$edge.length
 
-    nodes.df <- data.frame(id=nodes, times=times, is_tip=is_tip)
+    children <- sapply(nodes, function (x) edges.df$node.child[which(edges.df$node.parent==x)])
+
+    nodes.df <- data.frame(id=nodes, times=times, is_tip=is_tip, children = children)
     edges.df <- data.frame(node.parent=edges.parent, node.child=edges.child, length=edges.len)
 
     nodes.df <- nodes.df[order(nodes.df$id), ]
-    edges.df <- edges.df[order(edges.df$node.parent), ]
+    edges.df <- edges.df[order(edges.df$node.child), ]
 
     clades.list <- lapply(nodes.df$id[which(nodes.df$is_tip==FALSE)], function(x) extract.clade(phy, x))
 

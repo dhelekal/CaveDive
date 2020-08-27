@@ -465,7 +465,23 @@ After change of time variables as in the case of the SIS model, the correspondin
 \begin{gather}
 \int_{t}^{t+s}\alpha^{-1}(\tau)\,d\tau = \left[\frac{-1}{rK}\log(\exp(-r(\tau-T_{max}+T_{div})) - 1)\right]_{t}^{t+s}
 \end{gather}
-In our inference scenario we will assume the following. There exists a neutral population with constant population size. This can be interpreted as the parent populatio{}n of the pathogen being at steady state. All diverging populations follow the growth function \ref{eq:loggrowth}.
+Unfortunately, this formulation has also proven to be problematic numerically, often suffering from catastrophic loss of precision.\\
+As such a third formulation has been tested and seems to not suffer from any of these issues. This formulation assumes a population size function given by
+\begin{gather}
+\alpha(t) = K\frac{rt^2}{1+rt^2}
+\end{gather} 
+This function still exhibits saturating behaviour, symmetry around zero, and numerically stable behaviour due to not relying on time-offsetting exponentials and a more gradual decay around zero.
+The integral of the reciprocal $\alpha^{-1}(t)$ under this formulation is then given by 
+\begin{gather}
+\int_{t}^{t+s}\alpha^{-1}(\tau)\,d\tau = \frac{1}{K}\left[-\frac{1}{r(\tau-T_{max}+T_{div})}+\tau-T_{max}+T_{div}\right]_{t}^{t+s}
+\end{gather} 
+
+\begin{figure}[H]
+  \centering
+     \includegraphics[width=0.5\textwidth]{../R/structured_tree}
+    \caption{A genealogy simulated under this formulation}
+\end{figure}
+
 \subsection{Priors}
 As a prior for change points $\mathcal{L}(\Xi,M)$ a Poisson Point Process is used. Denote by $B$ the total branch length of the genealogy. Then
 \begin{gather}
@@ -509,11 +525,11 @@ One million iterations were used and the first One hundred thousand discarded as
   \caption{Histograms of the posterior marginals. MLE marked by blue line. MAP marked by orange line. \ref{hists:a} $\lambda$ marginal \ref{hists:b} $N$ marginal}
   \label{fig:hists}
 \end{figure}
-\begin{figure}[H]
+`\begin{figure}[H]
   \centering
     \includegraphics[width=0.5\textwidth]{../R/tree}
     \caption{The simulated genealogy used for this example.}
-\end{figure}
+\end{figure}'
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
