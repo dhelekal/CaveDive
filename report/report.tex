@@ -92,6 +92,52 @@ While methods to detect inhomogeneities in the population structure and size hav
 Despite the problems of inferring population size from a genealogy and detecting heterogeneities in the population size of the entire population being intrinsically tied, all but one method \cite{volz_identification_nodate}, to our knowledge, rely either on manual detection or indirect detection. We aim to propose a simulation for the formation of clonal expansions in genealogy using the structured coalescent process, and devise a fully bayesian method for joint estimation and detection of relative population size and clonal expansions.
 \chapter{Methods}
 \section{Coalescent Preliminaries}
+We shall begin with an overview of the standard Kingman's Coalescent process\cite{kingman_coalescent_1982}. This process is often used to characterise evolutionary histories of populations \cite{drummond_estimating_2002,hein_gene_2004,ho_skyline-plot_2011}.
+The coalescent is a CTMC defined on the set $\{1 ... n\}$, parametrised via the coalescent rate, in our case $1/Neg(t)$, where $g$ is a scale parameter and $Neg(t)$ the effective population size at time $t$ \cite{drummond_estimating_2002,hein_gene_2004}. Define $\alpha = Neg$.\\
+The transition rates of the rescaled (phylogenetic) coalescent process are given by 
+\begin{gather*}
+\lambda(j, j-1) = \binom{j}{2}\cdot\frac{1}{\alpha(t)}
+\end{gather*}
+The waiting times in the homogenous case are exponentially distributed
+\begin{gather*}
+P[W_j \leq s] = 1-\exp(-s\frac{\binom{j}{2}}{\alpha(t)})
+\end{gather*}
+Furthermore, the waiting times for individual coalescent events, conditioned on being less than the time between two consecutive sampling events $\Delta t$ are distributed as follows
+\begin{gather}\label{eq:conditional}
+P[W_j \leq s\mid W_j \leq \Delta t ] = \frac{P[W_j \leq s]}{P[W_j \leq \Delta t]} \quad\forall s \leq \Delta t
+\end{gather}
+In the case of time-inhomogenous effective population size, the waiting times can be derived as follows:
+For an inhomogenous CTMC, let $E_j(t)$ be the total exit rate from state $j$ at time $t$.
+By the markov property individual exit events from a given state only depend on the state and given time, i.e. they form a time-inhomogenous poisson process.
+As such the probability of no events in an interval $[t,t+s]\quad s\in \R^+$ is 
+\begin{gather}
+\exp(-\int_t^{t+s}E_j(\tau)d\tau) = \exp(-\int_0^{s}E_j(t+\tau)d\tau)
+\end{gather}
+The waiting times are defined as
+\begin{gather}
+W_j(t) = \inf\{s:X(t+s)\neq j \mid X(t) = j\}
+\end{gather}
+As such
+\begin{gather}
+W_j(t) > s \Rightarrow \forall \tau\in[t, t+s]\quad X(\tau) = j
+\end{gather}
+Furthermore the above relation holds iff no exit event have occured in the time interval $[t,t+s]$. As such:
+\begin{align*}
+&P[W_j(t) > s] = P[\text{no exit events in }[t,t+s]] = \exp(-\int_0^{s}E_j(t+\tau)d\tau)\\
+&P[W_j(t) < s] = 1 - \exp(-\int_0^{s}E_j(t+\tau)d\tau)
+\end{align*}
+In the case of phylodynamic coalescent this becomes
+\begin{gather}
+P[W_j(t) \leq s] = 1 - \exp(-\int_0^{s}\frac{\binom{j}{2}}{\alpha(t+\tau)}d\tau)
+\end{gather}
+Note, the waiting times are still memoryless:
+\begin{gather}
+P\left[W_j(t) > s+u\mid W_j(t)>s \right] = P\left[W_j(t) > s+u\mid X(s)=j\right]
+\end{gather}
+By markov property
+\begin{gather}
+P\left[W_j(t) > s+u\mid X(s)=j\right] = P\left[W_j(t+s) > u\right]
+\end{gather}
 \section{Inhomogenous Coalescent}
 \subsection{Exponential Growth}
 \section{Coalescent with Local Population Structure}
