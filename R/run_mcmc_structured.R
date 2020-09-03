@@ -76,14 +76,14 @@ log_lh <- function(x){
   prior_N <- dexp(N, rate = 1/100, log = TRUE)
 
 
-  if (all(K > 0) && all(rates>0) && all(N>0) && all(!is.na(div.branch))){
+  if (all(K > 0) && all(rates > 0) && all(N > 0) && all(!is.na(div.branch))){
       MRCAs <- sapply(pre$edges.df$node.child[div.branch], function(x) if (x > n_tips) pre$phy$node.label[x-n_tips] else NA)  
       if (all(!is.na(MRCAs))) {
-        prior_br <- sum(log(pre$edges.df$length[div.branch])-log(total_branch_len))
+        prior_br <- 0 #sum(log(pre$edges.df$length[div.branch]/total_branch_len))
         lh <- 0 #structured_coal.likelihood(pre, MRCAs, div.times, rates, K, N, type="Sat")$log_lh
         prior <- prior_rates + prior_K + prior_N + prior_br
         lh <- lh + prior
-      } else{
+      } else {
         lh <- -Inf
       }
   } else {
@@ -146,7 +146,7 @@ select_br <- function(pre, div.br, div.time, div.time_upd) {
   return(br)
 }
 
-branch_prob <- function(src, dest) {
+branch_log_lh <- function(src, dest) {
   edges <- pre$edges.df
   nodes <- pre$nodes.df
   out <- 0
@@ -180,19 +180,21 @@ proposal.cond_lh <- function(x_cand, x_prev, it){
   out <- 0
 
   if (it %% 2) {
-    out <- sum(dnorm(rates_cand, rates_prev, 1, log=TRUE)) + 
-           sum(dnorm(K_cand, K_prev, 1, log=TRUE)) +
-           sum(dnorm(N_cand, N_cand, 1, log=TRUE))
+    out <- sum(dnorm(rates_cand, mean=rates_prev, 1, log=TRUE)) + 
+           sum(dnorm(K_cand, mean=K_prev, 1, log=TRUE)) +
+           sum(dnorm(N_cand, mean=N_prev, 1, log=TRUE))
   } else {
-    out <- sum(sapply(c(1:length(div.branch_cand)), function (x) branch_prob(div.branch_prev[x], div.branch_cand[x]))) +
-           sum(dnorm(div.times_cand, mean=div.times_prev, 10))
+    out <- sum(dnorm(div.times_cand, mean=div.times_prev, 10, log=TRUE)) +
+           sum(sapply(c(1:length(div.branch_cand)), function (x) branch_log_lh(div.branch_prev[x], div.branch_cand[x])))
+           
 
   }
   return(out)
 }
 
-n_it <- 10000
-burn_in <-1
+n_it <- 100000
+burn_in <- 1
 
-o <- run_mcmc(log_lh, proposal.cond_lh, prop.sampler, x_0, n_it, TRUE)
-o.df <- as.data.frame(t(as.data.frame(o)))
+o <- run_mcmc(log_lh, proposal.cond_lh, prop.sampler, x_0, n_it, FALSE)
+#o.df <- as.data.frame(t(as.data.frame(o)))
+branches <- sapply(c(1:length(o)), function (i) o[[i]][[5]])
