@@ -172,7 +172,7 @@ plot_structured_tree <- function(tree, n_lineages){
 
     lineages <- lapply(c(1:n_lineages), function (x) labs[grep(paste0("[N,X,S]_",LETTERS[x]), labs)])
 
-    lin_names <- c(sapply(c(1:n_lineages) function (x) paste0("expansion ",x)), "neutral")
+    lin_names <- c(sapply(c(1:n_lineages), function (x) paste0("expansion ",x)), "neutral")
 
     lineage_labs <- unlist(lineages)
     membership <- unlist(lapply(c(1:length(lineages)), function (x) rep(lin_names[x], length(lineages[[x]]))))

@@ -1,0 +1,95 @@
+\documentclass{report}
+
+% set font encoding for PDFLaTeX, XeLaTeX, or LuaTeX
+\usepackage{ifxetex,ifluatex}
+
+\if\ifxetex T\else\ifluatex T\else F\fi\fi T%
+  \usepackage{fontspec}
+\else
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{lmodern}
+\fi
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{bm}
+\usepackage{bbm}
+\usepackage{mathtools}
+\usepackage{physics}
+
+\usepackage{enumitem}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
+
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,}
+
+\usepackage[parfill]{parskip}
+\usepackage{lipsum}
+\usepackage[export]{adjustbox}
+\usepackage{listings}
+
+\usepackage{xparse} 
+\usepackage{subfig} 
+\usepackage{xparse} 
+\usepackage{float}
+
+\usepackage[sorting=none]{biblatex} 
+
+%%%%%This is an image table command, can likely be deleted
+\newcommand{\subf}[2]{
+
+%
+{\small 
+\begin{tabular}
+  [t]{@{}c@{}} #1\ 
+  \#2 
+\end{tabular}
+}
+
+%
+} 
+
+\makeatletter
+\renewcommand*\env@matrix[1][c]{\hskip -\arraycolsep
+  \let\@ifnextchar\new@ifnextchar
+  \array{*\c@MaxMatrixCols #1}}
+\makeatother
+%%%%%% Tensor Product
+\NewDocumentCommand{\tens}{e{_^}}{ 
+\mathbin{\mathop{\otimes}\displaylimits \IfValueT{#1}{_{#1}} \IfValueT{#2}{^{#2}} }}
+%%%%%% Add \R Reals
+\newcommand{\R}{\mathbb{R}} 
+\newcommand{\N}{\mathbb{N}} 
+\newcommand{\Z}{\mathbb{Z}} 
+%%%%%% Missing citation warn
+\newcommand{\CITEMISSING}{\colorbox{BurntOrange}{CITE ME}}
+%%%%%% Add \theorem float
+\newtheorem{theorem}{Theorem}
+%%%%%% Add \definition float
+\theoremstyle{definition} 
+\newtheorem{definition}{Definition}[section]
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%Uncomment to add citation library 
+\bibliography{lib} 
+\title{Notes}
+\author{David Helekal}
+\begin{document}
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+\chapter{Introduction}
+In epidemiology, it is often desired to be able to reconstruct the history of a pathogen population and it's structure. The problem of reconstructing the hisotry of a pathogen population can be tackles using phylodynamics. Phylodynamics utilises genomic data to assemble phylogenies, which are then used to infer the population size history. This is possible by viewing a phylogeny as a realisation of a coalescent process, in which the rates are dependent on the total population. This claim can be justified by viewing the coalescent as a Moran model, run backwards in time with the time rate equal to the population size.\\
+Within this report we will first introduce the coalescent process for phylodynamic inference, review it's inhomogenous generalisation, and finally introduce the main result of this work, a new model capable of doing local phylodynamic inference, i.e. on a subset of the whole population capable of detecting and modelling clonal expansions.\\
+Clonal expansions are a process in which a particular subsest of a given bacterial strain undergoes explosive population growth that can be traced back to a particular individual \cite{smith_how_1993}. The presence of clonal expansions in bacterial populations have been of long-standing interest and is implicated in epidemic processes, were an outbreak can be traced to a single ancestor \cite{smith_how_1993,spratt_displaying_2004,fraser_neutral_2005,ledda_re-emergence_2017}. This often happens when a particular strain or individual obtains a variant of a particular gene that confers evolutionary advantange, for example, antibiotic resistance \cite{holden_genomic_2013,hsu_evolutionary_2015, ledda_re-emergence_2017}.\\
+The presence of clonal expansions leaves an imprint in the overall population structure of a given bacterial strain, the particular topology associated with this often being referred to as star-like \cite{smith_how_1993,spratt_displaying_2004}.
+The problem of detecting hidden population structure corresponding to clonal expansions has become a problem of interest in epidemiology and outbreak surveillance \cite{volz_identification_nodate}.\\
+While methods to detect inhomogeneities in the population structure and size have been of interest since the early days of genetic sequencing \cite{smith_how_1993,spratt_displaying_2004}, the interest in the problem increased with whole genome sequencing becoming more accessible and affordable \cite{holden_genomic_2013,dearlove_measuring_2015,eldholm_four_2015}.\\
+Despite the problems of inferring population size from a genealogy and detecting heterogeneities in the population size of the entire population being intrinsically tied, all but one method \cite{volz_identification_nodate}, to our knowledge, rely either on manual detection or indirect detection. We aim to propose a simulation for the formation of clonal expansions in genealogy using the structured coalescent process, and devise a fully bayesian method for joint estimation and detection of relative population size and clonal expansions.
+\chapter{Bibliography}
+\printbibliography
+\end{document}

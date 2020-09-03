@@ -7,20 +7,21 @@ library(viridis)
 
 set.seed(1)
     
-    sam <- runif(100, 0, 10)
+    sam <- runif(40, 0, 10)
+    n <- length(sam)
 
     tmax <- max(sam)
 
     sam <- sam - tmax
     sam <- sam[order(-sam)]
     
-    colours <- trunc(runif(100, 1, 4))
+    colours <- trunc(runif(n, 1, 4))
 
-    N <- rexp(n, rate = 100)
-    A <- rexp(n, rate = 10)
-    K <- rexp(n, rate = 100)
+    N <- rexp(1, rate = 1/100)
+    A <- rexp(2, rate = 1/10)
+    K <- rexp(2, rate = 1/100)
 
-    div_times <- c(-1*runif(2,5,50), -Inf)
+    div_times <- c(-1*runif(2,15,70), -Inf)
     div_cols <- c(1, 2, 3)
     rates <- list(function (s) sat.rate(s, K[1], A[1], div_times[1]), function (s) sat.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
     rate.ints <- list(function(t,s) sat.rate.int(t, s, K[1], A[1], div_times[1]), function(t,s) sat.rate.int(t, s, K[2], A[2], div_times[2]), function(t,s) constant.rate.int(t,s,N))
@@ -66,7 +67,7 @@ set.seed(1)
 
     times.nodiv <- node.depth.edgelength(tree.nodiv)
     times.nodiv <- times.nodiv-max(times.nodiv)
-    times.nodiv <- times.nodiv[101:length(times.nodiv)]
+    times.nodiv <- times.nodiv[(n+1):length(times.nodiv)]
     times.ord <- order(-times.nodiv)
     times.nodiv <- times.nodiv[times.ord]
 
@@ -74,7 +75,7 @@ set.seed(1)
     MRCAs<- sapply(MRCAs.idx, function (x) tree.nodiv$node.label[times.ord[x]])
 
     pre <- structured_coal.preprocess_phylo(tree.nodiv)
-    lh.comp <-  structured_coal.likelihood(pre, MRCAs, div_times-4, A, K, N, type="Sat")
+    lh.comp <-  structured_coal.likelihood(pre, MRCAs, div_times, A, K, N, type="Sat")
 
     print(lh.comp)
 

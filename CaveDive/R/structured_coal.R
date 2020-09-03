@@ -163,7 +163,7 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
             }
         }
     }
-    return(list(times=coalescent_times, colours=coalescent_cols, div_from=div_from, log_lh=log_lh, lh_ctr = lh_ctr))
+    return(list(times=coalescent_times, colours=coalescent_cols, div_from=div_from, log_lh=log_lh))
 }
 
 #' Preprocess phylogeny to speed up likelihood computation
@@ -180,21 +180,35 @@ structured_coal.preprocess_phylo <- function(phy){
     times <- times - max(times)
     times <- times[nodes]
 
+    t_min <- min(times)
+    t_max <- max(times)
+
     edges.parent <- phy$edge[,1]
     edges.child <- phy$edge[,2]
     edges.len <- phy$edge.length
 
-    children <- sapply(nodes, function (x) edges.df$node.child[which(edges.df$node.parent==x)])
-
-    nodes.df <- data.frame(id=nodes, times=times, is_tip=is_tip, children = children)
-    edges.df <- data.frame(node.parent=edges.parent, node.child=edges.child, length=edges.len)
+    nodes.df <- data.frame(id=nodes, times=times, is_tip=is_tip)#, children=children)
+    edges.df <- data.frame(node.parent=edges.parent, node.child=edges.child, length=edges.len, id=c(1:length(edges.parent)))
 
     nodes.df <- nodes.df[order(nodes.df$id), ]
-    edges.df <- edges.df[order(edges.df$node.child), ]
+    edges.df <- edges.df[order(edges.df$id), ]
+
+    edges.outgoing <- lapply(nodes.df$id, function (x) edges.df$id[which(edges.df$node.parent==x)])
+    edges.outgoing <- lapply(edges.outgoing, function (x) if (length(x) > 0) x else NA)
+    edges.incoming <- lapply(nodes.df$id, function (x) edges.df$id[which(edges.df$node.child==x)])
+    edges.incoming <- lapply(edges.incoming, function (x) if (length(x) > 0) x else NA)
 
     clades.list <- lapply(nodes.df$id[which(nodes.df$is_tip==FALSE)], function(x) extract.clade(phy, x))
 
-    return(list(phy=phy, nodes.df = nodes.df, edges.df = edges.df, clades.list = clades.list, n_tips=length(phy$tip.label)))
+    return(list(phy=phy,
+                nodes.df = nodes.df,
+                edges.df = edges.df,
+                clades.list = clades.list, 
+                n_tips = length(phy$tip.label), 
+                incoming = edges.incoming,
+                outgoing = edges.outgoing,
+                t_min = t_min, 
+                t_max = t_max))
 }
 
 #' Compute likelihood for preprocessed phylogeny 
@@ -214,26 +228,30 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.t
     subtrees <- lapply(c(1:length(div.MRCA.nodes)), function (x) phylo.preprocessed$clades.list[[MRCA.idx[x]]]) 
     k_div <- length(subtrees)
     log_lh <- 0
-
-
     times <- extract_lineage_times(phylo.preprocessed, subtrees, div.MRCA.nodes, div.times)
 
-    t_max <- max(sapply(c(1:length(times$sam.times)),function (x) max(times$sam.times[[x]])))
+    if(times$empty_tips) {
+        warning("MRCA selection produced subtrees with empty tips.")
+        log_lh <- -Inf
+    } else {
 
-    for (i in c(1:(k_div-1))){
-        if (type == "Log-Exp") {
-                log_lh <- log_lh + logexp_coalescent_loglh(times$sam.times[[i]], times$coal.times[[i]], div.times[i], diverging.rates[i], diverging.sizes[i], t_max)
-            } else if (type=="Sat") {
-                log_lh <- log_lh + sat_coalescent_loglh(times$sam.times[[i]], times$coal.times[[i]], div.times[i], diverging.rates[i], diverging.sizes[i], t_max)
-            } else {
-                warning(paset0("Unrecognised likelihood option: ", type))
-                return(NA)
-            }
-        
+        t_max <- max(sapply(c(1:length(times$sam.times)),function (x) max(times$sam.times[[x]])))
+
+        for (i in c(1:(k_div-1))){
+            if (type == "Log-Exp") {
+                    log_lh <- log_lh + logexp_coalescent_loglh(times$sam.times[[i]], times$coal.times[[i]], div.times[i], diverging.rates[i], diverging.sizes[i], t_max)
+                } else if (type=="Sat") {
+                    log_lh <- log_lh + sat_coalescent_loglh(times$sam.times[[i]], times$coal.times[[i]], div.times[i], diverging.rates[i], diverging.sizes[i], t_max)
+                } else {
+                    warning(paset0("Unrecognised likelihood option: ", type))
+                    return(NA)
+                }
+            
+        }
+        log_lh <- log_lh + coalescent_loglh(times$sam.times[[k_div]], times$coal.times[[k_div]], neutral.size, t_max)
     }
-    log_lh <- log_lh + coalescent_loglh(times$sam.times[[k_div]], times$coal.times[[k_div]], neutral.size, t_max)
 
-    return(list(log_lh=log_lh, sam.times = times$sam.times, coal.times=times$coal.times))
+    return(list(log_lh = log_lh, sam.times = times$sam.times, coal.times = times$coal.times))
 }
 
 #' Extracts Lineage times from a parent phylogeny based on provided divergence MRCA nodes and times. 
@@ -249,6 +267,8 @@ extract_lineage_times <- function(phylo.preprocessed, subtrees, div.MRCA.nodes, 
 
     coal.times <- list()
     sam.times <- list()
+
+    empty_tips <- FALSE
     
     for (i in c(1:k_div)) {
         ii <- times.ord[i]
@@ -266,14 +286,19 @@ extract_lineage_times <- function(phylo.preprocessed, subtrees, div.MRCA.nodes, 
             }
         }
 
+        tip.times <- phylo.preprocessed$nodes.df$times[nodeid(phylo.preprocessed$phy, leaf.labs)]
 
-        leaf.times <- c(leaf.times, phylo.preprocessed$nodes.df$times[nodeid(phylo.preprocessed$phy, leaf.labs)])
+        if (length(tip.times)==0) {
+            empty_tips <- TRUE
+        }
+
+        leaf.times <- c(leaf.times, tip.times)
         node.times <- phylo.preprocessed$nodes.df$times[nodeid(phylo.preprocessed$phy, node.labs)]
 
         sam.times[[ii]] <- leaf.times[order(-leaf.times)]
         coal.times[[ii]] <- node.times[order(-node.times)]
     }
-    return(list(sam.times=sam.times, coal.times=coal.times))
+    return(list(sam.times=sam.times, coal.times=coal.times, empty_tips=empty_tips))
 }
 
 choose_reaction <- function(rates) {
@@ -312,7 +337,7 @@ inv_rates <- function(func, N, dfun=NULL){
         }
 
         if (sign(f(hi*(10^(min_hi)))) == sg) {
-            warning(paste0("Cannot find initial bisection search interval. ", "min_lo: ", min_lo, " min_hi: ", min_hi))
+            warning(paste0("Cannot find initial bisection search interval. ", "min_lo: ", 0, " min_hi: ", min_hi))
         }
 
 

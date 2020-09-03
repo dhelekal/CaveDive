@@ -308,6 +308,32 @@ test_that("Coalescent Tree matches precomputed tree", {
 })
 
 context("Structured Coalescent")
+test_that("structured_coal.preprocess_phylo works", {
+    set.seed(1)
+    
+    sam <- runif(100, 0, 10)
+    tmax <- max(sam)
+    sam <- sam - tmax
+    sam <- sam[order(-sam)]
+    colours <- trunc(runif(100, 1, 4))
+    
+    N <- 100
+    A <- c(5.1, 0.3)
+    K <- c(100,100)
+
+    div_times <- c(-25, -80, -Inf)
+    div_cols <- c(1, 2, 3)
+    rates <- list(function (s) sat.rate(s, K[1], A[1], div_times[1]), function (s) sat.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
+    rate.ints <- list(function(t,s) sat.rate.int(t, s, K[1], A[1], div_times[1]), function(t,s) sat.rate.int(t, s, K[2], A[2], div_times[2]), function(t,s) constant.rate.int(t,s,N))
+
+    co <- structured_coal.simulate(sam, colours, div_times, div_cols, rates, rate.ints)
+
+    tr.nodiv <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from, include_div_nodes = FALSE)
+    tree.nodiv <- read.tree(text = tr.nodiv$full)
+
+    pre <- structured_coal.preprocess_phylo(tree.nodiv)
+  })
+
 test_that("extract_lineage_times works", {
     set.seed(1)
     
@@ -318,13 +344,13 @@ test_that("extract_lineage_times works", {
     colours <- trunc(runif(100, 1, 4))
     
     N <- 100
-    A <- c(1.1, 0.3)
-    K <- c(100,150)
+    A <- c(5.1, 0.3)
+    K <- c(100,100)
 
-    div_times <- c(-25, -40, -Inf)
+    div_times <- c(-25, -80, -Inf)
     div_cols <- c(1, 2, 3)
-    rates <- list(function (s) half_log.rate(s, K[1], A[1], div_times[1]), function (s) half_log.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
-    rate.ints <- list(function(t,s) half_log.rate.int(t, s, K[1], A[1], div_times[1]), function(t,s) half_log.rate.int(t, s, K[2], A[2], div_times[2]), function(t,s) constant.rate.int(t,s,N))
+    rates <- list(function (s) sat.rate(s, K[1], A[1], div_times[1]), function (s) sat.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
+    rate.ints <- list(function(t,s) sat.rate.int(t, s, K[1], A[1], div_times[1]), function(t,s) sat.rate.int(t, s, K[2], A[2], div_times[2]), function(t,s) constant.rate.int(t,s,N))
 
     co <- structured_coal.simulate(sam, colours, div_times, div_cols, rates, rate.ints)
 
@@ -359,73 +385,6 @@ test_that("extract_lineage_times works", {
 })
 
 test_that("Simulation Likelihood matches product of colour specific likelihoods", {
-    set.seed(1)
-    
-    sam <- runif(100, 0, 10)
-    tmax <- max(sam)
-    sam <- sam - tmax
-    sam <- sam[order(-sam)]
-    colours <- trunc(runif(100, 1, 4))
-    
-    N <- 100
-    A <- c(0.7, 0.3)
-    K <- c(100,150)
-
-    div_times <- c(-25, -40, -Inf)
-    div_cols <- c(1, 2, 3)
-    rates <- list(function (s) half_log.rate(s, K[1], A[1], div_times[1]), function (s) half_log.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
-    rate.ints <- list(function(t,s) half_log.rate.int(t, s, K[1], A[1], div_times[1]), function(t,s) half_log.rate.int(t, s, K[2], A[2], div_times[2]), function(t,s) constant.rate.int(t,s,N))
-
-    co <- structured_coal.simulate(sam, colours, div_times, div_cols, rates, rate.ints)
-
-    tr.nodiv <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from, include_div_nodes = FALSE)
-    tree.nodiv <- read.tree(text = tr.nodiv$full)
-    
-    times.nodiv <- node.depth.edgelength(tree.nodiv)
-    times.nodiv <- times.nodiv-max(times.nodiv)
-    times.nodiv <- times.nodiv[101:length(times.nodiv)]
-    times.ord <- order(-times.nodiv)
-    times.nodiv <- times.nodiv[times.ord]
-
-    MRCAs.idx <- sapply(c(1:3), function (x) (which(co$colours==x)[which.min(times.nodiv[which(co$colours==x)])])) 
-    MRCAs <- sapply(MRCAs.idx, function (x) tree.nodiv$node.label[times.ord[x]])
-
-    pre <- structured_coal.preprocess_phylo(tree.nodiv)
-    comp <- structured_coal.likelihood(pre, MRCAs, div_times, A, K, N)
-    log_lh <- 0
-    for (i in div_cols){
-      sam.gt <- sam[which(colours==i)]
-      coal.gt  <- co$times[which(co$colours==i)]
-
-      for (j in c(1:length(co$div_from))) {
-        if (co$div_from[j]==i) {
-          sam.gt <- c(sam.gt, div_times[j])
-        }
-      }
-
-
-      sam.gt <- sam.gt[order(-sam.gt)]
-      coal.gt <- coal.gt[order(-coal.gt)]
-
-      expect_equal(sam.gt, comp$sam.times[[i]])
-      expect_equal(coal.gt, comp$coal.times[[i]])
-      if (i < length(div_cols)){
-        log_lh <- log_lh + logexp_coalescent_loglh(sam.gt, coal.gt, div_times[i], A[i], K[i], 0)
-        expect_equal(logexp_coalescent_loglh(sam.gt, coal.gt, div_times[i], A[i], K[i], 0), 
-                      logexp_coalescent_loglh(comp$sam.times[[i]], comp$coal.times[[i]], div_times[i], A[i], K[i], 0))
-      } else {
-        log_lh <- log_lh + coalescent_loglh(sam.gt, coal.gt, N, 0)
-      }
-
-    }
-
-
-    expect_equal(log_lh, co$log_lh)
-    expect_equal(comp$log_lh, co$log_lh)
-
-})
-
-test_that("Simulation Likelihood matches product of colour specific likelihoods2", {
     set.seed(1)
     
     sam <- runif(100, 0, 10)
