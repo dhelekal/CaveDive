@@ -198,3 +198,5 @@ burn_in <- 1
 o <- run_mcmc(log_lh, proposal.cond_lh, prop.sampler, x_0, n_it, FALSE)
 #o.df <- as.data.frame(t(as.data.frame(o)))
 branches <- sapply(c(1:length(o)), function (i) o[[i]][[5]])
+h<-table(branches[1,burn_in:n_it])
+freq<-sapply(as.integer(unlist(dimnames(h))), function (i) h[toString(i)]/pre$edges.df$length[i]) 
