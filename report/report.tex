@@ -83,6 +83,7 @@
 \tableofcontents
 \newpage
 \chapter{Introduction}
+\section{Motivation}
 In epidemiology, it is often desired to be able to reconstruct the history of a pathogen population and it's structure. The problem of reconstructing the hisotry of a pathogen population can be tackles using phylodynamics. Phylodynamics utilises genomic data to assemble phylogenies, which are then used to infer the population size history. This is possible by viewing a phylogeny as a realisation of a coalescent process, wit appropriately rescaled time. This claim can be justified by viewing the coalescent as a Moran model, run backwards in time with the time rate equal to the population size \cite{griffiths_sampling_1994}.\\
 Within this report we will first introduce the coalescent process for phylodynamic inference, review it's inhomogenous generalisation, and finally introduce the main result of this work, a new model capable of doing local phylodynamic inference, i.e. on a subset of the whole population capable of detecting and modelling clonal expansions.\\
 Clonal expansions are a process in which a particular subsest of a given bacterial strain undergoes explosive population growth that can be traced back to a particular individual \cite{smith_how_1993}. The presence of clonal expansions in bacterial populations have been of long-standing interest and is implicated in epidemic processes, were an outbreak can be traced to a single ancestor \cite{smith_how_1993,spratt_displaying_2004,fraser_neutral_2005,ledda_re-emergence_2017}. This often happens when a particular strain or individual obtains a variant of a particular gene that confers evolutionary advantange, for example, antibiotic resistance \cite{holden_genomic_2013,hsu_evolutionary_2015, ledda_re-emergence_2017}.\\
@@ -90,23 +91,28 @@ The presence of clonal expansions leaves an imprint in the overall population st
 The problem of detecting hidden population structure corresponding to clonal expansions has become a problem of interest in epidemiology and outbreak surveillance \cite{volz_identification_nodate}.\\
 While methods to detect inhomogeneities in the population structure and size have been of interest since the early days of genetic sequencing \cite{smith_how_1993,spratt_displaying_2004}, the interest in the problem increased with whole genome sequencing becoming more accessible and affordable \cite{holden_genomic_2013,dearlove_measuring_2015,eldholm_four_2015}.\\
 Despite the problems of inferring population size from a genealogy and detecting heterogeneities in the population size of the entire population being intrinsically tied, all but one method \cite{volz_identification_nodate}, to our knowledge, rely either on manual detection or indirect detection. We aim to propose a simulation for the formation of clonal expansions in genealogy using the structured coalescent process, and devise a fully bayesian method for joint estimation and detection of relative population size and clonal expansions.
+\section{Existing Work}
+\subsection{Phylodynamic Methods}
+Kingman's Coalescent is a continuous time markov chain stochastic process, defined on the statespace ${1,2,3, ... ,K}$ which can be interpreted as a set of a particles, where each pair of particles independently coalesces at a constant rate. This gives transition rates:
+\begin{gather}
+g(j, j-1) = \binom{j}{2}\lambda\quad\lambda\in\R^+
+\end{gather}
+\cite{kingman_coalescent_1982}\\
+By taking a backwards in time approximation of the Wright-Fisher model, the coalescent process can be modified to model evolution of genealogies, i.e. how do the ancestors of a set of individuals relate to each other backwards in time. Denote the relative population size at time $t$ by $\alpha(t)$. Under such modification the transition rates become:
+\begin{gather}
+g(j, j-1) = \binom{j}{2}\cdot\frac{1}{\alpha(t)}
+\end{gather}
+\cite{griffiths_sampling_1994}\\
+One way to interpret this is as a rescaling of time inversely proportional to the population size under Wright-Fisher model \cite{hein_gene_2004}.\\
+As the transition rates depend on the relative population size, it is possible to utilise this model for the inverse problem of determining the history of the size of a population, based on genealogies reconstructed from genomic samples.
+Such methods are often referred to as SkyGrid methods, have been first introduced in \cite{pybus_integrated_2000} and \cite{drummond_estimating_2002}.\\
+The framework has then been extended to allow for piecewise continuous population size functions, referred to as SkyGrid \cite{gill_improving_2013} and to include covariates \cite{gill_understanding_2016}.
+\subsection{Local Phylodynamics}
+
 \chapter{Methods}
 \section{Coalescent Preliminaries}
-We shall begin with an overview of the standard Kingman's Coalescent process\cite{kingman_coalescent_1982}. This process is often used to characterise evolutionary histories of populations \cite{drummond_estimating_2002,hein_gene_2004,ho_skyline-plot_2011}.
-The coalescent is a CTMC defined on the set $\{1 ... n\}$, parametrised via the coalescent rate, in our case $1/Neg(t)$, where $g$ is a scale parameter and $Neg(t)$ the effective population size at time $t$ \cite{drummond_estimating_2002,hein_gene_2004}. Define $\alpha = Neg$.\\
-The transition rates of the rescaled (phylogenetic) coalescent process are given by 
-\begin{gather*}
-\lambda(j, j-1) = \binom{j}{2}\cdot\frac{1}{\alpha(t)}
-\end{gather*}
-The waiting times in the homogenous case are exponentially distributed
-\begin{gather*}
-P[W_j \leq s] = 1-\exp(-s\frac{\binom{j}{2}}{\alpha(t)})
-\end{gather*}
-Furthermore, the waiting times for individual coalescent events, conditioned on being less than the time between two consecutive sampling events $\Delta t$ are distributed as follows
-\begin{gather}\label{eq:conditional}
-P[W_j \leq s\mid W_j \leq \Delta t ] = \frac{P[W_j \leq s]}{P[W_j \leq \Delta t]} \quad\forall s \leq \Delta t
-\end{gather}
-In the case of time-inhomogenous effective population size, the waiting times can be derived as follows:
+This process is a time-inhomogenous pure-death markov process, as such we conduct and re-derive the following propoerties.\\
+The waiting times can be derived as follows.
 For an inhomogenous CTMC, let $E_j(t)$ be the total exit rate from state $j$ at time $t$.
 By the markov property individual exit events from a given state only depend on the state and given time, i.e. they form a time-inhomogenous poisson process.
 As such the probability of no events in an interval $[t,t+s]\quad s\in \R^+$ is 
@@ -129,14 +135,6 @@ Furthermore the above relation holds iff no exit event have occured in the time 
 In the case of phylodynamic coalescent this becomes
 \begin{gather}
 P[W_j(t) \leq s] = 1 - \exp(-\int_0^{s}\frac{\binom{j}{2}}{\alpha(t+\tau)}d\tau)
-\end{gather}
-Note, the waiting times are still memoryless:
-\begin{gather}
-P\left[W_j(t) > s+u\mid W_j(t)>s \right] = P\left[W_j(t) > s+u\mid X(s)=j\right]
-\end{gather}
-By markov property
-\begin{gather}
-P\left[W_j(t) > s+u\mid X(s)=j\right] = P\left[W_j(t+s) > u\right]
 \end{gather}
 \section{Inhomogenous Coalescent}
 \subsection{Exponential Growth}
