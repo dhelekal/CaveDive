@@ -30,7 +30,7 @@ tree.div.str <- build_coal_tree.structured(sam, co$times, colours, co$colours, d
 tree.div <- read.tree(text = tree.div.str$full)
 tree.plt <- plot_structured_tree(tree.div, 3)
 
-pdf(file="tree_strucutred.pdf")
+pdf(file="tree_structured.pdf")
 plot(tree.plt)
 dev.off()
 
