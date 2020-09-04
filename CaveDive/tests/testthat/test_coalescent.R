@@ -332,6 +332,10 @@ test_that("structured_coal.preprocess_phylo works", {
     tree.nodiv <- read.tree(text = tr.nodiv$full)
 
     pre <- structured_coal.preprocess_phylo(tree.nodiv)
+
+    expect_equal(all(sapply(pre$edges.df$id,
+                function(i) pre$nodes.df$times[pre$edges.df$node.child[i]]>pre$nodes.df$times[pre$edges.df$node.parent[i]])),
+                TRUE)
   })
 
 test_that("extract_lineage_times works", {
