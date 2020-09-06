@@ -93,7 +93,7 @@ While methods to detect inhomogeneities in the population structure and size hav
 Despite the problems of inferring population size from a genealogy and detecting heterogeneities in the population size of the entire population being intrinsically tied, all but one method \cite{volz_identification_nodate}, to our knowledge, rely either on manual detection or indirect detection. We aim to propose a simulation for the formation of clonal expansions in genealogy using the structured coalescent process, and devise a fully bayesian method for joint estimation and detection of relative population size and clonal expansions.
 \section{Existing Work}
 \subsection{Phylodynamic Methods}
-Kingman's Coalescent is a continuous time markov chain stochastic process, defined on the statespace ${1,2,3, ... ,K}$ which can be interpreted as a set of a particles, where each pair of particles independently coalesces at a constant rate. This gives transition rates:
+Kingman's Coalescent is a continuous time markov chain stochastic process, defined on the statespace ${1,2,3, ... ,K}$ which can be interpreted as a set of $j$ particles, where each pair of particles independently coalesces at a constant rate. This gives transition rates:
 \begin{gather}
 g(j, j-1) = \binom{j}{2}\lambda\quad\lambda\in\R^+
 \end{gather}
@@ -108,10 +108,10 @@ As the transition rates depend on the relative population size, it is possible t
 Such methods are often referred to as SkyGrid methods, have been first introduced in \cite{pybus_integrated_2000} and \cite{drummond_estimating_2002}.\\
 The framework has then been extended to allow for piecewise continuous population size functions, referred to as SkyGrid \cite{gill_improving_2013} and to include covariates \cite{gill_understanding_2016}.
 \subsection{Local Phylodynamics}
-
+Whereas phylodynamics considers the size history of an entire population, the idea behind local phylodynamics is to consider the histories of selected subsets of related individuals, where each subset can be traced to a single ancestor. This can for example be practical when trying to detect hidden outbreaks, or clonal expansions due to a particular strain of a bacteria gaining a fitness advantage. This idea has been investigated in \cite{volz_identification_nodate}, where a null hypothesis based testing framework is developed to identify subsets of individuals that seem to have a significantly different opulation history than the the rest of the phylogeny. Recently, a birth-death type model that allows for heterogenous growth rate parameters has been introduced in \cite{barido-sottani_multitype_2020}.
 \chapter{Methods}
 \section{Coalescent Preliminaries}
-This process is a time-inhomogenous pure-death markov process, as such we conduct and re-derive the following propoerties.\\
+The coalescemt process can be characterised as a time-inhomogenous pure-death markov process. We now conduct a brief analysis of the process and re-derive some properties.\\
 The waiting times can be derived as follows.
 For an inhomogenous CTMC, let $E_j(t)$ be the total exit rate from state $j$ at time $t$.
 By the markov property individual exit events from a given state only depend on the state and given time, i.e. they form a time-inhomogenous poisson process.
