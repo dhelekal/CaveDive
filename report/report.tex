@@ -75,8 +75,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%Uncomment to add citation library 
 \bibliography{lib} 
-\title{Notes}
-\author{David Helekal}
+\title{Bayesian Local Phylodynamics for Outbreak Detection}
+\author{David Helekal, Xavier Didelot}
 \begin{document}
 \maketitle
 \newpage
@@ -84,9 +84,9 @@
 \newpage
 \chapter{Introduction}
 \section{Motivation}
-In epidemiology, it is often desired to be able to reconstruct the history of a pathogen population and it's structure. The problem of reconstructing the hisotry of a pathogen population can be tackles using phylodynamics. Phylodynamics utilises genomic data to assemble phylogenies, which are then used to infer the population size history. This is possible by viewing a phylogeny as a realisation of a coalescent process, wit appropriately rescaled time. This claim can be justified by viewing the coalescent as a Moran model, run backwards in time with the time rate equal to the population size \cite{griffiths_sampling_1994}.\\
-Within this report we will first introduce the coalescent process for phylodynamic inference, review it's inhomogenous generalisation, and finally introduce the main result of this work, a new model capable of doing local phylodynamic inference, i.e. on a subset of the whole population capable of detecting and modelling clonal expansions.\\
-Clonal expansions are a process in which a particular subsest of a given bacterial strain undergoes explosive population growth that can be traced back to a particular individual \cite{smith_how_1993}. The presence of clonal expansions in bacterial populations have been of long-standing interest and is implicated in epidemic processes, were an outbreak can be traced to a single ancestor \cite{smith_how_1993,spratt_displaying_2004,fraser_neutral_2005,ledda_re-emergence_2017}. This often happens when a particular strain or individual obtains a variant of a particular gene that confers evolutionary advantange, for example, antibiotic resistance \cite{holden_genomic_2013,hsu_evolutionary_2015, ledda_re-emergence_2017}.\\
+In epidemiology, it is often desired to be able to reconstruct the history of a pathogen population and it's structure. The problem of reconstructing the history of a pathogen population can be tackles using phylodynamics. Phylodynamics utilises genomic data to assemble phylogenies, which are then used to infer the population size history. This is possible by viewing a phylogeny as a realisation of a coalescent process, wit appropriately rescaled time. This claim can be justified by viewing the coalescent as a Moran model, run backwards in time with the time rate equal to the population size \cite{griffiths_sampling_1994}.\\
+Within this report we will first introduce the coalescent process for phylodynamic inference, review it's inhomogeneous generalisation, and finally introduce the main result of this work, a new model capable of doing local phylodynamic inference, i.e. on a subset of the whole population capable of detecting and modeling clonal expansions.\\
+Clonal expansions are a process in which a particular subset of a given bacterial strain undergoes explosive population growth that can be traced back to a particular individual \cite{smith_how_1993}. The presence of clonal expansions in bacterial populations have been of long-standing interest and is implicated in epidemic processes, were an outbreak can be traced to a single ancestor \cite{smith_how_1993,spratt_displaying_2004,fraser_neutral_2005,ledda_re-emergence_2017}. This often happens when a particular strain or individual obtains a variant of a particular gene that confers evolutionary advantage, for example, antibiotic resistance \cite{holden_genomic_2013,hsu_evolutionary_2015, ledda_re-emergence_2017}.\\
 The presence of clonal expansions leaves an imprint in the overall population structure of a given bacterial strain, the particular topology associated with this often being referred to as star-like \cite{smith_how_1993,spratt_displaying_2004}.
 The problem of detecting hidden population structure corresponding to clonal expansions has become a problem of interest in epidemiology and outbreak surveillance \cite{volz_identification_nodate}.\\
 While methods to detect inhomogeneities in the population structure and size have been of interest since the early days of genetic sequencing \cite{smith_how_1993,spratt_displaying_2004}, the interest in the problem increased with whole genome sequencing becoming more accessible and affordable \cite{holden_genomic_2013,dearlove_measuring_2015,eldholm_four_2015}.\\
@@ -94,7 +94,7 @@ Despite the problems of inferring population size from a genealogy and detecting
 \section{Existing Work}
 \subsection{Phylodynamic Methods}
 A phylogeny is a labeled tree, where leaf nodes correspond to sampling events, and internal nodes to the divergence of two separate lineages from a common ancestor. Branch length labels correspond to time. As such a phylogeny can be viewed as a realisation of Kingman's Coalescent process which shall now be introduced, and the justification behind why viewing a phylogeny as its realisation briefly outlined.\\
-Kingman's Coalescent is a continuous time markov chain stochastic process, defined on the statespace ${1,2,3, ... ,K}$ which can be interpreted as a set of $j$ particles, where each pair of particles independently coalesces at a constant rate. This gives transition rates:
+Kingman's Coalescent is a continuous time markov chain stochastic process, defined on the state space ${1,2,3, ... ,K}$ which can be interpreted as a set of $j$ particles, where each pair of particles independently coalesces at a constant rate. This gives transition rates:
 \begin{gather}
 g(j, j-1) = \binom{j}{2}\lambda\quad\lambda\in\R^+
 \end{gather}
@@ -109,13 +109,13 @@ As the transition rates depend on the relative population size, it is possible t
 Such methods are often referred to as SkyGrid methods, have been first introduced in \cite{pybus_integrated_2000} and \cite{drummond_estimating_2002}.\\
 The framework has then been extended to allow for piecewise continuous population size functions, referred to as SkyGrid \cite{gill_improving_2013} and to include covariates \cite{gill_understanding_2016}.
 \subsection{Local Phylodynamics}
-Whereas phylodynamics considers the size history of an entire population, the idea behind local phylodynamics is to consider the histories of selected subsets of related individuals, where each subset can be traced to a single ancestor. This can for example be practical when trying to detect hidden outbreaks, or clonal expansions due to a particular strain of a bacteria gaining a fitness advantage. This idea has been investigated in \cite{volz_identification_nodate}, where a null hypothesis based testing framework is developed to identify subsets of individuals that seem to have a significantly different opulation history than the the rest of the phylogeny. Recently, a birth-death type model that allows for heterogenous growth rate parameters has been introduced in \cite{barido-sottani_multitype_2020}.
+Whereas phylodynamics considers the size history of an entire population, the idea behind local phylodynamics is to consider the histories of selected subsets of related individuals, where each subset can be traced to a single ancestor. This can for example be practical when trying to detect hidden outbreaks, or clonal expansions due to a particular strain of a bacteria gaining a fitness advantage. This idea has been investigated in \cite{volz_identification_nodate}, where a null hypothesis based testing framework is developed to identify subsets of individuals that seem to have a significantly different population history than the the rest of the phylogeny. Recently, a birth-death type model that allows for heterogeneous growth rate parameters has been introduced in \cite{barido-sottani_multitype_2020}.
 \chapter{Methods}
 \section{Coalescent Preliminaries}
-The coalescemt process can be characterised as a time-inhomogenous pure-death markov process. We now conduct a brief analysis of the process and re-derive some properties.\\
+The coalescent process can be characterised as a time-inhomogeneous pure-death markov process. We now conduct a brief analysis of the process and re-derive some properties.\\
 The waiting times can be derived as follows.
 For an inhomogenous CTMC, let $E_j(t)$ be the total exit rate from state $j$ at time $t$.
-By the markov property individual exit events from a given state only depend on the state and given time, i.e. they form a time-inhomogenous poisson process.
+By the markov property individual exit events from a given state only depend on the state and given time, i.e. they form a time-inhomogeneous poisson process.
 As such the probability of no events in an interval $[t,t+s]\quad s\in \R^+$ is 
 \begin{gather}
 \exp(-\int_t^{t+s}E_j(\tau)d\tau) = \exp(-\int_0^{s}E_j(t+\tau)d\tau)
@@ -128,7 +128,7 @@ As such
 \begin{gather}
 W_j(t) > s \Rightarrow \forall \tau\in[t, t+s]\quad X(\tau) = j
 \end{gather}
-Furthermore the above relation holds iff no exit event have occured in the time interval $[t,t+s]$. As such:
+Furthermore the above relation holds iff no exit event have occurred in the time interval $[t,t+s]$. As such:
 \begin{align*}
 &P[W_j(t) > s] = P[\text{no exit events in }[t,t+s]] = \exp(-\int_0^{s}E_j(t+\tau)d\tau)\\
 &P[W_j(t) < s] = 1 - \exp(-\int_0^{s}E_j(t+\tau)d\tau)
@@ -183,20 +183,193 @@ Using that $1-P[W > \Delta't] = 1-P[W_j(t_i) > \Delta t_i]$ we obtain
 &\Rightarrow& 1-\exp(-G^{-1}(c;t)) &= 1-\exp(-\int_{0}^{c}{\frac{\binom{j}{2}}{\alpha(t+\tau)}d\tau})\\
 &\Rightarrow& G^{-1}(c;t) &= \int_{0}^{c}{\frac{\binom{j}{2}}{\alpha(t+\tau)}d\tau}\label{eq:inv_int}
 \end{align}\\
-Therefore the scheme to generate waiting times $W_j(t)$ is to first generate appropriate $W'$ from uniformly distributed random variates, and then to further tranform $W'$ by solving \ref{eq:inv_int}.\\
+Therefore the scheme to generate waiting times $W_j(t)$ is to first generate appropriate $W'$ from uniformly distributed random variates, and then to further transform $W'$ by solving \ref{eq:inv_int}.\\
 In practice, \ref{eq:inv_int} often cannot be solved analytically, and hence we resort to numeric methods.
 \section{Inference Under Inhomogenous Coalescent}
-\subsection{Exponential Growth}
+The derivation of the likelihood function for time-inhomogenous coalescent process can be found in \cite{drummond_estimating_2002}. We adapt notational convention from \cite{drummond_estimating_2002}.
+Let $\left\{t_i\right\}_{i\in S\subset \N}$ denote the times of events in increasing order. Let $t_Y\triangleq \left\{t_i\right\}_{i\in Y}$ denote times of coalescent events and $t_I\triangleq \left\{t_i\right\}_{i\in I}$ denote times of sampling events, where $Y$, $I$ are disjoint partitions of the index set $S$ with the property that $S = Y\cup I$.
+The likelihood of a particular genealogy is then given by:
+\begin{gather}
+\mathcal{L}\left(g\mid \alpha\right) 
+= \prod_{i\in S\setminus 1}\left(\mathbbm{1}_Y(i)\frac{\binom{k_{i}}{2}}{\alpha(t_i)}+\mathbbm{1}_I(i)\right)
+\exp(-\int_{t_{i-1}}^{t_i}\frac{\binom{k_{i}}{2}}{\alpha(\tau)}d\tau)
+\end{gather}
+The log-likelihood is:
+\begin{gather}
+\log\mathcal{L}\left(g\mid \alpha\right) 
+= -\sum_{i\in S\setminus 1}{\int_{t_{i-1}}^{t_i}{\frac{\binom{k_{i}}{2}}{\alpha(\tau)d\tau}}} + \sum_{i\in Y}{\log\frac{\binom{k_{i}}{2}}{\alpha(t_i)}}
+\end{gather}
 \section{Coalescent with Local Population Structure}
+In this section we present the new local phylodynamic model that we developed.
+Suppose we sample genomes of a set of pathogenic bacterial samples. 
+At an unknown point in time a particular strain acquires a mutation conferring it resistance to a widely used antibiotic. This increases the particular strains fitness and enables it to undergo a period of rapid growth leading to a clonal expansion. If we assume that this increase in fitness occurs in a short time span, the lineage of this strain will behave differently in the phylogenetic tree, having a coalescent rate corresponding to a rapidly expanding population, starting from a very small number of individuals\CITEMISSING. This problem of identifying hidden population structure has been proposed in \cite{volz_identification_nodate}, where a testing based approach was used to identify structure in a phylogeny.\\
+
+We seek a modification to the coalescent model that will allow for change points located on the branches of the phylogeny, marking the event when a particular lineage starts behaving according to a different population size function than its parent lineage.\\
+
+In this model, coalescent nodes have an added colour property, and each colour coalesces according to a colour specific, time dependent case. Nodes of non-identical colour can coalesce iff at least one of them is the last remaining node of a given colour.
+Different colours correspond to different lineages, each behaving under its own growth function.\\
+
+Similar models, referred to as Structured Coalescent, adding colouring to vertices of phylogenies have been used in epidemiology to track outbreaks \cite{maio_scotti_2016}, or transmission chains \cite{didelot_genomic_2017}.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Model}
+A given genealogy $\mathbf{g}=(V_\mathbf{g}, E_\mathbf{g}, t_\mathbf{g})$ is an incomplete, empirical sample of the underlying process\CITEMISSING.\\
+It consists of nodes $V_\mathbf{g}$, directed edges $E_\mathbf{g}$, and node labels $t_\mathbf{g}$ corresponding to event times.\\
+As in section \ref{subsection:likelihood} $\mathbf{g}$ shall be indexed by an index set $S=1\leq i \leq N\subset \N$, with $Y\subset S$ corresponding to coalescent events and $I\subset S$ corresponding to sampling events.\\
+For convenience, assume that all edges are in the forwards time direction, i.e.: 
+\begin{gather*}
+\forall k,l \in S: (k,l)\in E_\mathbf{g} \Rightarrow t_k<t_l
+\end{gather*}
+Furthermore, all event times are ordered in descending (backwards) time order, i.e.:
+\begin{gather*}
+\forall k,l \in S: k<l \Rightarrow t_k > t_l
+\end{gather*}
+Under the assumption that $\mathbf{g}$ is a genealogy of a given sample, with each edge in $E_\mathbf{g}$ there is an associated unobserved set of individuals descending from one another\CITEMISSING. At some point along an edge a node of one lineage will undergo colour change and change its type to that of another lineage.\\
+We seek a model which enable us to investigate this proposed behaviour.
+\begin{definition}[Multiple Lineage Coalescent]\label{def:model}
+Given $M$ colours, $M$ population size functions $\mathbf{\alpha}\triangleq\{\alpha_j(t)\}_{1\leq j\leq M}$. Let $Y(t)$ be a CTMC with the state space:
+\begin{gather}
+  \Sigma = \left\{\mathbf{s}\in \Z_+: |\mathbf{s}|\geq1\right\}
+\end{gather}
+and the transition rates
+\begin{gather}\label{eq:multirate}
+\begin{align}
+\mathbf{s}&\to\mathbf{s}-\mathbf{e_j} &\quad& \binom{s_j}{2}\alpha_j^{-1}(t)&\quad&1\leq j\leq M\\
+\mathbf{s}&\to\mathbf{s}-\mathbf{e_j}+\mathbf{e_k}&\quad& \delta_{1,j}s_k&\quad&1\leq j,k\leq M
+\end{align}
+\end{gather}
+\end{definition}
+The interpretation of this model in backwards (coalescent) time is that each node corresponds to a single specific lineage (colour). Nodes of the same lineage coalesce at i.i.d rates, according to a lineage specific growth functions, until reaching the MRCA of given lineage. The MRCA then changes type (colour) to that of a different lineage. \\
+Under the hypothesis, along each of the edges from the parent of a lineage MRCA to the MRCA lies a point in time that characterises the time of divergence of the lineage, after which the lineage starts to undergo clonal expansion.
+
+\subsection{Inference}
+Assume that we have been given a genealogy as described in previous section. The number of individual lineages $M$, the effective population size functions $\mathbf{\alpha}$, the placement and divergence events in descending order $\Xi =\{\xi_i\}_{1\leq i\leq M}$, are unknown. In effect we seek to identify terms in the factorisation of the posterior:
+\begin{gather}
+\mathcal{L}(\mathbf{\alpha}, \Xi, M\mid\mathbf{g}) \propto 
+\mathcal{L}(\mathbf{g}\mid \Xi, M, \mathbf{\alpha})\mathcal{L}(\mathbf{\alpha}\mid\Xi,M)\mathcal{L}(\Xi,M)
+\end{gather}
+
+\begin{definition}[Divergence Event] A divergence event $\xi$ associated with a lineage is a tuple:
+\begin{gather}
+\xi=\left(e', \tau\right)
+\end{gather}
+where $\tau$ denotes the time of the divergence event, and $e' = (v^{pa}, v^{MRCA})$ denotes the edge along which the divergence event happens, with $v^{MRCA}$ being the MRCA of the newly diverging lineage.
+\end{definition}
+In order to identify the likelihood $\mathcal{L}(\mathbf{g}\mid \Xi, M, \mathbf{\alpha})$, the genealogy needs to be first partitioned into separate subtrees, each corresponding to an individual lineage.
+
+\begin{definition}[Descendant Set]
+\begin{gather}
+\begin{aligned}
+\mathcal{D}(i) &\triangleq \{j\in S\mid j \text{ is a descendant of } i\}
+\end{aligned}
+\end{gather} 
+\end{definition}
+
+\begin{definition}[Lineage Subtree]
+A subtree $W(\xi_i)$ associated with a divergence event $\xi_i$ consists of all vertices, edges and times associated with a given lineage.
+\begin{gather}
+W(\xi_i) \triangleq \mathcal{D}(v^{pa}_i) \setminus \bigcup_{j<i}(\mathcal{D}(v^{pa}_j))
+\end{gather} 
+\end{definition}
+As members of a lineage can only coalesce with one another, the coalescence rate is independent of other lineages, and the time of divergence has been given, the total likelihood is equal to the product of individual lineage specific likelihoods.\\
+A final step before deriving lineage specific likelihoods is required, that is, the divergence times have to be included along with the times contained within the lineage subtree.\\
+
+Denote the set of all divergence times associated with a Lineage Subtree $W(\xi_j)$ $\tau_{W(\xi_j)}$
+\begin{gather*}
+\tau_{W(\xi_j)} \triangleq \tau_i \in \xi_i : v^{pa}_i \in W(\xi_j), \quad \forall 1\leq i\leq M
+\end{gather*}
+Finally define the set of all times associated with a particular lineage
+$T(\xi_j) = \tau_{W(\xi_j)}\cup t_{W(\xi_j)}$, indexed by set $S_{T(\xi_j)}=\{1 ... |T(\xi_j)|\}$ such that
+\begin{gather*}
+\forall t_k, t_l \in T(\xi_j),\quad k>l \Rightarrow t_k \geq t_l
+\end{gather*}
+Let $k_{i,\xi_j}$ denote the number of extant individuals corresponding to subtree lineage $\xi_j$ at during the time interval $[t_{i-1}, t_i]$.
+The total likelihood is equal to:
+\begin{gather}
+\begin{aligned}
+\mathcal{L}(\mathbf{g}\mid \Xi, M, \mathbf{\alpha}) &= \prod_{j=1}^{M}\mathcal{L}(T(\xi_j) \mid \alpha_j) \\
+\mathcal{L}(T(\xi_j) \mid \alpha_j) &= \prod_{t_i\in T(\xi_j)}\left(\mathbbm{1}_{t_Y}(t_i) \frac{\binom{k_{i,\xi_j}}{2}}{\alpha(t_i)}+\mathbbm{1}_{t_I\cup\tau_{W(\xi_j)}}(t_i)\right)
+\exp(-\int_{t_{i-1}}^{t_i}\frac{\binom{k_{i,j}}{2}}{\alpha(\tau)}d\tau)
+\end{aligned}
+\end{gather}
+\subsection{Choice of Population Size Functions} 
+While the parent clade is assumed to be at equilibrium, the population size functions of the diverging clades have to satisfy several properties. 
+In order to achieve consistency with our assumptions, we seek functions that are equal to $0$ at the time of divergence, are monotone increasing, and exhibit saturating behaviour. \\
+Initially, functions exhibiting a period of exponential growth were investigated, however these were hard to justify and were ill-posed numerically.
+We therefore derived the following function in forward time 
+\begin{gather}
+\alpha(t) = K\frac{rt^2}{1+rt^2}
+\end{gather} 
+This function still exhibits saturating behaviour, symmetry around zero, and numerically stable behaviour due to not relying on time-offsetting exponentials and a more gradual decay around zero.\\
+We transform this function into backwards (coalescent) time as follows. 
+Define $\tau = -t + T_{max} - T_{div}$.\\
+The integral of the reciprocal $\alpha^{-1}(\tau)$ under this formulation is then given by 
+\begin{gather}
+\int_{t}^{t+s}\alpha^{-1}(\tau)\,d\tau = \frac{1}{K}\left[-\frac{1}{r(\tau-T_{max}+T_{div})}+\tau-T_{max}+T_{div}\right]_{t}^{t+s}
+\end{gather}
 \chapter{Results}
 \section{Implementation Notes}
+The framework described has been implemented as an R package, that enables the computation of likelihoods, simulation of genealogies under the model developed, and computation of likelihoods along with an implementation of the metropolis-hastings MCMC algorithm.
 \section{Exponential Growth}
-\subsection{Phylogeny Simulation}
-\subsection{MCMC inference}
+An example of a population under exponential growth, $\alpha(t) = N*\exp(-\lambda t)$ consisting of 100 sampling events between 0 and 10 years before present has been simulated with a rate parameter $\lambda$ and final size parameter $N$ drawn from a uniform densities on intervals $[0.1, 10]$, and $[1,100]$ respectively.\\
+A Metropolis-Hastings MCMC scheme was then used to infer the parameters $\lambda$ and $N$. An exponential distribution rate equal to one was chosen as the prior for $\lambda$, as well as for $N$.\\
+One million iterations were used and the first One hundred thousand discarded as burn in time. To further validate the fit, both a maximum likelihood (MLE) and maximum \textit{a-posteriori} (MAP) estimates were computed and plotted against the posterior marginals inferred by the MCMC.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  \centering
+  \subfloat[]{\label{trace:a}\includegraphics[scale=.25]{../R/trace}}
+  \centering
+  \subfloat[]{\label{trace:b}\includegraphics[scale=.25]{../R/trace_zoom}}
+  \centering
+  \caption{Trace plots for the markov chain. Red lines denote true parameter values. MLE marked by blue lines. MAP marked by orange lines. \ref{trace:a} Shows the entire trace of the chain. \ref{trace:b} Shows the trace with the first 100000 iterations discarded. Colour gradient corresponds to the iteration number, with more recent iterations in yellow.}
+  \label{fig:trace}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  \centering
+  \subfloat[]{\label{hists:a}\includegraphics[scale=.4]{../R/lambdahist}}
+  \centering
+  \subfloat[]{\label{hists:b}\includegraphics[scale=.4]{../R/nhist}}
+  \centering
+  \caption{Histograms of the posterior marginals. MLE marked by blue line. MAP marked by orange line. \ref{hists:a} $\lambda$ marginal \ref{hists:b} $N$ marginal}
+  \label{fig:hists}
+\end{figure}
+`\begin{figure}[H]
+  \centering
+    \includegraphics[width=0.5\textwidth]{../R/tree}
+    \caption{The simulated genealogy used for this example.}
+\end{figure}'
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Coalescent with Local Population Structure}
 \subsection{Phylogeny Simulation}
+We present a simulated phylogeny under the new model we developed,m with two divergence events.
+\begin{figure}[H]
+  \centering
+     \includegraphics[width=0.5\textwidth]{../R/tree_structured}
+    \caption{A genealogy simulated under this formulation}
+\end{figure}
 \subsection{MCMC inference}
-\chapter{Discussion}
+\chapter{Discussion \& Future Work}
+\section{Future Work}
+In this work we proposed a framework to enable local phylodynamic inference, with the aim to facilitate usage of genomic data for outbreak detection. What remains now is to thoroughly test MCMC inference under this framework on both synthetic data and real world data. First of all with the number of divergence events fixed, and then further with an arbitrary number of divergence.\\
+Having a variable amount of divergence events leads to the dimensionality of the problem not being fixed, and therefore will require the use of Reversible Jump MCMC (RjMCMC) \cite{green_reversible_1995, fan_reversible_2010}, which computationally intensive.\\
+If the performance of this framework in this setting is satisfactory, a further comparison with existing methods such as \cite{volz_identification_nodate,barido-sottani_multitype_2020} would be interesting and desirable.\\
+Finally, after the evaluation is complete it is our intention to release the R package as open source.
+\section{Discussion}
+The effect of priors and of the choice of the population size function family for divergence events remains poorly understood. It would be desirable to investigate what effect might different function families and parameter priors have on inference under our model.\\
+It would be worth investigating the analytic properties of model proposed, and to see whether it can be shown to be consistent with existing models in population genetics in the limit, under appropriate assumptions.
+\newpage
 \chapter{Bibliography}
 \printbibliography
 \end{document}
