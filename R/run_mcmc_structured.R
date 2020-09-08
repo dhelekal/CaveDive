@@ -79,7 +79,6 @@ log_lh <- function(x){
   prior_K <- sum(dexp(K, rate = 1/100, log = TRUE))
   prior_N <- dexp(N, rate = 1/100, log = TRUE)
 
-
   if (all(K > 0) && all(rates > 0) && all(N > 0) && all(!is.na(div.branch))){
       MRCAs <- sapply(pre$edges.df$node.child[div.branch], function(x) if (x > n_tips) pre$phy$node.label[x-n_tips] else NA)  
       if (all(!is.na(MRCAs))) {
@@ -117,7 +116,7 @@ prop.sampler <-function (x_prev, it){
     x_next[[5]] <- div.branch
 
   } else {
-    div.times_upd <- rnorm(length(div.times), mean=div.times, 10)
+    div.times_upd <- rnorm(length(div.times), mean=div.times, 1)
     div.branch_upd <- sapply(c(1:length(div.branch)), function (i) select_br(pre, div.branch[i], div.times[i], div.times_upd[i]))
 
     x_next[[1]] <- rates
@@ -135,13 +134,13 @@ select_br <- function(pre, div.br, div.time, div.time_upd) {
   nodes <- pre$nodes.df
   br <- div.br
 
-  if (div.time_upd-div.time > 0) {
+  if (div.time_upd-div.time > 0) { ##if going forwards in time
     outgoing <- pre$outgoing
     while (!is.na(br) && nodes$times[edges$node.child[br]] < (div.time_upd)) {
-      r <- runif(1,1,2)
+      r <- runif(1,1,3)
       br <- outgoing[[edges$node.child[br]]][r]
     }
-  } else {
+  } else { ##if going back in time
     incoming <- pre$incoming
     while (!is.na(br) && nodes$times[edges$node.parent[br]] > (div.time_upd)) {
       br <- incoming[[edges$node.parent[br]]]
@@ -188,7 +187,7 @@ proposal.cond_lh <- function(x_cand, x_prev, it){
            sum(dnorm(K_cand, mean=K_prev, 1, log=TRUE)) +
            sum(dnorm(N_cand, mean=N_prev, 1, log=TRUE))
   } else {
-    out <- sum(dnorm(div.times_cand, mean=div.times_prev, 10, log=TRUE)) +
+    out <- sum(dnorm(div.times_cand, mean=div.times_prev, 1, log=TRUE)) +
            sum(sapply(c(1:length(div.branch_cand)), function (x) branch_log_lh(div.branch_prev[x], div.branch_cand[x])))
            
 
