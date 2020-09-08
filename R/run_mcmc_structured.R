@@ -6,29 +6,33 @@ library(ape)
 
 set.seed(123456)
 
+n <- 1
+
 n_tips <- 100
 sam <- runif(n_tips, 0, 10)
 sam <- sam - max(sam)
 sam <- sam[order(-sam)]
 
-colours <- trunc(runif(n_tips, 1, 4))
-
-n <- 2
+colours <- trunc(runif(n_tips, 1, n+2))
 
 N <- rexp(1, rate = 1/100)
 A <- rexp(n, rate = 1/20)
 K <- rexp(n, rate = 1/100)
-div_times <- c(-1*runif(n,20,80), -Inf)
+div_times <- c(-1*runif(n,30,80), -Inf)
 
-div_cols <- c(1, 2, 3)
-rates <- list(function (s) sat.rate(s, K[1], A[1], div_times[1]), function (s) sat.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
-rate.ints <- list(function(t,s) sat.rate.int(t, s, K[1], A[1], div_times[1]), function(t,s) sat.rate.int(t, s, K[2], A[2], div_times[2]), function(t,s) constant.rate.int(t,s,N))
+div_cols <- c(1:(n+1))
+
+rates <- lapply(c(1:n), function(i) return(function (s) sat.rate(s, K[i], A[i], div_times[i])))
+rates[[n+1]] <- function (s) constant.rate(s, N)
+
+rate.ints <- lapply(c(1:n), function(i) return(function (t, s) sat.rate.int(t, s, K[i], A[i], div_times[i])))
+rate.ints[[n+1]] <- function(t, s) constant.rate.int(t, s, N)
+
 co <- structured_coal.simulate(sam, colours, div_times, div_cols, rates, rate.ints)
-#print(co)
 
 tree.div.str <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from, include_div_nodes = TRUE)
 tree.div <- read.tree(text = tree.div.str$full)
-tree.plt <- plot_structured_tree(tree.div, 3)
+tree.plt <- plot_structured_tree(tree.div, n+1)
 
 pdf(file="tree_structured.pdf")
 plot(tree.plt)
@@ -198,5 +202,9 @@ burn_in <- 1
 o <- run_mcmc(log_lh, proposal.cond_lh, prop.sampler, x_0, n_it, FALSE)
 #o.df <- as.data.frame(t(as.data.frame(o)))
 branches <- sapply(c(1:length(o)), function (i) o[[i]][[5]])
-h<-table(branches[1,burn_in:n_it])
+if (n < 2) {
+  h<-table(branches[burn_in:n_it])
+} else {
+  h<-table(branches[1,burn_in:n_it])
+}
 freq<-sapply(as.integer(unlist(dimnames(h))), function (i) h[toString(i)]/pre$edges.df$length[i]) 
