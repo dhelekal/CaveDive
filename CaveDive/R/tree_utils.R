@@ -6,6 +6,7 @@
 #' @export
 
 build_coal_tree <- function(sampling_times, coalescent_times, leaf_names=NULL,node_name_prefix="N", terminate_string = TRUE) {
+  set.seed(1)
   coal_times_desc <- coalescent_times[order(-coalescent_times)]
   sam_ord <- order(-sampling_times)
   times_desc <- sampling_times[sam_ord]
@@ -172,21 +173,21 @@ plot_structured_tree <- function(tree, n_lineages){
 
     lineages <- lapply(c(1:n_lineages), function (x) labs[grep(paste0("[N,X,S]_",LETTERS[x]), labs)])
 
-    lin_names <- c(sapply(c(1:n_lineages), function (x) paste0("expansion ",x)), "neutral")
+    lin_names <- c(sapply(c(1:(n_lineages-1)), function (x) paste0("expansion ",x)), "neutral")
 
     lineage_labs <- unlist(lineages)
     membership <- unlist(lapply(c(1:length(lineages)), function (x) rep(lin_names[x], length(lineages[[x]]))))
     type <- sapply(lineage_labs, 
         function (x) if (length(grep("X_", x, value="FALSE"))>0) "Divergence" else if(length(grep("N_", x, value="FALSE"))>0) "Coalescent" else "Sampling")
 
-    ldf <- data.frame(node = nodeid(tree, lineage_labs), lineage = membership, type=type)
+    ldf <- data.frame(node = nodeid(tree, lineage_labs), clade = membership, type=type)
     ldf$node <- as.numeric(ldf$node)
-    ldf$lineage <- as.factor(ldf$lineage)
+    ldf$clade <- as.factor(ldf$clade)
     ldf$type <- as.factor(ldf$type)
 
     tree.full <- full_join(tree, ldf, by = 'node')
 
-    plt<-ggtree(tree.full, aes(color=lineage), ladderize=TRUE) +
+    plt<-ggtree(tree.full, aes(color=clade), ladderize=TRUE) +
                     geom_point(aes(shape=type, size=type)) +
                     scale_size_manual(values=c(1,4,1)) +
                     scale_shape_manual(values=c(1,8,2)) +

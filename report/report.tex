@@ -338,10 +338,11 @@ This function  exhibits saturating behaviour, symmetry around zero, and numerica
 \end{figure}
 The integral of the reciprocal $\alpha^{-1}(\tau)$ under this formulation is then given by 
 \begin{gather}
-\begin{aligned}
+\begin{aligned}\label{eq:rint}
 &\int_{t}^{t+s}\alpha^{-1}(\tau)\,d\tau\\ &= \frac{1}{K}\left[-\frac{1}{r(\tau-T_{max}+T_{div})}+\tau-T_{max}+T_{div}\right]_{t}^{t+s}
 \end{aligned}
 \end{gather}
+As $t+s$ approaches the divergence time relative to the most recent sample $T_{div} - T_{max}$, the rate integral \ref{eq:rint} approaches infinity, and as such all coalescence within a clade happens before time of divergence with probability one.
 \section{Results}
 \section{Implementation Notes}
 The framework described has been implemented as an R package, that enables the computation of likelihoods, simulation of genealogies under the model developed, and computation of likelihoods along with an implementation of the metropolis-hastings MCMC algorithm.

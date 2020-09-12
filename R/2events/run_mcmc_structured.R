@@ -6,9 +6,9 @@ library(ggtree)
 library(treeio)
 library(viridis)
 
-set.seed(1234567)
+set.seed(12345)
 
-n <- 1
+n <- 2
 
 n_tips <- 100
 sam <- runif(n_tips, 0, 10)
@@ -17,10 +17,10 @@ sam <- sam[order(-sam)]
 
 colours <- trunc(runif(n_tips, 1, n+2))
 
-N <- 100#rexp(1, rate = 1/100)
-K <- rep(N, n)#rexp(n, rate = 1/100)
-A <- c(0.1) #rexp(n, rate = 1/20)
-div_times <- c(-1*runif(n,20,50), -Inf)
+N <- rexp(1, rate = 1/100)
+K <- rexp(n, rate = 1/100)
+A <- rexp(n, rate = 1/20)
+div_times <- c(-1*runif(n,20,80), -Inf)
 
 div_cols <- c(1:(n+1))
 
@@ -78,7 +78,7 @@ log_lh <- function(x){
   div.times <- x[[4]]
   div.branch <- x[[5]]
 
-  prior_rates <- sum(dexp(rates, rate = 1, log = TRUE))
+  prior_rates <- sum(dexp(rates, rate = 1/20, log = TRUE))
   prior_K <- sum(dexp(K, rate = 1/100, log = TRUE))
   prior_N <- dexp(N, rate = 1/100, log = TRUE)
 
