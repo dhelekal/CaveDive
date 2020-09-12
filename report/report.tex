@@ -321,19 +321,26 @@ The total likelihood is equal to:
 \end{aligned}
 \end{gather}
 \subsubsection{Choice of Population Size Functions} 
-While the parent clade is assumed to be at equilibrium, the population size functions of the diverging clades have to satisfy several properties. 
-In order to achieve consistency with our assumptions, we seek functions that are equal to $0$ at the time of divergence, are monotone increasing, and exhibit saturating behaviour. \\
+While the parent clade is assumed to be at equilibrium, the population size functions of the diverging clades have to satisfy several properties.\\
+First we introduce the variable $\tau = -t + T_{max} - T_{div}$ whch denotes time relative to a divergence event of a given clade, where $T_{div}$ denotes the divergence time and $T_{max}$ denotes the time of the most recent sample.
+In our model we assume that the diverging subpopulation only appears after the divergence event, and as such it is required that at $\tau-0$ $\alpha(\tau)=0$. Furthermore, we're a for a monotone decreasing function in $\tau$, that exhibits saturating behaviour as $\tau$ grows large.
 Initially, functions exhibiting a period of exponential growth were investigated, however these were hard to justify and were ill-posed numerically.
-We therefore derived the following function in forward time 
+Hence we arrived at the following function
 \begin{gather}
-\alpha(t) = K\frac{rt^2}{1+rt^2}
+\alpha(\tau) = K\frac{r\tau^2}{1+r\tau^2}
 \end{gather} 
-This function still exhibits saturating behaviour, symmetry around zero, and numerically stable behaviour due to not relying on time-offsetting exponentials and a more gradual decay around zero.\\
-We transform this function into backwards (coalescent) time as follows. 
-Define $\tau = -t + T_{max} - T_{div}$.\\
+Where $K$ is the carrying capacity and $r$ is the growth rate.
+This function  exhibits saturating behaviour, symmetry around zero, and numerically stable behaviour due to not relying on time-offsetting exponentials and having a more gradual decay around zero.\\
+\begin{figure}[H]
+  \centering
+     \includegraphics[width=0.4\textwidth]{../R/alpha_plots}
+    \caption{$\alpha(\tau)$ under different parameters, with $T_{div}=20$}
+\end{figure}
 The integral of the reciprocal $\alpha^{-1}(\tau)$ under this formulation is then given by 
 \begin{gather}
-\int_{t}^{t+s}\alpha^{-1}(\tau)\,d\tau = \frac{1}{K}\left[-\frac{1}{r(\tau-T_{max}+T_{div})}+\tau-T_{max}+T_{div}\right]_{t}^{t+s}
+\begin{aligned}
+&\int_{t}^{t+s}\alpha^{-1}(\tau)\,d\tau\\ &= \frac{1}{K}\left[-\frac{1}{r(\tau-T_{max}+T_{div})}+\tau-T_{max}+T_{div}\right]_{t}^{t+s}
+\end{aligned}
 \end{gather}
 \section{Results}
 \section{Implementation Notes}
