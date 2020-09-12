@@ -86,7 +86,7 @@ log_lh <- function(x){
       div.times <- c(div.times, root_div)
       if (all(!is.na(MRCAs))) {
         prior_br <- 0
-        lh <- structured_coal.likelihood(pre, MRCAs, div.times, rates, K, N, type="Sat")$log_lh
+        lh <- 0#structured_coal.likelihood(pre, MRCAs, div.times, rates, K, N, type="Sat")$log_lh
         prior <- prior_rates + prior_K + prior_N + prior_br
         lh <- lh + prior
       } else {
@@ -98,7 +98,7 @@ log_lh <- function(x){
   return(lh)
 }
 
-prop.sampler <-function (x_prev, it){
+prop.sampler <-function (x_prev){
   rates <- x_prev[[1]]
   K <- x_prev[[2]]
   N <- x_prev[[3]]
@@ -107,7 +107,9 @@ prop.sampler <-function (x_prev, it){
 
   x_next <- vector(mode = "list", length = length(x_prev))
 
-  if (it %% 2) {
+  which_upd <- runif(1,1,3)
+
+  if (which_upd < 2) {
     rates_upd <- rnorm(length(rates), mean=rates, 1) 
     K_upd <- rnorm(length(K), mean=K, 1)
     N_upd <- rnorm(length(N), mean=N, 1)
@@ -156,7 +158,7 @@ branch_log_lh <- function(src, dest) {
   edges <- pre$edges.df
   nodes <- pre$nodes.df
   out <- 0
-  if (nodes$times[edges$node.child[src]] < nodes$times[edges$node.child[dest]]){
+  if ( src!=dest && nodes$times[edges$node.child[src]] < nodes$times[edges$node.child[dest]]){
     ### Check if direction is forwards. If backwards likelihood is one.
     ### iterate backwards exponentiating two at each branch point
     br <- dest 
@@ -185,16 +187,12 @@ proposal.cond_lh <- function(x_cand, x_prev, it){
 
   out <- 0
 
-  if (it %% 2) {
-    out <- sum(dnorm(rates_cand, mean=rates_prev, 1, log=TRUE)) + 
-           sum(dnorm(K_cand, mean=K_prev, 1, log=TRUE)) +
-           sum(dnorm(N_cand, mean=N_prev, 1, log=TRUE))
-  } else {
-    out <- sum(dnorm(div.times_cand, mean=div.times_prev, 1, log=TRUE)) +
-           sum(sapply(c(1:length(div.branch_cand)), function (x) branch_log_lh(div.branch_prev[x], div.branch_cand[x])))
-           
-
-  }
+    
+  out <- sum(dnorm(rates_cand, mean=rates_prev, 1, log=TRUE)) + 
+         sum(dnorm(K_cand, mean=K_prev, 1, log=TRUE)) +
+         sum(dnorm(N_cand, mean=N_prev, 1, log=TRUE)) + 
+         sum(dnorm(div.times_cand, mean=div.times_prev, 1, log=TRUE)) +
+         sum(sapply(c(1:length(div.branch_cand)), function (x) branch_log_lh(div.branch_prev[x], div.branch_cand[x])))
   return(out)
 }
 
