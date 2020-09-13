@@ -78,17 +78,28 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
             }
         } else {
             comb_ns <- sapply(extant_lineages, function (x) choose(x, 2))
+            opt <- -1
             if (sam_idx > length(times_desc) && div_idx > (length(div_times)-1)) {
+                opt <- 1
                 s <- Inf
             } else if(sam_idx > length(times_desc)){
+                opt <- 2
                 s <- t0 - t - div_times[div_idx]
             } else if(div_idx > (length(div_times)-1)){
+                opt <- 3
                 s <- t0 - t - times_desc[sam_idx]
             } else {
+                opt <- 4
                 s <- t0 - t - max(times_desc[sam_idx], div_times[div_idx])
             }
 
             if (t > t+s) {
+                print(paste0("sam_idx: ",sam_idx))
+                print(paste0("div_idx: ",div_idx))
+                print(paste0("t0: ",t0))
+                print(paste0("t: ",t))
+                print(paste0("t+s: ",t+s))
+                print(paste0("opt: ", opt))
                 warning("next time step must be greater than current time")
                 return(-1)
             }
@@ -243,7 +254,7 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.t
                 } else if (type=="Sat") {
                     log_lh <- log_lh + sat_coalescent_loglh(times$sam.times[[i]], times$coal.times[[i]], div.times[i], diverging.rates[i], diverging.sizes[i], t_max)
                 } else {
-                    warning(paset0("Unrecognised likelihood option: ", type))
+                    warning(paste0("Unrecognised likelihood option: ", type))
                     return(NA)
                 }
             

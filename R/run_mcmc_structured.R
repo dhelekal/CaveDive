@@ -137,7 +137,6 @@ prop.sampler <-function (x_prev){
   return(x_next)
 }
 
-
 select_br <- function(pre, div.br, div.time, div.time_upd) {
   edges <- pre$edges.df
   nodes <- pre$nodes.df

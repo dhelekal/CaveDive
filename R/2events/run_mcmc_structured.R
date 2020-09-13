@@ -6,21 +6,22 @@ library(ggtree)
 library(treeio)
 library(viridis)
 
-set.seed(123456)
+set.seed(12345678)
 
-n <- 2
+n <- 4
 
-n_tips <- 100
+n_tips <- 200
 sam <- runif(n_tips, 0, 10)
 sam <- sam - max(sam)
 sam <- sam[order(-sam)]
 
 colours <- trunc(runif(n_tips, 1, n+2))
 
-N <- rexp(1, rate = 1/100)
-K <- rexp(n, rate = 1/100)
-A <- rexp(n, rate = 1/20)
-div_times <- c(-1*runif(n,20,80), -Inf)
+N <- 100
+K <- rnorm(n, mean=N, sd=sqrt(N))
+A <- c(0.1,5,1,10)
+div_times <- c(-1*runif(n,15,40), -Inf)
+div_times <- div_times[order(-div_times)]
 
 div_cols <- c(1:(n+1))
 

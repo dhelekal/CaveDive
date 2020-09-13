@@ -345,7 +345,7 @@ The integral of the reciprocal $\alpha^{-1}(\tau)$ under this formulation is the
 As $t+s$ approaches the divergence time relative to the most recent sample $T_{div} - T_{max}$, the rate integral \ref{eq:rint} approaches infinity, and as such all coalescence within a clade happens before time of divergence with probability one.
 \section{Results}
 \subsection{Implementation Notes}
-The framework described is being implemented as an R package, featuring the ability to simulate genealogies under the model we propose, compute model likelihoods for varying parameters. and to perform inference under same model using MCMC. 
+The framework described is being implemented as an R package, featuring the ability to simulate genealogies under the model we propose, compute model likelihoods for varying parameters. and to perform inference under same model using MCMC. Please note, as this is still unpublished and work in progress, the repository is currently private access can be granted upon request. Once this has been submitted for publication and completed, the package will be released as open source.
 \subsection{Exponential Growth}
 \subsubsection{MCMC Inference}
 First thing that has been implemented and tested was a basic framework that enables simulating genealogies under the standard inhomogenous coalescent process, and the computation of likelihoods under the standard inhomogenous coalescent model. Along with this, standard metropolis-hastings MCMC routine was implemented and subsequently tested by simulating a genealogy undergoing exponential growth, and performing inferences on the rate parameter and the maximum population size parameter, effectively replicating results in \cite{drummond_estimating_2002}.\\
@@ -394,20 +394,28 @@ The package is also capable of rapidly computing likelihoods for the arbitrary p
 \begin{figure}[H]
   \centering
      \includegraphics[width=0.5\textwidth]{../R/tree_structured}
-    \caption{A genealogy simulated under this formulation}
+    \caption{A simulated genealogy with one clonal expansion}
+\end{figure}
+\begin{figure}[H]
+  \centering
+     \includegraphics[width=0.5\textwidth]{../R/2events/tree_structured}
+    \caption{A simulated genealogy with four clonal expansions}
 \end{figure}
 \subsubsection{MCMC inference}
-At the moment we are in the process of implementing, and valdiating the MCMC routine for inference under coalescent with local population structure. We present the following intermediate results, however it is important to note that the proposal distributions are still pending validation and rigorous testing.\\
-For the example, a phylogeny with 100 sampling events and a single diverging subpopulation has been simulated. The location of the divergence event on the tree, the growth rate and carrying capacity of the diverging subpopulation, as well as the neutral population size of the parent population have then been inferred using MCMC run for one million iterations. 
+At the moment we are in the process of implementing, and valdiating the MCMC routine for inference under coalescent with local population structure, and with a fixed number of divergence events. Currently there is a bug in the proposal move that changes the location of the divergence event, specifically, when it's supposed to traverse the root of the tree. As such we are unable to present reliable results for 
 \section{Discussion \& Future Work}
+\section{Discussion}
+In this work we proposed a framework to enable local phylodynamic inference, with the aim to facilitate usage of genomic data for outbreak detection.
+We implemented this model in an R package which we plan to release as open source on github once completed. To our knowledge this is a novel model, and there are no other models designed to capture the process of clonal expansions in genealogies.\\
+At the moment we are still experiencing implementation issues with the MCMC routine for the coalescent with local population structure, and these need to be addressed before thoroughly testing the MCMC inference on simulated data.\\ 
+The effect of priors and of the choice of the population size function family for divergence events is not understood and has not  been properly investigated. It would be desirable to investigate what effect might different function families and parameter priors have on inference under our model.\\
+It would be worth investigating the analytic properties of model proposed, and to see whether it can be shown to be consistent with existing models in population genetics in the limit, under appropriate assumptions.\\ 
 \section{Future Work}
-In this work we proposed a framework to enable local phylodynamic inference, with the aim to facilitate usage of genomic data for outbreak detection. What remains now is to thoroughly test MCMC inference under this framework on both synthetic data and real world data. First of all with the number of divergence events fixed, and then further with an arbitrary number of divergence.\\
+Once work on the MCMC routine for a fixed number of divergence events is completed and the routine is validated, we will move onwards to expand this to an arbitrary number of divergence events.\\
 Having a variable amount of divergence events leads to the dimensionality of the problem not being fixed, and therefore will require the use of Reversible Jump MCMC (RjMCMC) \cite{green_reversible_1995, fan_reversible_2010}, which computationally intensive.\\
 If the performance of this framework in this setting is satisfactory, a further comparison with existing methods such as \cite{volz_identification_nodate,barido-sottani_multitype_2020} would be interesting and desirable.\\
-Finally, after the evaluation is complete it is our intention to release the R package as open source.
-\section{Discussion}
-The effect of priors and of the choice of the population size function family for divergence events remains poorly understood. It would be desirable to investigate what effect might different function families and parameter priors have on inference under our model.\\
-It would be worth investigating the analytic properties of model proposed, and to see whether it can be shown to be consistent with existing models in population genetics in the limit, under appropriate assumptions.
+Finally, after the validation of the method is complete, we plan on using this model to analyse real world datasets, ideally those provided by Public Health England to see if outbreaks can be detected.\\
+We plan on releasing the R package implementing our methodology as open source. 
 \begin{thebibliography}{00}
 \printbibliography
 \end{thebibliography}
