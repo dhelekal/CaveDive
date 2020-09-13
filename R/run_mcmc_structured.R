@@ -40,7 +40,7 @@ pdf(file="tree_structured.pdf")
 plot(tree.plt)
 dev.off()
 
-tree.str <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from, include_div_nodes = FALSE)
+tree.str <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from, include_div_nodes = FALSE, aux_root = FALSE)
 tree <- read.tree(text = tree.str$full)
 
 pre <- structured_coal.preprocess_phylo(tree)
@@ -112,6 +112,7 @@ prop.sampler <-function (x_prev){
   which_upd <- runif(1,1,3)
 
   if (which_upd < 2) {
+    ### update rates
     rates_upd <- rnorm(length(rates), mean=rates, 1) 
     K_upd <- rnorm(length(K), mean=K, 1)
     N_upd <- rnorm(length(N), mean=N, 1)
@@ -123,6 +124,7 @@ prop.sampler <-function (x_prev){
     x_next[[5]] <- div.branch
 
   } else {
+    ### move change point up or down
     div.times_upd <- rnorm(length(div.times), mean=div.times, 1)
     div.branch_upd <- sapply(c(1:length(div.branch)), function (i) select_br(pre, div.branch[i], div.times[i], div.times_upd[i]))
 
@@ -187,9 +189,6 @@ proposal.cond_lh <- function(x_cand, x_prev, it){
   div.times_cand <- x_cand[[4]]
   div.branch_cand <- x_cand[[5]]
 
-  out <- 0
-
-    
   out <- sum(dnorm(rates_cand, mean=rates_prev, 1, log=TRUE)) + 
          sum(dnorm(K_cand, mean=K_prev, 1, log=TRUE)) +
          sum(dnorm(N_cand, mean=N_prev, 1, log=TRUE)) + 
@@ -247,8 +246,13 @@ for(i in c(1:n)) {
 
 o.df <- as.data.frame(marginals)
 colnames(o.df) <- names 
-
 o.df <- o.df[burn_in:n_it, ]
+
+### Filter auxilliary branch entries
+### First locate auxilliary branch
+r_idx <- which(pre$phy$node.label=="R")+100
+br_idx <- pre$outgoing[[r_idx]][1]
+o.df <- o.df[!(o.df$branches_1==br_idx),]
 
 for(i in c(1:n)) {
   pdf(file=paste0("branch_hist_",i,".pdf"), width = 5, height = 5)

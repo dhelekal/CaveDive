@@ -344,10 +344,13 @@ The integral of the reciprocal $\alpha^{-1}(\tau)$ under this formulation is the
 \end{gather}
 As $t+s$ approaches the divergence time relative to the most recent sample $T_{div} - T_{max}$, the rate integral \ref{eq:rint} approaches infinity, and as such all coalescence within a clade happens before time of divergence with probability one.
 \section{Results}
-\section{Implementation Notes}
-The framework described has been implemented as an R package, that enables the computation of likelihoods, simulation of genealogies under the model developed, and computation of likelihoods along with an implementation of the metropolis-hastings MCMC algorithm.
-\section{Exponential Growth}
-An example of a population under exponential growth, $\alpha(t) = N*\exp(-\lambda t)$ consisting of 100 sampling events between 0 and 10 years before present has been simulated with a rate parameter $\lambda$ and final size parameter $N$ drawn from a uniform densities on intervals $[0.1, 10]$, and $[1,100]$ respectively.\\
+\subsection{Implementation Notes}
+The framework described is being implemented as an R package, featuring the ability to simulate genealogies under the model we propose, compute model likelihoods for varying parameters. and to perform inference under same model using MCMC. 
+\subsection{Exponential Growth}
+\subsubsection{MCMC Inference}
+First thing that has been implemented and tested was a basic framework that enables simulating genealogies under the standard inhomogenous coalescent process, and the computation of likelihoods under the standard inhomogenous coalescent model. Along with this, standard metropolis-hastings MCMC routine was implemented and subsequently tested by simulating a genealogy undergoing exponential growth, and performing inferences on the rate parameter and the maximum population size parameter, effectively replicating results in \cite{drummond_estimating_2002}.\\
+This example used the relative population size function $\alpha(t) = N*\exp(-\lambda t)$, and consisted of 100 sampling events between 0 and 10 years before present.
+Accordingly, a genealogy has then been simulated with a rate parameter $\lambda$ and final size parameter $N$ drawn from a uniform densities on intervals $[0.1, 10]$, and $[1,100]$ respectively.\\
 A Metropolis-Hastings MCMC scheme was then used to infer the parameters $\lambda$ and $N$. An exponential distribution rate equal to one was chosen as the prior for $\lambda$, as well as for $N$.\\
 One million iterations were used and the first One hundred thousand discarded as burn in time. To further validate the fit, both a maximum likelihood (MLE) and maximum \textit{a-posteriori} (MAP) estimates were computed and plotted against the posterior marginals inferred by the MCMC.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -357,10 +360,9 @@ One million iterations were used and the first One hundred thousand discarded as
 \begin{figure}[H]
   \centering
   \subfloat[]{\label{trace:a}\includegraphics[scale=.25]{../R/trace}}
-  \centering
+
   \subfloat[]{\label{trace:b}\includegraphics[scale=.25]{../R/trace_zoom}}
-  \centering
-  \caption{Trace plots for the markov chain. Red lines denote true parameter values. MLE marked by blue lines. MAP marked by orange lines. \ref{trace:a} Shows the entire trace of the chain. \ref{trace:b} Shows the trace with the first 100000 iterations discarded. Colour gradient corresponds to the iteration number, with more recent iterations in yellow.}
+  \caption{Trace plots for the markov chain. Red lines denote true parameter values. MLE marked by orange lines. MAP marked by blue lines. \ref{trace:a} Shows the entire trace of the chain. \ref{trace:b} Shows the trace with the first 100000 iterations discarded. Colour gradient corresponds to the iteration number, with more recent iterations in yellow.}
   \label{fig:trace}
 \end{figure}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -370,30 +372,33 @@ One million iterations were used and the first One hundred thousand discarded as
 \begin{figure}[H]
   \centering
   \subfloat[]{\label{hists:a}\includegraphics[scale=.4]{../R/lambdahist}}
-  \centering
+  
   \subfloat[]{\label{hists:b}\includegraphics[scale=.4]{../R/nhist}}
-  \centering
-  \caption{Histograms of the posterior marginals. MLE marked by blue line. MAP marked by orange line. \ref{hists:a} $\lambda$ marginal \ref{hists:b} $N$ marginal}
+  \caption{Histograms of the posterior marginals. MLE marked by orange line. MAP marked by blue line. \ref{hists:a} $\lambda$ marginal \ref{hists:b} $N$ marginal}
   \label{fig:hists}
 \end{figure}
-`\begin{figure}[H]
+\begin{figure}[H]
   \centering
-    \includegraphics[width=0.5\textwidth]{../R/tree}
+    \includegraphics[width=0.4\textwidth]{../R/tree}
     \caption{The simulated genealogy used for this example.}
 \end{figure}'
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Coalescent with Local Population Structure}
-\subsection{Phylogeny Simulation}
-We present a simulated phylogeny under the new model we developed,m with two divergence events.
+\subsection{Coalescent with Local Population Structure}
+\subsubsection{Phylogeny Simulation}
+The package in development is currently capable of simulating phylogenies based on the coalescent with local population structure proposed in this work. 
+Phylogenies can be simulated with an arbitrary number of diverging subpopulations and clearly visualised.\\
+The package is also capable of rapidly computing likelihoods for the arbitrary phylogenies and parameters. The likelihood computation is partly implemented in C++ for increased perfromance. 
 \begin{figure}[H]
   \centering
      \includegraphics[width=0.5\textwidth]{../R/tree_structured}
     \caption{A genealogy simulated under this formulation}
 \end{figure}
-\subsection{MCMC inference}
+\subsubsection{MCMC inference}
+At the moment we are in the process of implementing, and valdiating the MCMC routine for inference under coalescent with local population structure. We present the following intermediate results, however it is important to note that the proposal distributions are still pending validation and rigorous testing.\\
+For the example, a phylogeny with 100 sampling events and a single diverging subpopulation has been simulated. The location of the divergence event on the tree, the growth rate and carrying capacity of the diverging subpopulation, as well as the neutral population size of the parent population have then been inferred using MCMC run for one million iterations. 
 \section{Discussion \& Future Work}
 \section{Future Work}
 In this work we proposed a framework to enable local phylodynamic inference, with the aim to facilitate usage of genomic data for outbreak detection. What remains now is to thoroughly test MCMC inference under this framework on both synthetic data and real world data. First of all with the number of divergence events fixed, and then further with an arbitrary number of divergence.\\

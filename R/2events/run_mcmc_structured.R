@@ -6,7 +6,7 @@ library(ggtree)
 library(treeio)
 library(viridis)
 
-set.seed(12345)
+set.seed(123456)
 
 n <- 2
 
@@ -198,8 +198,8 @@ proposal.cond_lh <- function(x_cand, x_prev, it){
   return(out)
 }
 
-n_it <- 1e6
-burn_in <- 1e5
+n_it <- 1e7
+burn_in <- 1e6
 
 o <- run_mcmc(log_lh, proposal.cond_lh, prop.sampler, x_0, n_it, FALSE)
 

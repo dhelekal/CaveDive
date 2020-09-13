@@ -88,7 +88,7 @@ build_coal_tree <- function(sampling_times, coalescent_times, leaf_names=NULL,no
 #' @return a list with the Newick string corresponding to the tree, and a list of leaf colouring assignments
 #' @export
 
-build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_colours, coalescent_colours, div_times, div_events, div_from, include_div_nodes = TRUE) {
+build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_colours, coalescent_colours, div_times, div_events, div_from, include_div_nodes = TRUE, aux_root = FALSE) {
 
   sam_ord <- order(-sampling_times)
   coal_ord <- order(-coalescent_times)
@@ -157,7 +157,11 @@ build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_co
     subtrees[parent] <- gsub(paste0("#D_", i), diverging_tree, parent_tree)
   }
 
-  tree_str <- paste0(subtrees[length(subtrees)], ";")
+  if (aux_root) {
+    tree_str <- paste0("(",subtrees[length(subtrees)],":", 1, ")", "R", ";")
+  } else {
+    tree_str <- paste0(subtrees[length(subtrees)], ";")
+  }
   return(list(full=tree_str, subtrees=subtrees.ret))
 }
 
