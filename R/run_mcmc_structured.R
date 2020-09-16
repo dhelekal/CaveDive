@@ -8,6 +8,8 @@ library(viridis)
 
 set.seed(1234567)
 
+source("./proposal.R")
+
 n <- 1
 
 n_tips <- 100
@@ -82,13 +84,19 @@ log_lh <- function(x){
   prior_K <- sum(dexp(K, rate = 1/100, log = TRUE))
   prior_N <- dexp(N, rate = 1/100, log = TRUE)
 
-  if (all(K > 0) && all(rates > 0) && all(N > 0) && all(!is.na(div.branch))){
+  if (all(K > 0) &&
+      all(rates > 0) &&
+      all(N > 0) && 
+      all(!is.na(div.branch)) && 
+      all(div.times>pre$nodes.df$times[pre$edges.df$node.parent[div.branch]]) &&
+      all(div.times<pre$nodes.df$times[pre$edges.df$node.child[div.branch]]))
+  {
       MRCAs <- sapply(pre$edges.df$node.child[div.branch], function(x) if (x > n_tips) pre$phy$node.label[x-n_tips] else NA)
       MRCAs <- c(MRCAs, root_MRCA)
       div.times <- c(div.times, root_div)
       if (all(!is.na(MRCAs))) {
-        prior_br <- 0
-        lh <- 0#structured_coal.likelihood(pre, MRCAs, div.times, rates, K, N, type="Sat")$log_lh
+        prior_br <- #sum(log(pre$edges.df$length[div.branch]/total_branch_len))
+        lh <- structured_coal.likelihood(pre, MRCAs, div.times, rates, K, N, type="Sat")$log_lh
         prior <- prior_rates + prior_K + prior_N + prior_br
         lh <- lh + prior
       } else {
@@ -100,163 +108,14 @@ log_lh <- function(x){
   return(lh)
 }
 
-prop.sampler <-function (x_prev){
-  rates <- x_prev[[1]]
-  K <- x_prev[[2]]
-  N <- x_prev[[3]]
-  div.times <- x_prev[[4]]
-  div.branch <- x_prev[[5]]
+n_it <- 1e7
+burn_in <- 1e6
 
-  x_next <- vector(mode = "list", length = length(x_prev))
+set.seed(1)
 
-  which_upd <- runif(1,1,3)
-
-  if (which_upd < 2) {
-    ### update rates
-    rates_upd <- rnorm(length(rates), mean=rates, 1) 
-    K_upd <- rnorm(length(K), mean=K, 1)
-    N_upd <- rnorm(length(N), mean=N, 1)
-
-    x_next[[1]] <- rates_upd
-    x_next[[2]] <- K_upd
-    x_next[[3]] <- N_upd
-    x_next[[4]] <- div.times
-    x_next[[5]] <- div.branch
-
-  } else {
-    ### move change point up or down
-    div.times_upd_delta <- rnorm(length(div.times), mean=div.times, 1)
-    div.branch_upd <- lapply(c(1:length(div.branch)), function (i) select_br(pre, div.branch[i], div.times[i], div.times_upd_delta[i]))
-
-    x_next[[1]] <- rates
-    x_next[[2]] <- K
-    x_next[[3]] <- N
-    x_next[[4]] <- sapply(div.branch_upd, function(x) x$new_time)
-    x_next[[5]] <- sapply(div.branch_upd, function(x) x$br)
-
-    if (!is.na(x_next[[5]])){
-      lh1 <- sapply(div.branch_upd, function(x) x$log_lh)
-      lh2 <- sapply(c(1:length(div.branch_upd)), function (x) branch_log_lh(div.branch[x], x_next[[5]][x]))
-       if(!all(abs(lh1-lh2)<1e-6)) {
-        warning(paste0("conditional log_lh incorrect: ",lh1, " , ", lh2))
-        print("ERR")
-        return(NA)
-      }
-    }
-  }
-  return(x_next)
-}
-
-select_br <- function(pre, div.br, div.time, div.time_upd) {
-  edges <- pre$edges.df
-  nodes <- pre$nodes.df
-  br <- div.br
-  new_time <- div.time_upd
-
-  root_traversed <- FALSE
-  prev_br <- NA
-
-  outgoing <- pre$outgoing
-  incoming <- pre$incoming
-
-  lh <- 0
-
-  if (new_time-div.time < 0) { ##if going backwards in time
-    pa <- edges$node.parent[br]
-    while (!is.na(br) && nodes$times[pa] > (new_time)) {
-      pa <- edges$node.parent[br]
-      prev_br <- br
-      br <- incoming[[pa]]
-    }
-    if (is.na(br)) {
-      ### we reached root, hence we need to switch over to other half of tree
-      if(pa != pre$root_idx){
-         warning("Parent not equal to root")
-         return(NA)
-      } 
-      remaining_time <- (new_time-div.time) + (nodes$times[pa]-div.time)
-      new_time <- nodes$times[pa] - remaining_time
-      br <- outgoing[[pa]][which(outgoing[[pa]]!=prev_br)]
-      root_traversed <- TRUE
-    }
-  }
-  if (root_traversed || new_time-div.time > 0) {#if forwards in time
-    while (!is.na(br) && nodes$times[edges$node.child[br]] < (new_time)) {
-      r <- runif(1,1,3)
-      lh <- lh+log(1/2)
-      br <- outgoing[[edges$node.child[br]]][r]
-    }
-  }
-  return(list(br=br, new_time=new_time, log_lh = lh))
-}
-
-branch_log_lh <- function(src, dest) {
-  edges <- pre$edges.df
-  nodes <- pre$nodes.df
-  which_half <- pre$which_half
-  out <- 0
-  temp_src <- src
-  temp_dest <- dest
-  if (which_half[temp_src] != which_half[temp_dest]) {
-    ### this means root was crossed, as such the move was first backwards, then forwards
-    root <- pre$root_idx
-    ### switch over to the initial branch of the other half of the tree
-    root_outgoing <- pre$outgoing[[root]]
-    temp_src <- root_outgoing[which(which_half[root_outgoing]!=which_half[temp_src])]
-  }
-  if (temp_src != temp_dest && 
-      which_half[temp_src]==which_half[temp_dest] &&
-      nodes$times[edges$node.child[temp_src]] < nodes$times[edges$node.child[temp_dest]]){
-    ### Check if direction is forwards. If backwards loglikelihood 0 UNLESS root has been traversed 
-    ### iterate backwards exponentiating two at each branch point
-    br <- temp_dest 
-    incoming <- pre$incoming
-    while (!is.na(br) && br != temp_src) {
-      br <- incoming[[edges$node.parent[br]]]
-      out <- out + log(1/2) ### loops infinitely
-    }
-  }
-  return(out)
-}
-
-time_log_lh <- function(src, dest, prev_time, cand_time) {
-  which_half <- pre$which_half
-  out <- 0
-  if (which_half[src] == which_half[dest]){
-    out <- dnorm(cand_time, mean=prev_time, 1, log=TRUE)
-  } else {
-    root_time <- pre$nodes.df$times[pre$root_idx]
-    out <- dnorm((root_time-prev_time+root_time-cand_time), mean=prev_time, 1, log=TRUE)
-  }
-  return(out)
-}
-
-proposal.cond_lh <- function(x_cand, x_prev, it){
-
-  rates_prev <- x_prev[[1]]
-  K_prev <- x_prev[[2]]
-  N_prev <- x_prev[[3]]
-  div.times_prev <- x_prev[[4]]
-  div.branch_prev <- x_prev[[5]]
-
-  rates_cand <- x_cand[[1]]
-  K_cand <- x_cand[[2]]
-  N_cand <- x_cand[[3]]
-  div.times_cand <- x_cand[[4]]
-  div.branch_cand <- x_cand[[5]]
-
-  out <- sum(dnorm(rates_cand, mean=rates_prev, 1, log=TRUE)) + 
-         sum(dnorm(K_cand, mean=K_prev, 1, log=TRUE)) +
-         sum(dnorm(N_cand, mean=N_prev, 1, log=TRUE)) + 
-         sum(sapply(c(1:length(div.branch_cand)), function(x) time_log_lh(div.branch_prev[x], div.branch_cand[x],div.times_prev[x], div.times_cand[x]))) +
-         sum(sapply(c(1:length(div.branch_cand)), function (x) branch_log_lh(div.branch_prev[x], div.branch_cand[x])))
-  return(out)
-}
-
-n_it <- 1e6
-burn_in <- 1e5
-
-o <- run_mcmc(log_lh, proposal.cond_lh, prop.sampler, x_0, n_it, FALSE)
+o <- run_mcmc(log_lh, 
+  function (x_cand, x_prev) prop.cond_log_lh(x_cand, x_prev, pre), 
+  function (x_prev) prop.sampler(x_prev, pre), x_0, n_it, FALSE)
 
 marginals <- list()
 names <- list()
@@ -322,7 +181,7 @@ for(i in c(1:n)) {
   tt <- table(o.df[[paste0("branches_",i)]])
   freq <- sapply(c(1:length(tt)), function (i) tt[i]/pre$edges.df$length[as.integer(names(tt))[i]])
 
-  aux.df <- data.frame(x=as.integer(names(tt)), y = freq)
+  aux.df <- data.frame(x=names(tt), y = freq)
 
   plt <- ggplot(aux.df, aes(x=x,y=y)) +
          geom_bar(stat="identity", fill="steelblue") + 
@@ -361,19 +220,21 @@ plt <- ggplot(o.df, aes(x=N)) +
          geom_vline(xintercept = N, colour="orange", linetype = "longdash") + 
          theme(aspect.ratio=1)
 plot(plt)
+dev.off()
 
 
 pdf(file="tree_freq.pdf", width = 5, height = 5)
-    
     labs <- c(tree$node.label, tree$tip.label)
+    tip <- c(rep("1",length(tree$node.label)), rep("2", length(tree$tip.label)))
     ids <- nodeid(tree, labs)
-    id_freq <- sapply(ids, function (i) if (is.na(freq[paste0(pre$incoming[[i]])])) 0 else freq[paste0(pre$incoming[[i]])])
+    id_freq <- sapply(ids, function (i) if(pre$nodes.df$is_tip[i]) NA else if (is.na(freq[paste0(pre$incoming[[i]])])) 0 else freq[paste0(pre$incoming[[i]])])
 
-    ldf <- data.frame(node = ids, frequency = id_freq)
+    ldf <- data.frame(node = ids, frequency = id_freq, tip=tip)
     tree.full <- full_join(tree, ldf, by = 'node')
 
-    plt<-ggtree(tree.full, aes(color=frequency), ladderize=TRUE) +
+    plt<-ggtree(tree.full, aes(color=frequency, linetype=tip), ladderize=TRUE) +
                           geom_point() +
+                          scale_linetype(c("solid","dashed"), na.value = "blank") +
                           scale_size_manual(values=c(1)) +
                           scale_color_viridis() +
                           theme_tree2()
