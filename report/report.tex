@@ -351,7 +351,7 @@ First thing that has been implemented and tested was a basic framework that enab
 This example used the relative population size function $\alpha(t) = N*\exp(-\lambda t)$, and consisted of 100 sampling events between 0 and 10 years before present.
 Accordingly, a genealogy has then been simulated with a rate parameter $\lambda$ and final size parameter $N$ drawn from a uniform densities on intervals $[0.1, 10]$, and $[1,100]$ respectively.\\
 A Metropolis-Hastings MCMC scheme was then used to infer the parameters $\lambda$ and $N$. An exponential distribution rate equal to one was chosen as the prior for $\lambda$, as well as for $N$.\\
-One million iterations were used and the first one hundred thousand were discarded as burn in time. To further validate the fit, both a maximum likelihood (MLE) and maximum \textit{a-posteriori} (MAP) estimates were computed and plotted against the posterior marginals inferred by the MCMC.
+One million iterations were used and the first one hundred thousand were discarded as burn in time. To further validate the fit, both a maximum likelihood (MLE) and maximum \textit{a-posteriori} (MAP) estimates were computed and plotted against the posterior marginals inferred by the MCMC \ref{hists:a, hists:b}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -401,7 +401,7 @@ The package is also capable of rapidly computing likelihoods for the arbitrary p
     \caption{A simulated genealogy with four clonal expansions}
 \end{figure}
 \subsubsection{MCMC inference}
-At the moment we are in the process of implementing, and valdiating the MCMC routine for inference under coalescent with local population structure, and with a fixed number of divergence events. Currently there is a bug in the proposal move of the MCMC algorithm that changes the location of the divergence event, specifically, when it's supposed to traverse the root of the tree. As such we are unable to present reliable results at the moment. 
+At the moment we are in the process of implementing, and validating the MCMC routine for inference under coalescent with local population structure, and with a fixed number of divergence events. Currently there is a bug in the proposal move of the MCMC algorithm that changes the location of the divergence event, specifically, when it's supposed to traverse the root of the tree. As such we are unable to present reliable results at the moment. 
 \section{Discussion \& Future Work}
 \section{Discussion}
 In this work we proposed a framework to enable local phylodynamic inference, with the aim to facilitate usage of genomic data for outbreak detection.

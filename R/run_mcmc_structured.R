@@ -133,6 +133,16 @@ prop.sampler <-function (x_prev){
     x_next[[3]] <- N
     x_next[[4]] <- sapply(div.branch_upd, function(x) x$new_time)
     x_next[[5]] <- sapply(div.branch_upd, function(x) x$br)
+
+    if (!is.na(x_next[[5]])){
+      lh1 <- sapply(div.branch_upd, function(x) x$log_lh)
+      lh2 <- sapply(c(1:length(div.branch_upd)), function (x) branch_log_lh(div.branch[x], x_next[[5]][x]))
+       if(!all(abs(lh1-lh2)<1e-6)) {
+        warning(paste0("conditional log_lh incorrect: ",lh1, " , ", lh2))
+        print("ERR")
+        return(NA)
+      }
+    }
   }
   return(x_next)
 }
@@ -149,6 +159,7 @@ select_br <- function(pre, div.br, div.time, div.time_upd) {
   outgoing <- pre$outgoing
   incoming <- pre$incoming
 
+  lh <- 0
 
   if (new_time-div.time < 0) { ##if going backwards in time
     pa <- edges$node.parent[br]
@@ -172,13 +183,14 @@ select_br <- function(pre, div.br, div.time, div.time_upd) {
   if (root_traversed || new_time-div.time > 0) {#if forwards in time
     while (!is.na(br) && nodes$times[edges$node.child[br]] < (new_time)) {
       r <- runif(1,1,3)
+      lh <- lh+log(1/2)
       br <- outgoing[[edges$node.child[br]]][r]
     }
   }
-  return(list(br=br, new_time=new_time))
+  return(list(br=br, new_time=new_time, log_lh = lh))
 }
 
-branch_log_lh <- function(src, dest, div.time_upd) {
+branch_log_lh <- function(src, dest) {
   edges <- pre$edges.df
   nodes <- pre$nodes.df
   which_half <- pre$which_half
@@ -237,7 +249,7 @@ proposal.cond_lh <- function(x_cand, x_prev, it){
          sum(dnorm(K_cand, mean=K_prev, 1, log=TRUE)) +
          sum(dnorm(N_cand, mean=N_prev, 1, log=TRUE)) + 
          sum(sapply(c(1:length(div.branch_cand)), function(x) time_log_lh(div.branch_prev[x], div.branch_cand[x],div.times_prev[x], div.times_cand[x]))) +
-         sum(sapply(c(1:length(div.branch_cand)), function (x) branch_log_lh(div.branch_prev[x], div.branch_cand[x], div.times_cand[x])))
+         sum(sapply(c(1:length(div.branch_cand)), function (x) branch_log_lh(div.branch_prev[x], div.branch_cand[x])))
   return(out)
 }
 
