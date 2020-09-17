@@ -95,8 +95,8 @@ log_lh <- function(x){
       MRCAs <- c(MRCAs, root_MRCA)
       div.times <- c(div.times, root_div)
       if (all(!is.na(MRCAs))) {
-        prior_br <- #sum(log(pre$edges.df$length[div.branch]/total_branch_len))
-        lh <- structured_coal.likelihood(pre, MRCAs, div.times, rates, K, N, type="Sat")$log_lh
+        prior_br <- 0#sum(log(pre$edges.df$length[div.branch]/total_branch_len))
+        lh <- 0#structured_coal.likelihood(pre, MRCAs, div.times, rates, K, N, type="Sat")$log_lh
         prior <- prior_rates + prior_K + prior_N + prior_br
         lh <- lh + prior
       } else {
@@ -108,13 +108,13 @@ log_lh <- function(x){
   return(lh)
 }
 
-n_it <- 1e7
-burn_in <- 1e6
+n_it <- 3e6
+burn_in <- 1e5
 
 set.seed(1)
 
 o <- run_mcmc(log_lh, 
-  function (x_cand, x_prev) prop.cond_log_lh(x_cand, x_prev, pre), 
+  function (x, x_given) prop.cond_log_lh(x, x_given, pre), 
   function (x_prev) prop.sampler(x_prev, pre), x_0, n_it, FALSE)
 
 marginals <- list()
