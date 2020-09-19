@@ -6,9 +6,9 @@ library(ggtree)
 library(treeio)
 library(viridis)
 
-set.seed(1234567)
+set.seed(12345689)
 
-source("./proposal2.R")
+source("./proposal.R")
 
 n <- 1
 
@@ -22,7 +22,7 @@ colours <- trunc(runif(n_tips, 1, n+2))
 N <- 100#rexp(1, rate = 1/100)
 K <- rep(N, n)#rexp(n, rate = 1/100)
 A <- c(0.1) #rexp(n, rate = 1/20)
-div_times <- c(-1*runif(n,20,50), -Inf)
+div_times <- c(-1*runif(n,40,100), -Inf)
 
 div_cols <- c(1:(n+1))
 
