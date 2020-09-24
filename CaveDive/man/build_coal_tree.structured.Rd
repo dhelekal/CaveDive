@@ -12,7 +12,8 @@ build_coal_tree.structured(
   div_times,
   div_events,
   div_from,
-  include_div_nodes = TRUE
+  include_div_nodes = TRUE,
+  aux_root = FALSE
 )
 }
 \arguments{

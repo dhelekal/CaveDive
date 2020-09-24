@@ -9,7 +9,7 @@
 inhomogenous_coal.simulate <- function(sampling_times,
                                        Neg.rate,
                                        Neg.rate.int,
-                                       Neg.rate.int_inv) {
+                                       Neg.rate.int_inv=NULL) {
   log_lh <- 0
   
   times_desc <- sampling_times[order(-sampling_times)]
@@ -20,6 +20,10 @@ inhomogenous_coal.simulate <- function(sampling_times,
   t0 <- times_desc[1]
   idx <- 2
   coal_idx <- 1
+
+  if(is.null(Neg.rate.int_inv)){
+    Neg.rate.int_inv <- function(t,s) inv_rates(function (s) Neg.rate.int(t,s), s, dfun=Neg.rate)
+  }
   
   while (future_lineages > 0 || extant_lineages > 1) {
     if (extant_lineages < 2) {

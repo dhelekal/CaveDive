@@ -4,7 +4,14 @@
 \alias{run_mcmc}
 \title{Run metropolis-hastings mcmc.}
 \usage{
-run_mcmc(model.log_lh, proposal.cond_log_lh, proposal.sampler, x0, n_it)
+run_mcmc(
+  model.log_lh,
+  proposal.cond_log_lh,
+  proposal.sampler,
+  x0,
+  n_it,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{x0}{initial value for the chain}

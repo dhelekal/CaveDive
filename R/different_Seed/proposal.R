@@ -57,7 +57,7 @@ move_1 <- function(x_prev, pre) { ### update rates
   x_next <- vector(mode = "list", length = length(x_prev))
 
   rates <- x_prev[[1]]
-  K <- x_prev[[2]]
+  K <- x_prev[[2]]  
   N <- x_prev[[3]]
   div.times <- x_prev[[4]]
   div.branch <- x_prev[[5]]

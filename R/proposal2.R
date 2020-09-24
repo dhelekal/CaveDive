@@ -1,14 +1,14 @@
 
 prop.sampler <-function (x_prev, pre){
-  which_move <- sample.int(2, size=1)
+  which_move <- sample.int(3, size=1)
   if (which_move==1) {
     x_next <- move_1(x_prev, pre)
   } else if(which_move==2) {
     x_next <- move_2(x_prev, pre)
   }
-  #else if(which_move==3) {
-  #  x_next <- move_3(x_prev, pre)
-  #} 
+  else if(which_move==3) {
+    x_next <- move_3(x_prev, pre)
+  } 
   return(x_next)
 }
 
@@ -65,7 +65,7 @@ prop.cond_log_lh <- function(x, given, pre) {
         }
       }
     }
-    time_log_lh <- time_log_lh + dnorm(delta_t, mean=0, sd=2, log=TRUE)
+    time_log_lh <- time_log_lh + dnorm(delta_t, mean=0, sd=1, log=TRUE)
   } 
   log_lh <- param_log_lh+time_log_lh+branch_log_lh 
   return(log_lh)
@@ -120,7 +120,7 @@ move_2 <- function(x_prev, pre) { ### update time
   div.times_upd <- div.times
   div.branch_upd <- div.branch
   
-  delta_t <- rnorm(1, mean = 0, sd = 2)
+  delta_t <- rnorm(1, mean = 0, sd = 1)
   t0 <- div.times[which_idx]
   br <- div.branch[which_idx]
 
@@ -154,6 +154,15 @@ move_2 <- function(x_prev, pre) { ### update time
 
   div.times_upd[which_idx] <- new_time
   div.branch_upd[which_idx] <- new_branch
+
+  MRCAs <- sapply(pre$edges.df$node.child[div.branch], function(x) if (x > n_tips) pre$phy$node.label[x-n_tips] else NA)
+  MRCAs <- c(MRCAs, root_MRCA)
+  div.times <- c(div.times, root_div)
+
+  subtrees <- lapply(c(1:length(div.MRCA.nodes)), function (x) phylo.preprocessed$clades.list[[MRCA.idx[x]]]) 
+  k_div <- length(subtrees)
+  log_lh <- 0
+  times <- extract_lineage_times(phylo.preprocessed, subtrees, div.MRCA.nodes, div.times)
   N_upd  <- rnorm(1, mean=N, sd=1)
 
   x_next[[1]] <- rates
@@ -165,22 +174,22 @@ move_2 <- function(x_prev, pre) { ### update time
   return(x_next)
 }
 
-#move_3 <- function(x_prev, pre) { ### update N
-#  x_next <- vector(mode = "list", length = length(x_prev))
-#
-#  rates <- x_prev[[1]]
-#  K <- x_prev[[2]]
-#  N <- x_prev[[3]]
-#  div.times <- x_prev[[4]]
-#  div.branch <- x_prev[[5]]
-#
-#  N_upd  <- rnorm(1, mean=N, sd=1)
-#
-#  x_next[[1]] <- rates
-#  x_next[[2]] <- K
-#  x_next[[3]] <- N_upd
-#  x_next[[4]] <- div.times
-#  x_next[[5]] <- div.branch
-#
-#  return(x_next)
-#}
+move_3 <- function(x_prev, pre) { ### update N
+  x_next <- vector(mode = "list", length = length(x_prev))
+
+  rates <- x_prev[[1]]
+  K <- x_prev[[2]]
+  N <- x_prev[[3]]
+  div.times <- x_prev[[4]]
+  div.branch <- x_prev[[5]]
+
+  N_upd  <- rnorm(1, mean=N, sd=1)
+
+  x_next[[1]] <- rates
+  x_next[[2]] <- K
+  x_next[[3]] <- N_upd
+  x_next[[4]] <- div.times
+  x_next[[5]] <- div.branch
+
+  return(x_next)
+}

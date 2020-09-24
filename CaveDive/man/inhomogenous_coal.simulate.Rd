@@ -8,7 +8,7 @@ inhomogenous_coal.simulate(
   sampling_times,
   Neg.rate,
   Neg.rate.int,
-  Neg.rate.int_inv
+  Neg.rate.int_inv = NULL
 )
 }
 \arguments{

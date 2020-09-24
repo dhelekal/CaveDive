@@ -6,7 +6,7 @@ library(ggtree)
 library(treeio)
 library(viridis)
 
-set.seed(12345689)
+set.seed(1234589)
 
 source("./proposal.R")
 
@@ -19,10 +19,10 @@ sam <- sam[order(-sam)]
 
 colours <- trunc(runif(n_tips, 1, n+2))
 
-N <- 100#rexp(1, rate = 1/100)
+N <- 1000#rexp(1, rate = 1/100)
 K <- rep(N, n)#rexp(n, rate = 1/100)
 A <- c(0.1) #rexp(n, rate = 1/20)
-div_times <- c(-1*runif(n,40,100), -Inf)
+div_times <- c(-1*runif(n,100,400), -Inf)
 
 div_cols <- c(1:(n+1))
 
@@ -60,13 +60,13 @@ root_div <- -Inf
 inner_branches <- pre$edges.df$id[which(pre$edges.df$node.child>n_tips)] 
 #rand_br <- inner_branches[runif(n, 1, (length(inner_branches)+1))]
 
-rand_br <- pre$outgoing[[pre$root]][which(pre$which_half[pre$outgoing[[pre$root]]]==2)]
+rand_br <- pre$outgoing[[pre$root]][which(pre$which_half[pre$outgoing[[pre$root]]]==1)]
 rand_times <- sapply(rand_br, function (x) runif(1, pre$nodes.df$times[pre$edges.df$node.parent[x]],
                                                     pre$nodes.df$times[pre$edges.df$node.child[x]]))
 x_0 <- list()
-x_0[[1]] <- rexp(n, rate = 1/20)
-x_0[[2]] <- rexp(n, rate = 1/100)
-x_0[[3]] <- rexp(1, rate = 1/100)
+x_0[[1]] <- rnorm(n, mean=0.5, sd=0.1)
+x_0[[2]] <- rnorm(n, mean=1000, sd=10)
+x_0[[3]] <- rnorm(n, mean=1000, sd=10)
 x_0[[4]] <- rand_times
 x_0[[5]] <- rand_br
 
@@ -82,9 +82,9 @@ log_lh <- function(x){
   div.times <- x[[4]]
   div.branch <- x[[5]]
 
-  prior_rates <- sum(dexp(rates, rate = 1, log = TRUE))
-  prior_K <- sum(dexp(K, rate = 1/100, log = TRUE))
-  prior_N <- dexp(N, rate = 1/100, log = TRUE)
+  prior_rates <- sum(dexp(rates, rate = 0.1, log = TRUE))
+  prior_K <- sum(dlnorm(K, meanlog = log(1000), sdlog = 1, log = TRUE))
+  prior_N <- dlnorm(N, meanlog = log(1000), sdlog = 1, log = TRUE)
 
   if (all(K > 0) &&
       all(rates > 0) &&
@@ -97,14 +97,10 @@ log_lh <- function(x){
       MRCAs <- c(MRCAs, root_MRCA)
       div.times <- c(div.times, root_div)
       if (all(!is.na(MRCAs))) {
-        prior_br <- 0#sum(log(pre$edges.df$length[div.branch]/total_branch_len))
+        prior_br <- sum(log(pre$edges.df$length[div.branch]/total_branch_len))
         lh <-structured_coal.likelihood(pre, MRCAs, div.times, rates, K, N, type="Sat")$log_lh
         prior <- prior_rates + prior_K + prior_N + prior_br
         lh <- lh + prior
-
-        #if (pre$which_half[div.branch] == 2) {
-        #  print(lh)
-        #}
       } else {
         lh <- -Inf
       }
@@ -115,7 +111,7 @@ log_lh <- function(x){
 }
 
 n_it <- 1e6
-burn_in <- 1
+burn_in <- 1e5
 
 set.seed(1)
 
