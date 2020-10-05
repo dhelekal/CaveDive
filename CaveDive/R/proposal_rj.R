@@ -16,6 +16,19 @@ prop.sampler <- function (x_prev, i_prev, pre, para.initialiser){
   return(list(x_next=x_next,i_next=i_next))
 }
 
+prop.cond_lh <- function(x, i, x_given, i_given, initialiser.log_lh, pre) {
+  N <- x[[1]]
+  N_given <- x_given[[1]]
+  out <- dnorm(N, mean=N_given, sd=1, log=TRUE)
+
+  if(i > i_given) {
+    out <- out + initialiser.log_lh(x[[i+1]])
+  } else if(i==i_given) {
+    out <- out + sum(sapply(c(1:i_given), within_model.cond_log_lh(x[[i+1]], x_given[[i+1]], pre)))
+  }
+  return(out)
+}
+
 transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser) {
   which_move <- sample.int(2,size=1)
   if (which_move==1) { ### increase dim
@@ -25,7 +38,7 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser) {
   } else { ### decrease dim
     x_next <- x_prev
     which_elem <- sample.int(i_prev, size=1)
-    x_next <- x_next[[-which_elem]]
+    x_next <- x_next[[-(which_elem+1)]]
     i_next <- i_prev - 1
   }
   return(list(x_next=x_next, i_next=i_next))
@@ -60,26 +73,22 @@ make_move <- function(x_prev, i_prev, pre, move) {
     return(x_next)
 }
 
-prop.cond_log_lh <- function(x, given, pre) {
-
+within_model.cond_log_lh <- function(x, given, pre) {
   rates_given <- given[[1]]
   K_given <- given[[2]]
-  N_given <- given[[3]]
-  div.times_given <- given[[4]]
-  div.branch_given <- given[[5]]
+  div.times_given <- given[[2]]
+  div.branch_given <- given[[4]]
 
   rates <- x[[1]]
   K <- x[[2]]
-  N <- x[[3]]
-  div.times <- x[[4]]
-  div.branch <- x[[5]]
+  div.times <- x[[3]]
+  div.branch <- x[[4]]
 
   outgoing <- pre$outgoing
   edges <- pre$edges.df
 
   param_log_lh <- sum(dnorm(rates, mean=rates_given, sd=1, log=TRUE)) + 
-         sum(dnorm(K, mean=K_given, sd=1, log=TRUE)) +
-         sum(dnorm(N, mean=N_given, sd=1, log=TRUE))
+         sum(dnorm(K, mean=K_given, sd=1, log=TRUE)) 
 
   time_log_lh <- 0
   branch_log_lh <- 0
@@ -98,15 +107,14 @@ prop.cond_log_lh <- function(x, given, pre) {
   return(param_log_lh+time_log_lh+branch_log_lh)
 }
 
-move_update_rates` <- function(x_prev, pre) { ### update rates
+move_update_rates <- function(x_prev, pre) { ### update rates
   
   x_next <- vector(mode = "list", length = length(x_prev))
 
   rates <- x_prev[[1]]
   K <- x_prev[[2]]
-  N <- x_prev[[3]]
-  div.times <- x_prev[[4]]
-  div.branch <- x_prev[[5]]
+  div.times <- x_prev[[3]]
+  div.branch <- x_prev[[4]]
 
   which_idx <- sample.int(length(rates), size=1)
 
@@ -118,9 +126,8 @@ move_update_rates` <- function(x_prev, pre) { ### update rates
 
   x_next[[1]] <- rates_upd 
   x_next[[2]] <- K_upd
-  x_next[[3]] <- N
-  x_next[[4]] <- div.times
-  x_next[[5]] <- div.branch
+  x_next[[3]] <- div.times
+  x_next[[4]] <- div.branch
 
   return(x_next)
 }
@@ -131,9 +138,8 @@ move_update_time <- function(x_prev, pre) { ### update time
 
   rates <- x_prev[[1]]
   K <- x_prev[[2]]
-  N <- x_prev[[3]]
-  div.times <- x_prev[[4]]
-  div.branch <- x_prev[[5]]
+  div.times <- x_prev[[3]]
+  div.branch <- x_prev[[4]]
 
   which_idx <- sample.int(length(div.times), size=1)
   div.times_upd <- div.times
@@ -141,9 +147,8 @@ move_update_time <- function(x_prev, pre) { ### update time
 
   x_next[[1]] <- rates
   x_next[[2]] <- K
-  x_next[[3]] <- N
-  x_next[[4]] <- div.times_upd
-  x_next[[5]] <- div.branch
+  x_next[[3]] <- div.times_upd
+  x_next[[4]] <- div.branch
 
   return(x_next)
 }
@@ -153,9 +158,8 @@ move_update_branch <- function(x_prev, pre) { ### update branch
 
   rates <- x_prev[[1]]
   K <- x_prev[[2]]
-  N <- x_prev[[3]]
-  div.times <- x_prev[[4]]
-  div.branch <- x_prev[[5]]
+  div.times <- x_prev[[3]]
+  div.branch <- x_prev[[4]]
 
   edges <- pre$edges.df
   nodes <- pre$nodes.df
@@ -197,9 +201,8 @@ move_update_branch <- function(x_prev, pre) { ### update branch
   
   x_next[[1]] <- rates
   x_next[[2]] <- K
-  x_next[[3]] <- N
-  x_next[[4]] <- div.times_upd
-  x_next[[5]] <- div.branch_upd
+  x_next[[3]] <- div.times_upd
+  x_next[[4]] <- div.branch_upd
 
   return(x_next)
 }
