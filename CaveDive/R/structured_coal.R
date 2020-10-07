@@ -257,10 +257,9 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.t
     n_tips <- phylo.preprocessed$n_tips
 
     MRCA.idx <- nodeid(phylo.preprocessed$phy, div.MRCA.nodes)-n_tips
-    subtrees <- lapply(c(1:length(div.MRCA.nodes)), function (x) phylo.preprocessed$clades.list[[MRCA.idx[x]]]) 
-    k_div <- length(subtrees)
+    k_div <- length(div.MRCA.nodes)
     log_lh <- 0
-    times <- extract_lineage_times(phylo.preprocessed, subtrees, div.MRCA.nodes, div.times)
+    times <- extract_lineage_times(phylo.preprocessed, div.MRCA.nodes, div.times)
 
     if(times$empty_tips) {
         warning("MRCA selection produced subtrees with empty tips.")
@@ -269,7 +268,9 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.t
 
         t_max <- max(sapply(c(1:length(times$sam.times)),function (x) max(times$sam.times[[x]])))
 
-        for (i in c(1:(k_div-1))){
+        if (k_div > 1) range <- c(1:(k_div-1)) else range <- c()
+
+        for (i in range){
             if (type == "Log-Exp") {
                     log_lh <- log_lh + logexp_coalescent_loglh(times$sam.times[[i]], times$coal.times[[i]], div.times[i], diverging.rates[i], diverging.sizes[i], t_max)
                 } else if (type=="Sat") {
@@ -293,7 +294,7 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.t
 #' @param div.times absolute divergence times
 #' @return A list containing lists of sampling time vectors sam.times and coalescent time vectors coal.times for each lineage.
 #' @export
-extract_lineage_times <- function(phylo.preprocessed, subtrees, div.MRCA.nodes, div.times) {
+extract_lineage_times <- function(phylo.preprocessed, div.MRCA.nodes, div.times) {
     times.ord <- order(div.times)
     k_div <- length(div.times)
 
@@ -301,6 +302,11 @@ extract_lineage_times <- function(phylo.preprocessed, subtrees, div.MRCA.nodes, 
     sam.times <- list()
 
     empty_tips <- FALSE
+
+    n_tips <- phylo.preprocessed$n_tips
+
+    MRCA.idx <- nodeid(phylo.preprocessed$phy, div.MRCA.nodes)-n_tips
+    subtrees <- lapply(c(1:length(div.MRCA.nodes)), function (x) phylo.preprocessed$clades.list[[MRCA.idx[x]]]) 
     
     for (i in c(1:k_div)) {
         ii <- times.ord[i]

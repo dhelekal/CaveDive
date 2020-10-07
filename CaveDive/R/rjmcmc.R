@@ -1,4 +1,4 @@
-rjmcmc <- function(likelihood, proposal.cond_log_lh, proposal.sampler, prior_i, x0, i0. max_it, thinning=1) {
+rjmcmc <- function(likelihood, proposal.cond_log_lh, proposal.sampler, prior_i, x0, i0, max_it, thinning=1) {
 
     pb <- utils::txtProgressBar(min=0, max=max_it, style = 3)
     out.para <- vector('list',max_it/thinning)

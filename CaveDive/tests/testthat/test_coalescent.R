@@ -372,7 +372,7 @@ test_that("extract_lineage_times works", {
 
     pre <- structured_coal.preprocess_phylo(tree.nodiv)
     subtrees <- lapply(c(1:length(MRCAs)), function (x) pre$clades.list[[(nodeid(pre$phy, MRCAs[x])-100)]]) 
-    times <- extract_lineage_times(pre, subtrees, MRCAs, div_times) 
+    times <- extract_lineage_times(pre, MRCAs, div_times) 
 
     for (i in div_cols){
       sam.gt <- sam[which(colours==i)]
@@ -386,6 +386,43 @@ test_that("extract_lineage_times works", {
       expect_equal(sam.gt, times$sam.times[[i]])
       expect_equal(coal.gt, times$coal.times[[i]])
     }
+})
+
+test_that("Structured Coalescent likelihood with only one clade matches neutral likelihood", {
+    set.seed(1)
+
+    n_tips <- 100
+    
+    sam <- runif(n_tips, 0, 10)
+    tmax <- max(sam)
+    sam <- sam - tmax
+    sam.ord <- order(-sam)
+    sam <- sam[sam.ord]
+    colours <- trunc(runif(100, 1, 4))
+    
+    N <- 100
+    A <- c(5.1, 0.3)
+    K <- c(100,100)
+
+    div_times <- c(-25, -80, -Inf)
+    div_cols <- c(1, 2, 3)
+    rates <- list(function (s) sat.rate(s, K[1], A[1], div_times[1]), function (s) sat.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
+    rate.ints <- list(function(t,s) sat.rate.int(t, s, K[1], A[1], div_times[1]), function(t,s) sat.rate.int(t, s, K[2], A[2], div_times[2]), function(t,s) constant.rate.int(t,s,N))
+
+    co <- structured_coal.simulate(sam, colours, div_times, div_cols, rates, rate.ints)
+
+    tr.nodiv <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from, include_div_nodes = FALSE)
+    tree.nodiv <- read.tree(text = tr.nodiv$full)
+
+    pre <- structured_coal.preprocess_phylo(tree.nodiv)
+
+    root_MRCA <- pre$phy$node.label[pre$nodes.df$id[which.min(pre$nodes.df$times)]-n_tips]
+    root_div <- -Inf
+
+    comp <- structured_coal.likelihood(pre, root_MRCA, root_div, list(), list(), 100, type="Sat")
+    hom_log_lh <- coalescent_loglh(sam, co$times, 100, 0)
+
+    expect_equal(comp$log_lh, hom_log_lh)
 })
 
 test_that("Simulation Likelihood matches product of colour specific likelihoods", {
@@ -449,9 +486,7 @@ test_that("Simulation Likelihood matches product of colour specific likelihoods"
         expect_equal(coalescent_loglh(sam.gt, coal.gt, N, 0),
                       coalescent_loglh(comp$sam.times[[i]], comp$coal.times[[i]], N, 0))
       }
-
     }
-
 
     expect_equal(log_lh, co$log_lh)
     expect_equal(comp$log_lh, co$log_lh)
