@@ -6,7 +6,7 @@ prop.sampler <- function (x_prev, i_prev, pre, para.initialiser){
   r <- runif(1,0,2) 
 
   if (r < p) { ## transdimensional
-    upd <- transdimensional.sampler(x_prev, i_prev, pre)
+    upd <- transdimensional.sampler(x_prev, i_prev, pre, para.initialiser)
     x_next <- upd$x_next
     i_next <- upd$i_next
   } else { ## within-model
@@ -23,7 +23,7 @@ prop.cond_lh <- function(x, i, x_given, i_given, initialiser.log_lh, pre) {
 
   if(i > i_given) {
     out <- out + initialiser.log_lh(x[[i+1]])
-  } else if(i==i_given) {
+  } else if(i==i_given && i > 0) {
     out <- out + sum(sapply(c(1:i_given), within_model.cond_log_lh(x[[i+1]], x_given[[i+1]], pre)))
   }
   return(out)
@@ -32,21 +32,28 @@ prop.cond_lh <- function(x, i, x_given, i_given, initialiser.log_lh, pre) {
 transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser) {
   which_move <- sample.int(2,size=1)
   if (which_move==1) { ### increase dim
-    x_next <- x_prev
     i_next <- i_prev + 1
-    append(x_next, para.initialiser(pre))
+    x_next<- append(x_prev, para.initialiser())
   } else { ### decrease dim
     x_next <- x_prev
-    which_elem <- sample.int(i_prev, size=1)
-    x_next <- x_next[[-(which_elem+1)]]
-    i_next <- i_prev - 1
+    if (i_prev > 0) {
+      which_elem <- sample.int(i_prev, size=1)
+      x_next <- x_next[[-(which_elem+1)]]
+      i_next <- i_prev - 1
+    } else {
+      i_next <- i_prev
+    }
   }
   return(list(x_next=x_next, i_next=i_next))
 }
 
 within_model.sampler <- function(x_prev, i_prev, pre) {
 
-  which_move <- sample.int(4, size=1)
+  if (i_prev > 0) {
+    which_move <- sample.int(4, size=1)
+  } else {
+    which_move <- 4
+  }
 
   if (which_move==1) {
     x_next <- make_move(x_prev, i_prev, pre, move_update_rates)

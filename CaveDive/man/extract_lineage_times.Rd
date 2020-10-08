@@ -4,7 +4,7 @@
 \alias{extract_lineage_times}
 \title{Extracts Lineage times from a parent phylogeny based on provided divergence MRCA nodes and times.}
 \usage{
-extract_lineage_times(phylo.preprocessed, subtrees, div.MRCA.nodes, div.times)
+extract_lineage_times(phylo.preprocessed, div.MRCA.nodes, div.times)
 }
 \arguments{
 \item{phylo.preprocessed}{preprocessed phylogeny}
