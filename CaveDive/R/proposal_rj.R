@@ -24,7 +24,7 @@ prop.cond_lh <- function(x, i, x_given, i_given, initialiser.log_lh, pre) {
   if(i > i_given) {
     out <- out + initialiser.log_lh(x[[i+1]])
   } else if(i==i_given && i > 0) {
-    out <- out + sum(sapply(c(1:i_given), within_model.cond_log_lh(x[[i+1]], x_given[[i+1]], pre)))
+    out <- out + sum(sapply(c(1:i_given), function(j) within_model.cond_log_lh(x[[j+1]], x_given[[j+1]], pre)))
   }
   return(out)
 }
@@ -33,12 +33,13 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser) {
   which_move <- sample.int(2,size=1)
   if (which_move==1) { ### increase dim
     i_next <- i_prev + 1
-    x_next<- append(x_prev, para.initialiser())
-  } else { ### decrease dim
+    x_next <- x_prev
+    x_next[[length(x_next) + 1]] <- para.initialiser()
+   } else { ### decrease dim
     x_next <- x_prev
     if (i_prev > 0) {
       which_elem <- sample.int(i_prev, size=1)
-      x_next <- x_next[[-(which_elem+1)]]
+      x_next <- x_next[-(which_elem+1)]
       i_next <- i_prev - 1
     } else {
       i_next <- i_prev
@@ -83,7 +84,7 @@ make_move <- function(x_prev, i_prev, pre, move) {
 within_model.cond_log_lh <- function(x, given, pre) {
   rates_given <- given[[1]]
   K_given <- given[[2]]
-  div.times_given <- given[[2]]
+  div.times_given <- given[[3]]
   div.branch_given <- given[[4]]
 
   rates <- x[[1]]
@@ -182,18 +183,18 @@ move_update_branch <- function(x_prev, pre) { ### update branch
 
   which_idx <- sample.int(length(div.branch), size=1)
   ## decide whether moving up or down
-  r1 <- runif(1,1,3)
+  r1 <- runif(1,0,2)
 
-  if (r1 < 2) { ###up
+  if (r1 < 1) { ###up
     if (edges$node.parent[div.branch[which_idx]]!=root) {
         div.branch_upd[which_idx] <- incoming[[edges$node.parent[div.branch[which_idx]]]]
       } else {
         div.branch_upd[which_idx] <- outgoing[[root]][which(outgoing[[root]]!=div.branch[which_idx])]
       }
   } else { ###down
-    r2 <- runif(1,1,3)
+    r2 <- runif(1,0,2)
 
-    if (r2 < 2) {
+    if (r2 < 1) {
         div.branch_upd[which_idx] <- outgoing[[edges$node.child[div.branch[which_idx]]]][1]
     } else {
         div.branch_upd[which_idx] <- outgoing[[edges$node.child[div.branch[which_idx]]]][2]  

@@ -27,7 +27,8 @@ rjmcmc <- function(likelihood, proposal.cond_log_lh, proposal.sampler, x0, i0, m
             alpha <- min(a-b, 0)
 
             r <- log(runif(1))
-            if (alpha < r) {
+            if (r < alpha) {
+                prev_lh <- prop_lh
                 x_prev <- x_prop
                 i_prev <- i_prop
             }
