@@ -262,7 +262,7 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.t
     times <- extract_lineage_times(phylo.preprocessed, div.MRCA.nodes, div.times)
 
     if(times$empty_tips) {
-        warning("MRCA selection produced subtrees with empty tips.")
+        #warning("MRCA selection produced subtrees with empty tips.")
         log_lh <- -Inf
     } else {
 
