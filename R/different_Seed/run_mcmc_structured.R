@@ -6,7 +6,7 @@ library(ggtree)
 library(treeio)
 library(viridis)
 
-set.seed(1234589)
+set.seed(12345890)
 
 source("./proposal.R")
 

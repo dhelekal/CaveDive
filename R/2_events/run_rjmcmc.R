@@ -6,7 +6,7 @@ library(ggtree)
 library(treeio)
 library(viridis)
 
-set.seed(1234567)
+set.seed(12345678)
 
 n <- 2
 
@@ -57,8 +57,9 @@ prior_r.sample <- function(x) rexp(1, rate = 0.1)
 prior_K <- function(x) dlnorm(x, meanlog = 1, sdlog = 1, log = TRUE)
 prior_K.sample <- function() rlnorm(1, meanlog = 1, sdlog = 1) 
 
-o <- infer_outbreaks(tree, prior_i, prior_N, prior_N.sample, prior_r, prior_r.sample, prior_K, prior_K.sample, n_it=1e6, thinning=1, debug=TRUE)
+set.seed(0)
 
+o <- infer_outbreaks(tree, prior_i, prior_N, prior_N.sample, prior_r, prior_r.sample, prior_K, prior_K.sample, n_it=1e6, thinning=1, debug=TRUE)
 
 y <- sapply(o$dims, function(x) x)
 n <- sapply(o$para, function(x) x[[1]])
