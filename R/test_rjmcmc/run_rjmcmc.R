@@ -19,7 +19,7 @@ colours <- trunc(runif(n_tips, 1, n+2))
 
 N <- 10#rexp(1, rate = 1/100)
 K <- rep(N, n)#rexp(n, rate = 1/100)
-A <- rexp(n, rate = 0.1)
+A <- rlnorm(n, meanlog = 0, sdlog = 0.25) 
 div_times <- c(-1*runif(n,1,3), -Inf)
 div_times <- div_times[order(-div_times)]
 
@@ -45,30 +45,90 @@ tree.str <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_t
 tree <- read.tree(text = tree.str$full)
 pre <- structured_coal.preprocess_phylo(tree)
 
-
-prior_i <- function(x) dpois(x, 1, log = TRUE)
+prior_i <- function(x) if(x < 3) log(1/3) else log(0) # dpois(x, 1, log = TRUE)
 
 prior_N <- function(x) dlnorm(x, meanlog = 1, sdlog = 1, log = TRUE)
 prior_N.sample <- function() rlnorm(1, meanlog = 1, sdlog = 1) 
 
-prior_r <- function(x) dexp(x, rate=0.1, log=TRUE) 
-prior_r.sample <- function(x) rexp(1, rate = 0.1)
+prior_r <- function(x) dlnorm(x, meanlog = 0, sdlog = 0.25, log = TRUE) 
+prior_r.sample <- function(x) rlnorm(1, meanlog = 0, sdlog = 0.25) 
 
 prior_K <- function(x) dlnorm(x, meanlog = 1, sdlog = 1, log = TRUE)
 prior_K.sample <- function() rlnorm(1, meanlog = 1, sdlog = 1) 
 
 set.seed(0)
 
-o <- infer_outbreaks(tree, prior_i, prior_N, prior_N.sample, prior_r, prior_r.sample, prior_K, prior_K.sample, n_it=1e6, thinning=1, debug=FALSE)
+o <- infer_outbreaks(tree, prior_i, prior_N, prior_N.sample, prior_r, prior_r.sample, prior_K, prior_K.sample, n_it=1e6, thinning=1, debug=F)
 
 y <- sapply(o$dims, function(x) x)
 n <- sapply(o$para, function(x) x[[1]])
-r <- sapply(c(1:length(o$para)), function(x) if(o$dims[[x]] > 0) o$para[[x]][[2]][[1]] else NA)
-branches <- sapply(c(1:length(o$para)), function(x) if(o$dims[[x]] > 0) o$para[[x]][[2]][[4]] else NA)
+lh <- sapply(o$log_lh, function(x) x)
+prior <- sapply(o$log_prior, function(x) x)
+
+branches <- lapply(c(1:length(o$para)), function(x) if(o$dims[[x]] > 0) lapply(o$para[[x]][-1], function(y) list(br=y[[4]], x=x)) else NA)
+times <- unlist(lapply(c(1:length(o$para)), function(x) if(o$dims[[x]] > 0) lapply(o$para[[x]][-1], function(y) y[[3]])))
+times.df <- data.frame(times=times)
+branches.br <- unlist(lapply(branches, function(x) if(is.na(x)) NA else lapply(x, function(y) y$br)))
+branches.x <-  unlist(lapply(branches, function(x) if(is.na(x)) NA else lapply(x, function(y) y$x)))
+br.df <- data.frame(x=branches.x, br=branches.br)
 
 x <- c(1:length(y))
-df <- data.frame(x=x, y=y, n=n, r=r, branches=branches)
-df <- df[1e5:1e6,]
+df <- data.frame(x=x, y=y, n=n, lh=lh, prior=prior)
+
+B_set <- nodeid(tree,tree$node.label[grep("N_B", tree$node.label)]) 
+B_root<- B_set[which.min(pre$nodes.df$times[B_set])]
+B_root.edge <- pre$incoming[[B_root]]
+
+A_set <- nodeid(tree,tree$node.label[grep("N_A", tree$node.label)]) 
+A_root<- A_set[which.min(pre$nodes.df$times[A_set])]
+A_root.edge <- pre$incoming[[A_root]]
+
+save.image()
+
+png(file="trace_lh.png", width=600, height=600)
+plt <- ggplot(df, aes(x=x, y=lh)) +
+       geom_line(alpha = 0.3)+
+       theme_bw() + theme(aspect.ratio=1, legend.position = "bottom")
+plot(plt)
+dev.off()
+
+png(file="trace_prior.png", width=600, height=600)
+plt <- ggplot(df, aes(x=x, y=prior)) +
+       geom_line(alpha = 0.3)+
+       theme_bw() + theme(aspect.ratio=1, legend.position = "bottom")
+plot(plt)
+dev.off()
+
+png(file="trace_branch.png", width=2400, height=2400)
+plt <- ggplot(br.df, aes(x=x, y=br)) +
+       geom_point(alpha=0.1,size=0.1)+
+       geom_hline(yintercept = B_root.edge, colour="orange", alpha=1, linetype = "longdash") + 
+       geom_hline(yintercept = A_root.edge, colour="red", alpha=1, linetype = "longdash") +
+       geom_hline(yintercept = 33, colour="green", alpha=1, linetype = "longdash") +
+       theme_bw() + theme(aspect.ratio=1, legend.position = "bottom")
+plot(plt)
+dev.off()
+
+png(file="trace_dim.png", width=600, height=600)
+plt <- ggplot(df, aes(x=x, y=y)) +
+       geom_line(alpha = 0.3)+
+       theme_bw() + theme(aspect.ratio=1, legend.position = "bottom")
+plot(plt)
+dev.off()
+
+png(file="trace_n.png", width=600, height=600)
+plt <- ggplot(df, aes(x=x, y=n)) +
+       geom_line(alpha = 0.3)+
+       theme_bw() + theme(aspect.ratio=1, legend.position = "bottom")
+plot(plt)
+dev.off()
+
+pdf(file=paste0("times_hist.pdf"), width = 5, height = 5)
+plt <- ggplot(times.df, aes(times)) +
+         geom_histogram(colour="darkgreen", fill="white", binwidth = 1) + 
+         theme(aspect.ratio=1)
+plot(plt)
+dev.off()
 
 pdf(file=paste0("dim_hist.pdf"), width = 5, height = 5)
 plt <- ggplot(df, aes(y)) +
@@ -84,16 +144,22 @@ plt <- ggplot(df, aes(n)) +
 plot(plt)
 dev.off()
 
-pdf(file=paste0("r_hist.pdf"), width = 5, height = 5)
-plt <- ggplot(df, aes(r)) +
-         geom_histogram(colour="darkgreen", fill="white", binwidth = 1) + 
+pdf(file=paste0("branch_bar1.pdf"), width = 10, height = 10)
+tt.br <- table(br.df$br)
+freq <- sapply(c(1:length(tt.br)), function (i) tt.br[i])
+
+aux.df <- data.frame(x=names(tt.br), y = freq)
+
+plt <- ggplot(aux.df, aes(x=x,y=y)) +
+         geom_bar(stat="identity", fill="steelblue") + 
+         geom_vline(xintercept = B_root.edge, colour="orange", linetype = "longdash") + 
+         geom_vline(xintercept = A_root.edge, colour="red", linetype = "longdash") + 
          theme(aspect.ratio=1)
 plot(plt)
 dev.off()
 
-
-tt <- table(df$branches)
-freq <- sapply(c(1:length(tt)), function (i) tt[i]/pre$edges.df$length[as.integer(names(tt))[i]])
+tt <- table(branches.br)
+freq <- sapply(c(1:length(tt)), function (i) tt[i])
 
 pdf(file="tree_freq.pdf", width = 5, height = 5)
     labs <- c(tree$node.label, tree$tip.label)
@@ -106,7 +172,7 @@ pdf(file="tree_freq.pdf", width = 5, height = 5)
 
     plt<-ggtree(tree.full, aes(color=frequency, linetype=tip), ladderize=TRUE) +
                           geom_point() +
-                          scale_linetype(c("solid","dashed"), na.value = "blank") +
+                          scale_linetype(c("solid","dashed","dotted"), na.value = "blank") +
                           scale_size_manual(values=c(1)) +
                           scale_color_viridis() +
                           theme_tree2()

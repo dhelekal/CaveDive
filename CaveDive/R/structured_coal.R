@@ -253,7 +253,7 @@ structured_coal.preprocess_phylo <- function(phy){
 #' @param neutral.size size of neutral phylogeny
 #' @return Log-likelihood
 #' @export
-structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.times, diverging.rates, diverging.sizes, neutral.size, type="Log-Exp"){
+structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.times, diverging.rates, diverging.sizes, neutral.size, type="Sat"){
     n_tips <- phylo.preprocessed$n_tips
 
     MRCA.idx <- nodeid(phylo.preprocessed$phy, div.MRCA.nodes)-n_tips
@@ -266,7 +266,7 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.t
         log_lh <- -Inf
     } else {
 
-        t_max <- max(sapply(c(1:length(times$sam.times)),function (x) max(times$sam.times[[x]])))
+        t_max <- max(sapply(c(1:length(times$sam.times)), function (x) max(times$sam.times[[x]])))
 
         if (k_div > 1) range <- c(1:(k_div-1)) else range <- c()
 
