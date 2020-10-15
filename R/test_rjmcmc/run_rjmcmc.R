@@ -99,12 +99,11 @@ plt <- ggplot(df, aes(x=x, y=prior)) +
 plot(plt)
 dev.off()
 
-png(file="trace_branch.png", width=2400, height=2400)
+png(file="trace_branch.png", width=800, height=800)
 plt <- ggplot(br.df, aes(x=x, y=br)) +
        geom_point(alpha=0.1,size=0.1)+
        geom_hline(yintercept = B_root.edge, colour="orange", alpha=1, linetype = "longdash") + 
-       geom_hline(yintercept = A_root.edge, colour="red", alpha=1, linetype = "longdash") +
-       geom_hline(yintercept = 33, colour="green", alpha=1, linetype = "longdash") +
+       geom_hline(yintercept = A_root.edge, colour="red", alpha=1, linetype = "longdash")
        theme_bw() + theme(aspect.ratio=1, legend.position = "bottom")
 plot(plt)
 dev.off()
