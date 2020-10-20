@@ -14,7 +14,7 @@ sam <- runif(n_tips, 0, 0.1)
 sam <- sam - max(sam)
 sam <- sam[order(-sam)]
 
-N <- rlnorm(1, meanlog = 5, sdlog = 1) #rexp(1, rate = 1/100)
+N <- rlnorm(1, meanlog = 5, sdlog = 1) 
 
 co <- homogenous_coal.simulate(sam, N)
 
