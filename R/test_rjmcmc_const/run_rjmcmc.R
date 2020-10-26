@@ -18,8 +18,8 @@ N <- rlnorm(1, meanlog = 5, sdlog = 1)
 
 co <- homogenous_coal.simulate(sam, N)
 
-tree.str <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from, include_div_nodes = FALSE, aux_root = FALSE)
-tree <- read.tree(text = tree.str$full)
+tree.str <- build_coal_tree(sam, co$coalescent_times)
+tree <- read.tree(text = tree.str)
 pdf(file="tree_neutral.pdf")
 plot(tree)
 dev.off()
@@ -38,7 +38,7 @@ prior_K.sample <- function() rlnorm(1, meanlog = 5, sdlog = 1)
 
 set.seed(0)
 
-o <- infer_outbreaks(tree, prior_i, prior_N, prior_N.sample, prior_r, prior_r.sample, prior_K, prior_K.sample, n_it=1e7, thinning=5, debug=F)
+o <- infer_outbreaks(tree, prior_i, prior_N, prior_N.sample, prior_r, prior_r.sample, prior_K, prior_K.sample, n_it=1e6, thinning=5, debug=F)
 
 y <- sapply(o$dims, function(x) x)
 n <- sapply(o$para, function(x) x[[1]]) 
@@ -52,8 +52,29 @@ branches.br <- unlist(lapply(branches, function(x) if(is.na(x)) NA else lapply(x
 branches.x <-  unlist(lapply(branches, function(x) if(is.na(x)) NA else lapply(x, function(y) y$x)))
 br.df <- data.frame(x=branches.x, br=branches.br)
 
+evt <- lapply(c(1:length(o$para)), function(x) if(o$dims[[x]] > 0) lapply(o$para[[x]][-1], function(y) list(r=y[[1]], K=y[[2]], t=y[[3]], br=y[[4]], x=x)) else NA)
+evt.r <- unlist(lapply(evt, function(x) if(is.na(x)) NA else lapply(x, function(y) y$r)))
+evt.K <- unlist(lapply(evt, function(x) if(is.na(x)) NA else lapply(x, function(y) y$K)))
+evt.t <- unlist(lapply(evt, function(x) if(is.na(x)) NA else lapply(x, function(y) y$t)))
+evt.br <- unlist(lapply(evt, function(x) if(is.na(x)) NA else lapply(x, function(y) y$br)))
+evt.x <-  unlist(lapply(evt, function(x) if(is.na(x)) NA else lapply(x, function(y) y$x)))
+evt.df <- data.frame(r=evt.r, K=evt.K, t=evt.t, br=evt.br, x=evt.x)
+
 x <- c(1:length(y))
 df <- data.frame(x=x, y=y, n=n, lh=lh, prior=prior)
+
+root_MRCA <- pre$phy$node.label[pre$nodes.df$id[which.min(pre$nodes.df$times)]-n_tips]
+root_div <- -Inf
+z <- o$para[[2e5]]
+z_mrca <- c(sapply(pre$edges.df$node.child[sapply(z[-1], function(x) x[[4]])],
+                 function(x) if (x > n_tips) pre$phy$node.label[x-n_tips] else NA), root_MRCA)
+z_times <-c(sapply(z[-1], function(x) x[[3]]), root_div)
+
+l_times <- extract_lineage_times(pre, z_mrca, z_times)
+
+sizes <-c(sapply(z[-1], function(x) x[[2]]), z[[1]])
+
+z_lh <- sapply(c(1:length(sizes)), )
 
 save.image()
 
@@ -92,6 +113,21 @@ plt <- ggplot(df, aes(x=x, y=n)) +
 plot(plt)
 dev.off()
 
+pdf(file=paste0("r_hist.pdf"), width = 5, height = 5)
+plt <- ggplot(evt.df, aes(r)) +
+         geom_histogram(colour="darkgreen", fill="white", binwidth = 1) + 
+         theme(aspect.ratio=1)
+plot(plt)
+dev.off()
+
+pdf(file=paste0("K_hist.pdf"), width = 5, height = 5)
+plt <- ggplot(evt.df, aes(K)) +
+         geom_histogram(colour="darkgreen", fill="white", binwidth = 1) + 
+         xlim(c(0,200)) + 
+         theme(aspect.ratio=1)
+plot(plt)
+dev.off()
+
 pdf(file=paste0("times_hist.pdf"), width = 5, height = 5)
 plt <- ggplot(times.df, aes(times)) +
          geom_histogram(colour="darkgreen", fill="white", binwidth = 1) + 
@@ -109,6 +145,7 @@ dev.off()
 pdf(file=paste0("N_hist.pdf"), width = 5, height = 5)
 plt <- ggplot(df, aes(n)) +
          geom_histogram(colour="darkgreen", fill="white", binwidth = 1) + 
+         xlim(c(0,200)) + 
          theme(aspect.ratio=1)
 plot(plt)
 dev.off()

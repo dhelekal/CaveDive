@@ -47,10 +47,6 @@ infer_outbreaks <- function(phy, prior_i, prior_N, prior_N.sample, prior_r, prio
 
     o <- rjmcmc(function(x, i) log_lh(x,
                                       i, 
-                                      prior_i, 
-                                      prior_r, 
-                                      prior_K, 
-                                      prior_branch_time, 
                                       pre, 
                                       debug),
                 function(x, i) log_prior(x,
@@ -157,7 +153,7 @@ log_prior <- function(x, i, prior_i, prior_r, prior_K, prior_branch_time, pre) {
     return(prior)
 }
 
-log_lh <- function(x, i, prior_i, prior_r, prior_K, prior_branch_time, pre, exclude_lh=FALSE){
+log_lh <- function(x, i, pre, exclude_lh=FALSE){
     if (exclude_lh)
     {
         lh <- 0
