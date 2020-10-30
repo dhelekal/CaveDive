@@ -478,7 +478,7 @@ The integral of the reciprocal $\alpha^{-1}(t)$ under this formulation is then g
 
 \begin{figure}[H]
   \centering
-     \includegraphics[width=0.5\textwidth]{../R/tree_structured}
+     \includegraphics[width=0.5\textwidth]{../R/test_mcmc/tree_structured}
     \caption{A genealogy simulated under this formulation}
 \end{figure}
 
@@ -490,6 +490,10 @@ M\sim\frac{(\lambda B)^M}{M!}\exp(-\lambda B)
 \subsubsection{MCMC}
 Due to the variable nature of the dimensionality of the parameter space, it will be necessary to use Reversible Jump MCMC (rjMCMC) \cite{fan_reversible_2010,green_reversible_1995}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Model Selection Across Dimensions}%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -505,9 +509,9 @@ One million iterations were used and the first One hundred thousand discarded as
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure}[H]
   \centering
-  \subfloat[]{\label{trace:a}\includegraphics[scale=.25]{../R/trace}}
+  \subfloat[]{\label{trace:a}\includegraphics[scale=.25]{../R/test_mcmc/trace}}
   \centering
-  \subfloat[]{\label{trace:b}\includegraphics[scale=.25]{../R/trace_zoom}}
+  \subfloat[]{\label{trace:b}\includegraphics[scale=.25]{../R/test_mcmc/trace_zoom}}
   \centering
   \caption{Trace plots for the markov chain. Red lines denote true parameter values. MLE marked by blue lines. MAP marked by orange lines. \ref{trace:a} Shows the entire trace of the chain. \ref{trace:b} Shows the trace with the first 100000 iterations discarded}
   \label{fig:trace}
@@ -518,16 +522,16 @@ One million iterations were used and the first One hundred thousand discarded as
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure}[H]
   \centering
-  \subfloat[]{\label{hists:a}\includegraphics[scale=.4]{../R/lambdahist}}
+  \subfloat[]{\label{hists:a}\includegraphics[scale=.4]{../R/test_mcmc/lambdahist}}
   \centering
-  \subfloat[]{\label{hists:b}\includegraphics[scale=.4]{../R/nhist}}
+  \subfloat[]{\label{hists:b}\includegraphics[scale=.4]{../R/test_mcmc/nhist}}
   \centering
   \caption{Histograms of the posterior marginals. MLE marked by blue line. MAP marked by orange line. \ref{hists:a} $\lambda$ marginal \ref{hists:b} $N$ marginal}
   \label{fig:hists}
 \end{figure}
 `\begin{figure}[H]
   \centering
-    \includegraphics[width=0.5\textwidth]{../R/tree}
+    \includegraphics[width=0.5\textwidth]{../R/test_mcmc/tree}
     \caption{The simulated genealogy used for this example.}
 \end{figure}'
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
