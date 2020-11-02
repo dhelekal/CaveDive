@@ -11,7 +11,7 @@ structured_coal.likelihood(
   diverging.rates,
   diverging.sizes,
   neutral.size,
-  type = "Log-Exp"
+  type = "Sat"
 )
 }
 \arguments{
