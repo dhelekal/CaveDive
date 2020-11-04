@@ -23,7 +23,7 @@ K_sd <- 0.5
 time_shape <- 30
 time_rate <- 5**(-1)
 
-out <- simulate_outbreaks(poi_rate, concentration, sam, r_mean, r_sd, K_mean, K_sd, time_rate, time_shape)
+out <- outbreaks_simulate(poi_rate, concentration, sam, r_mean, r_sd, K_mean, K_sd, time_rate, time_shape)
 co <- out$co
 
 tree.div.str <- build_coal_tree.structured(sam, co$times, out$colours, co$colours, out$div_times, out$div_cols, co$div_from, include_div_nodes = TRUE)
