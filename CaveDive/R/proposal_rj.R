@@ -1,5 +1,6 @@
 ###list of: N, div_event_1, ... div_event_N
 ###div_event list of r, K, x_0, branch
+offset <- 1
 
 prop.sampler <- function (x_prev, i_prev, pre, para.initialiser){
   p <- 1 
@@ -22,9 +23,9 @@ prop.cond_lh <- function(x, i, x_given, i_given, initialiser.log_lh, pre) {
   out <- dnorm(N, mean=N_given, sd=1, log=TRUE)
 
   if(i > i_given) {
-    out <- out + initialiser.log_lh(x[[i+1]])
+    out <- out + initialiser.log_lh(x[[i+offset]])
   } else if(i==i_given && i > 0) {
-    out <- out + sum(sapply(c(1:i_given), function(j) within_model.cond_log_lh(x[[j+1]], x_given[[j+1]], pre)))
+    out <- out + sum(sapply(c(1:i_given), function(j) within_model.cond_log_lh(x[[j+offset]], x_given[[j+offset]], pre)))
   }
   return(out)
 }
@@ -34,12 +35,12 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser) {
   if (which_move==1) { ### increase dim
     i_next <- i_prev + 1
     x_next <- x_prev
-    x_next[[length(x_next) + 1]] <- para.initialiser()
+    x_next[[length(x_next) + offset]] <- para.initialiser()
    } else { ### decrease dim
     x_next <- x_prev
     if (i_prev > 0) {
       which_elem <- sample.int(i_prev, size=1)
-      x_next <- x_next[-(which_elem+1)]
+      x_next <- x_next[-(which_elem+offset)]
       i_next <- i_prev - 1
     } else {
       i_next <- i_prev
@@ -73,7 +74,7 @@ within_model.sampler <- function(x_prev, i_prev, pre) {
 }
 
 make_move <- function(x_prev, i_prev, pre, move) {
-    which_model <- 1+sample.int(i_prev, size=1)
+    which_model <- offset+sample.int(i_prev, size=1)
     mdl_prev <- x_prev[[which_model]] 
     mdl_next <- move(mdl_prev, pre)
     x_next <- x_prev
