@@ -87,7 +87,9 @@ infer_outbreaks <- function(phy,
                                                       pre, 
                                                       function() para.initialiser(prior_r.sample,
                                                                                   prior_K.sample, 
-                                                                                  prior_branch_time.sample)
+                                                                                  prior_branch_time.sample),
+                                                      prob.initialiser,
+                                                      fn_log_J
                                                       ),
                 x_0, i_0, n_it, thinning)
     return(o)
@@ -101,7 +103,7 @@ prob.initialiser <- function(x_prev, i_prev) {
 }
 
 fn_log_J <- function(i_prev, x_prev, x_next) {
-    retun((1/i_prev)**i_prev)
+    return((1/i_prev)**i_prev)
 }
 
 para.initialiser <- function(prior_r, prior_K, prior_branch_time, pre){

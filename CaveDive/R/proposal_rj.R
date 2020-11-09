@@ -47,7 +47,7 @@ prop.cond_lh <- function(x, i, x_given, i_given, initialiser.log_lh, pre) {
 }
 
 transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, prob.initialiser, fn_log_J) {
-  which_move <- sample.int(2,size=1)
+  which_move <- sample.int(2, size=1)
   log_J <- 0
   if (which_move==1) { ### increase dim
     i_next <- i_prev + 1
