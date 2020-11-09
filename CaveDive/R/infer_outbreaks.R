@@ -1,10 +1,24 @@
+offset <- 2
+
 #' @export
-infer_outbreaks <- function(phy, prior_i, prior_N, prior_N.sample, prior_r, prior_r.sample, prior_K, prior_K.sample, n_it=1e6, thinning=1, debug=FALSE) {
+infer_outbreaks <- function(phy,
+                            prior_i, 
+                            prior_N, 
+                            prior_N.sample, 
+                            prior_r, 
+                            prior_r.sample, 
+                            prior_K, 
+                            prior_K.sample, 
+                            prior_t,
+                            prior_t.sample,
+                            concentration,
+                            n_it=1e6, thinning=1, debug=FALSE) {
     i_0 <- 0
     N_0 <- prior_N.sample()
 
     x_0 <- list()
     x_0[[1]] <- N_0 
+    x_0[[2]] <- c(1)
 
     pre <- structured_coal.preprocess_phylo(tree)
     edges <- pre$edges.df
@@ -15,12 +29,14 @@ infer_outbreaks <- function(phy, prior_i, prior_N, prior_N.sample, prior_r, prio
     edges_subs <- edges[inner_branches,]
     total_branch_len <- sum(edges_subs$length)
 
-    prior_branch_time <- function(times, div.branch) log((times-nodes$times[edges$node.parent[div.branch]]) /
+    prior_probs <- function(probs) log(ddirichlet(probs, alpha=rep(concentration, length(probs))))
+
+    prop_branch_time <- function(times, div.branch) log((times-nodes$times[edges$node.parent[div.branch]]) /
                                        pre$edges.df$length[div.branch]) + 
                                        log(pre$edges.df$length[div.branch]/total_branch_len)
 
 
-    prior_branch_time.sample <- function() {
+    prop_branch_time.sample <- function() {
         out <- vector(mode = "list", length = 2)
         edges <- pre$edges.df
 
@@ -54,7 +70,8 @@ infer_outbreaks <- function(phy, prior_i, prior_N, prior_N.sample, prior_r, prio
                                          prior_i, 
                                          prior_r, 
                                          prior_K, 
-                                         prior_branch_time, 
+                                         prior_t, 
+                                         prior_probs,
                                          pre),
                 function(x, i, x_given, i_given) prop.cond_lh(x,
                                                               i,
@@ -74,6 +91,17 @@ infer_outbreaks <- function(phy, prior_i, prior_N, prior_N.sample, prior_r, prio
                                                       ),
                 x_0, i_0, n_it, thinning)
     return(o)
+}
+
+prob.initialiser <- function(x_prev, i_prev) {
+    new_exp_p <- 1/i_prev
+    old_probs <- x_prev[[2]]
+    old_probs <- old_probs*(1-new_exp_p)
+    return(c(old_probs, new_exp_p))
+}
+
+fn_log_J <- function(i_prev, x_prev, x_next) {
+    retun((1/i_prev)**i_prev)
 }
 
 para.initialiser <- function(prior_r, prior_K, prior_branch_time, pre){
@@ -105,16 +133,17 @@ para.log_lh <- function(x, prior_r, prior_K, prior_branch_time) {
     return(out)
 }
 
-log_prior <- function(x, i, prior_i, prior_r, prior_K, prior_branch_time, pre) {
+log_prior <- function(x, i, prior_i, prior_r, prior_K, prior_t, prior_probs, pre) {
 
     n_tips <- pre$n_tips
     N <- x[[1]]
+    probs <- x[[2]]
 
     if (i > 0) {
-        rates <- sapply(c(1:i), function(j) x[[j+1]][[1]])
-        K <- sapply(c(1:i), function(j) x[[j+1]][[2]])
-        div.times <- sapply(c(1:i), function(j) x[[j+1]][[3]])
-        div.branch <- sapply(c(1:i), function(j) x[[j+1]][[4]])
+        rates <- sapply(c(1:i), function(j) x[[j+offset]][[1]])
+        K <- sapply(c(1:i), function(j) x[[j+offset]][[2]])
+        div.times <- sapply(c(1:i), function(j) x[[j+offset]][[3]])
+        div.branch <- sapply(c(1:i), function(j) x[[j+offset]][[4]])
     } else {
         rates <- c()
         K <- c()
@@ -127,20 +156,22 @@ log_prior <- function(x, i, prior_i, prior_r, prior_K, prior_branch_time, pre) {
       all(K > 0) &&
       all(rates > 0) &&
       all(N > 0) && 
-      all(!is.na(div.branch))&&
+      all(probs>0) &&
+      abs(sum(probs)-1) < 1e-6 &&
+      all(!is.na(div.branch)) &&
       all(div.times > pre$nodes.df$times[pre$edges.df$node.parent[div.branch]]) &&
       all(div.times < pre$nodes.df$times[pre$edges.df$node.child[div.branch]])) 
     {
         MRCAs <- sapply(pre$edges.df$node.child[div.branch], function(x) if (x > n_tips) pre$phy$node.label[x-n_tips] else NA)
 
         if (all(!is.na(MRCAs))) {
-            prior <- prior_i(i)
+            prior <- prior_i(i) + prior_probs(probs)
             if (i > 0) {
                 prior <- prior + 
                          sum(prior_r(rates)) +
                          sum(prior_K(K)) + 
                          sum(prior_N(N)) + 
-                         sum(prior_branch_time(div.times, div.branch))
+                         sum(prior_t(div.times))
             }  else {
                 prior <- prior + sum(prior_N(N))
             }
@@ -154,6 +185,7 @@ log_prior <- function(x, i, prior_i, prior_r, prior_K, prior_branch_time, pre) {
 }
 
 log_lh <- function(x, i, pre, exclude_lh=FALSE){
+
     if (exclude_lh)
     {
         lh <- 0
@@ -164,12 +196,13 @@ log_lh <- function(x, i, pre, exclude_lh=FALSE){
         root_div <- -Inf
 
         N <- x[[1]]
+        probs <- x[[2]]
 
         if (i > 0) {
-            rates <- sapply(c(1:i), function(j) x[[j+1]][[1]])
-            K <- sapply(c(1:i), function(j) x[[j+1]][[2]])
-            div.times <- sapply(c(1:i), function(j) x[[j+1]][[3]])
-            div.branch <- sapply(c(1:i), function(j) x[[j+1]][[4]])
+            rates <- sapply(c(1:i), function(j) x[[j+offset]][[1]])
+            K <- sapply(c(1:i), function(j) x[[j+offset]][[2]])
+            div.times <- sapply(c(1:i), function(j) x[[j+offset]][[3]])
+            div.branch <- sapply(c(1:i), function(j) x[[j+offset]][[4]])
         } else {
             rates <- c()
             K <- c()
@@ -181,7 +214,7 @@ log_lh <- function(x, i, pre, exclude_lh=FALSE){
         MRCAs <- c(MRCAs, root_MRCA)
         div.times_root <- c(div.times, root_div)
 
-        lh <- structured_coal.likelihood(pre, MRCAs, div.times_root, rates, K, N, type="Sat")$log_lh
+        lh <- outbreaks_likelihood(pre, MRCAs, div.times_root, rates, K, N, probs)
     }
 
     return(lh)

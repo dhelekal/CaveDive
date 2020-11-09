@@ -1,58 +1,79 @@
 ###list of: N, div_event_1, ... div_event_N
 ###div_event list of r, K, x_0, branch
-offset <- 1
+offset <- 2
 
-prop.sampler <- function (x_prev, i_prev, pre, para.initialiser){
+prop.sampler <- function (x_prev, i_prev, pre, para.initialiser, prob.initialiser, fn_log_J){
   p <- 1 
   r <- runif(1,0,2) 
 
   if (r < p) { ## transdimensional
-    upd <- transdimensional.sampler(x_prev, i_prev, pre, para.initialiser)
+    upd <- transdimensional.sampler(x_prev, i_prev, pre, para.initialiser, prob.initialiser, fn_log_J)
     x_next <- upd$x_next
     i_next <- upd$i_next
+    log_J <- upd$log_J
   } else { ## within-model
     x_next <- within_model.sampler(x_prev, i_prev, pre)
     i_next <- i_prev
+    log_J <- 0
   }
-  return(list(x_next=x_next,i_next=i_next))
+  return(list(x_next=x_next,i_next=i_next, log_J=log_J))
 }
 
 prop.cond_lh <- function(x, i, x_given, i_given, initialiser.log_lh, pre) {
+
+  d <- 1e-2
+
   N <- x[[1]]
   N_given <- x_given[[1]]
+
+  probs <- x[[2]]
+  probs_given <- x_given[[2]]
+
   out <- dnorm(N, mean=N_given, sd=1, log=TRUE)
+
+  if(length(probs) != (i+1)) warning("Mismatch in probs and dimension parameter")
 
   if(i > i_given) {
     out <- out + initialiser.log_lh(x[[i+offset]])
-  } else if(i==i_given && i > 0) {
+  } else if(i==i_given &&  i > 0) {
+    ### prob update
+    out <- out + log(1/((i+1)*i)) 
+    out <- out + log(1/(2e-2))
+    ### within model updates
     out <- out + sum(sapply(c(1:i_given), function(j) within_model.cond_log_lh(x[[j+offset]], x_given[[j+offset]], pre)))
+
   }
   return(out)
 }
 
-transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser) {
+transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, prob.initialiser, fn_log_J) {
   which_move <- sample.int(2,size=1)
+  log_J <- 0
   if (which_move==1) { ### increase dim
     i_next <- i_prev + 1
     x_next <- x_prev
-    x_next[[length(x_next) + offset]] <- para.initialiser()
+    x_next[[i_next + offset]] <- para.initialiser()
+    x_next[[2]] <- prob.initialiser(i_prev)
+    log_J <- fn_log_J(i_prev, x_prev, x_next)
    } else { ### decrease dim
     x_next <- x_prev
     if (i_prev > 0) {
       which_elem <- sample.int(i_prev, size=1)
       x_next <- x_next[-(which_elem+offset)]
+      x_next[[2]] <- x_next[[2]][-(which_elem+1)]
+      x_next[[2]] <- x_next[[2]] / sum(x_next[[2]])
       i_next <- i_prev - 1
     } else {
       i_next <- i_prev
     }
   }
-  return(list(x_next=x_next, i_next=i_next))
+  return(list(x_next=x_next, i_next=i_next, log_J=log_J))
 }
 
 within_model.sampler <- function(x_prev, i_prev, pre) {
 
   if (i_prev > 0) {
-    which_move <- sample.int(4, size=1)
+    which_move <- sample.int(5, size=1)
   } else {
     which_move <- 4
   }
@@ -69,6 +90,13 @@ within_model.sampler <- function(x_prev, i_prev, pre) {
 
     x_next <- x_prev
     x_next[[1]] <- N_next 
+  } else if(which_move==5) {
+
+    probs_prev <- x_prev[[2]]
+    probs_next <- move_update_probs(probs_prev, pre)
+
+    x_next <- x_prev
+    x_next[[2]] <- probs_next 
   }
   return(x_next)
 }
@@ -222,4 +250,17 @@ move_update_N <- function(N_prev, pre) {
   N_upd <- rnorm(1, mean = N_prev, sd = 1)
   return(N_upd)
 
-} 
+}
+
+
+move_update_probs <- function(probs, pre) {
+  d <- 1e-2
+  delta <- runif(1, -1e-2, 1e-2)
+
+  which <- sample.int(length(probs), 2, replace=T)
+
+  probs_upd <- probs
+  probs_upd[which] <- probs_upd[which] + c(delta, -delta)
+  
+  return(probs_upd)
+}  

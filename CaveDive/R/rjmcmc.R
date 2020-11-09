@@ -22,7 +22,8 @@ rjmcmc <- function(likelihood, prior, proposal.cond_log_lh, proposal.sampler, x0
 
         prop <- proposal.sampler(x_prev, i_prev)
         x_prop <- prop$x
-        i_prop <- prop$i 
+        i_prop <- prop$i
+        prop_Jacc <- prop$log_J 
 
         prior_prop <- prior(x_prop, i_prop)
 
@@ -35,7 +36,7 @@ rjmcmc <- function(likelihood, prior, proposal.cond_log_lh, proposal.sampler, x0
         if (lh_prop > -Inf){
             a <- proposal.cond_log_lh(x_prev, i_prev, x_prop, i_prop)+lh_prop+prior_prop
             b <- proposal.cond_log_lh(x_prop, i_prop, x_prev, i_prev)+lh_prev+prior_prev
-            alpha <- min(a-b, 0)
+            alpha <- min(a-b+prop_Jacc, 0)
 
             r <- log(runif(1))
             if (r < alpha) {

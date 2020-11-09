@@ -28,7 +28,6 @@ outbreaks_simulate <- function(poi_rate, concentration, sampling_times, r_mean, 
     co <- structured_coal.simulate(sampling_times, colouring, div_times, div_cols, rates, rate.ints)
 
     full_lh <- co$log_lh + 
-               log(ddirichlet(expansion_probs, rep(concentration, n_exp))) +
                sum(sapply((div_cols), function(i) length(which(colouring==i)) * log(expansion_probs[i])))
 
     return(list(co=co, n_exp=n_exp, N=N, K=K, A=A, colours=colouring, div_times=div_times, div_cols=div_cols, exp_probs=expansion_probs, rates=rates, rate.ints=rate.ints, full_lh=full_lh))
