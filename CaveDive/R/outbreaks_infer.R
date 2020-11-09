@@ -29,7 +29,15 @@ outbreaks_infer <- function(phy,
     edges_subs <- edges[inner_branches,]
     total_branch_len <- sum(edges_subs$length)
 
-    prior_probs <- function(probs) log(ddirichlet(probs, alpha=rep(concentration, length(probs))))
+    prior_probs <- function(probs) {
+        out <- log(ddirichlet(probs, alpha=rep(concentration, length(probs))))
+        if(out == Inf) {
+            print("err prob prior")
+            print(probs)
+        }
+        return(out) 
+    }
+
 
     prop_branch_time <- function(times, div.branch) log((times-nodes$times[edges$node.parent[div.branch]]) /
                                        pre$edges.df$length[div.branch]) + 
@@ -80,30 +88,39 @@ outbreaks_infer <- function(phy,
                                                               function(x_init) para.log_lh(x_init,
                                                                                            prior_r, 
                                                                                            prior_K, 
-                                                                                           prior_branch_time),
+                                                                                           prop_branch_time),
                                                               pre),
                 function(x_prev, i_prev) prop.sampler(x_prev,
                                                       i_prev, 
                                                       pre, 
                                                       function() para.initialiser(prior_r.sample,
                                                                                   prior_K.sample, 
-                                                                                  prior_branch_time.sample),
+                                                                                  prop_branch_time.sample),
                                                       prob.initialiser,
-                                                      fn_log_J
+                                                      fn_log_J,
+                                                      fn_log_J_inv
                                                       ),
                 x_0, i_0, n_it, thinning)
     return(o)
 }
 
 prob.initialiser <- function(x_prev, i_prev) {
-    new_exp_p <- 1/i_prev
+    new_exp_p <- 1/(i_prev+2)
     old_probs <- x_prev[[2]]
     old_probs <- old_probs*(1-new_exp_p)
     return(c(old_probs, new_exp_p))
 }
 
 fn_log_J <- function(i_prev, x_prev, x_next) {
-    return((1/i_prev)**i_prev)
+    new_exp_p <- 1/(i_prev+2)
+    return(log(1-new_exp_p)*(i_prev+1) + log(new_exp_p))
+}
+
+fn_log_J_inv <- function(i_prev, x_prev, x_next) {
+    probs <- x_prev[[2]]
+    old_p_inv <- 1/probs[(i_prev+1)]
+    scale <- 1/sum(probs[-(i_prev+1)])
+    return(log(scale)*(i_prev) + log(old_p_inv))
 }
 
 para.initialiser <- function(prior_r, prior_K, prior_branch_time, pre){
@@ -183,6 +200,7 @@ log_prior <- function(x, i, prior_i, prior_r, prior_K, prior_t, prior_probs, pre
     } else {
         prior <- -Inf 
     }
+    if (prior==Inf) print("Error-prior")
     return(prior)
 }
 

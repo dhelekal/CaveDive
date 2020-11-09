@@ -2,12 +2,12 @@
 ###div_event list of r, K, x_0, branch
 offset <- 2
 
-prop.sampler <- function (x_prev, i_prev, pre, para.initialiser, prob.initialiser, fn_log_J){
+prop.sampler <- function (x_prev, i_prev, pre, para.initialiser, prob.initialiser, fn_log_J, fn_log_J_inv){
   p <- 1 
   r <- runif(1,0,2) 
 
   if (r < p) { ## transdimensional
-    upd <- transdimensional.sampler(x_prev, i_prev, pre, para.initialiser, prob.initialiser, fn_log_J)
+    upd <- transdimensional.sampler(x_prev, i_prev, pre, para.initialiser, prob.initialiser, fn_log_J, fn_log_J_inv)
     x_next <- upd$x_next
     i_next <- upd$i_next
     log_J <- upd$log_J
@@ -38,7 +38,7 @@ prop.cond_lh <- function(x, i, x_given, i_given, initialiser.log_lh, pre) {
   } else if(i==i_given &&  i > 0) {
     ### prob update
     out <- out + log(1/((i+1)*i)) 
-    out <- out + log(1/(2e-2))
+    out <- out + log(1/(2*d))
     ### within model updates
     out <- out + sum(sapply(c(1:i_given), function(j) within_model.cond_log_lh(x[[j+offset]], x_given[[j+offset]], pre)))
 
@@ -46,14 +46,14 @@ prop.cond_lh <- function(x, i, x_given, i_given, initialiser.log_lh, pre) {
   return(out)
 }
 
-transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, prob.initialiser, fn_log_J) {
+transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, prob.initialiser, fn_log_J, fn_log_J_inv) {
   which_move <- sample.int(2, size=1)
   log_J <- 0
   if (which_move==1) { ### increase dim
     i_next <- i_prev + 1
     x_next <- x_prev
     x_next[[i_next + offset]] <- para.initialiser()
-    x_next[[2]] <- prob.initialiser(i_prev)
+    x_next[[2]] <- prob.initialiser(x_prev, i_prev)
     log_J <- fn_log_J(i_prev, x_prev, x_next)
    } else { ### decrease dim
     x_next <- x_prev
@@ -63,6 +63,7 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, prob
       x_next[[2]] <- x_next[[2]][-(which_elem+1)]
       x_next[[2]] <- x_next[[2]] / sum(x_next[[2]])
       i_next <- i_prev - 1
+      log_J <- fn_log_J_inv(i_prev, x_prev, x_next)
     } else {
       i_next <- i_prev
     }
@@ -141,6 +142,7 @@ within_model.cond_log_lh <- function(x, given, pre) {
       }
     }
   }
+
   return(param_log_lh+time_log_lh+branch_log_lh)
 }
 

@@ -22,10 +22,10 @@ r_sd <- 1
 K_mean <- 5
 K_sd <- 0.5
 
-time_shape <- 30
-time_rate <- 5**(-1)
+time_shape <- 20
+time_rate <- 1**(-1)
 
-sim <- outbreaks_simulate(poi_rate, concentration, sampling_times, r_mean, r_sd, K_mean, K_sd, time_rate, time_shape)
+sim <- outbreaks_simulate(poi_rate, concentration, sam, r_mean, r_sd, K_mean, K_sd, time_rate, time_shape)
 
 co <- sim$co
 tip_cols <- sim$tip_colours
@@ -35,7 +35,7 @@ div_cols <- sim$div_cols
 
 tree.div.str <- build_coal_tree.structured(sam, co$times, tip_cols, co$colours, div_times, div_cols, co$div_from, include_div_nodes = TRUE)
 tree.div <- read.tree(text = tree.div.str$full)
-tree.plt <- plot_structured_tree(tree.div, n+1)
+tree.plt <- plot_structured_tree(tree.div, sim$n_exp)
 
 pdf(file="tree_structured.pdf")
 plot(tree.plt)
@@ -56,7 +56,11 @@ prior_r.sample <- function(x) rlnorm(1, meanlog = r_mean, sdlog = r_sd)
 prior_K <- function(x) dlnorm(x, meanlog = K_mean, sdlog = K_sd, log = TRUE)
 prior_K.sample <- function() rlnorm(1, meanlog = K_mean, sdlog = K_sd) 
 
-prior_t <- function(x) dgamma(x + min(sam), shape=time_shape, scale = 1/time_rate)
+prior_t <- function(x) {
+       out <- dgamma(-(x - min(sam)), shape=time_shape, scale = 1/time_rate, log=TRUE)
+       if(!all(out != Inf)) print("Err")
+       return(out)
+}
 prior_t.sample <-function() min(sam)-rgamma(1, shape=time_shape, scale = 1/time_rate)
 
 
@@ -64,15 +68,15 @@ set.seed(0)
 
 o <- outbreaks_infer(tree, prior_i,  prior_N,  prior_N.sample, 
                      prior_r, prior_r.sample,  prior_K,  prior_K.sample,  prior_t,
-                     prior_t.sample, concentration, n_it=1e6, thinning=1, debug=TRUE)
+                     prior_t.sample, concentration, n_it=1e6, thinning=1, debug=F)
 
 y <- sapply(o$dims, function(x) x)
 n <- sapply(o$para, function(x) x[[1]])
 lh <- sapply(o$log_lh, function(x) x)
 prior <- sapply(o$log_prior, function(x) x)
 
-branches <- lapply(c(1:length(o$para)), function(x) if(o$dims[[x]] > 0) lapply(o$para[[x]][-1], function(y) list(br=y[[4]], x=x)) else NA)
-times <- unlist(lapply(c(1:length(o$para)), function(x) if(o$dims[[x]] > 0) lapply(o$para[[x]][-1], function(y) y[[3]])))
+branches <- lapply(c(1:length(o$para)), function(x) if(o$dims[[x]] > 0) lapply(o$para[[x]][c(-1, -2)], function(y) list(br=y[[4]], x=x)) else NA)
+times <- unlist(lapply(c(1:length(o$para)), function(x) if(o$dims[[x]] > 0) lapply(o$para[[x]][c(-1, -2)], function(y) y[[3]])))
 times.df <- data.frame(times=times)
 branches.br <- unlist(lapply(branches, function(x) if(is.na(x)) NA else lapply(x, function(y) y$br)))
 branches.x <-  unlist(lapply(branches, function(x) if(is.na(x)) NA else lapply(x, function(y) y$x)))
@@ -149,7 +153,7 @@ plt <- ggplot(df, aes(n)) +
 plot(plt)
 dev.off()
 
-pdf(file=paste0("branch_bar1.pdf"), width = 10, height = 10)
+pdf(file=paste0("branch_bar.pdf"), width = 10, height = 10)
 tt.br <- table(br.df$br)
 freq <- sapply(c(1:length(tt.br)), function (i) tt.br[i])
 

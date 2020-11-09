@@ -36,9 +36,13 @@ rjmcmc <- function(likelihood, prior, proposal.cond_log_lh, proposal.sampler, x0
         if (lh_prop > -Inf){
             a <- proposal.cond_log_lh(x_prev, i_prev, x_prop, i_prop)+lh_prop+prior_prop
             b <- proposal.cond_log_lh(x_prop, i_prop, x_prev, i_prev)+lh_prev+prior_prev
+            
             alpha <- min(a-b+prop_Jacc, 0)
 
             r <- log(runif(1))
+
+            if(is.na(r<alpha)) print(paste0("A: ", a, " B: ", b, " J: ", prop_Jacc))
+
             if (r < alpha) {
                 lh_prev <- lh_prop
                 prior_prev <- prior_prop
