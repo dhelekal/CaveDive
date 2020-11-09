@@ -515,7 +515,7 @@ test_that("Outbreak simulation likelihood matches computer outbreak likelihood",
     out <- outbreaks_simulate(poi_rate, concentration, sam, r_mean, r_sd, K_mean, K_sd, time_rate, time_shape)
     co <- out$co
 
-    tr.nodiv <- build_coal_tree.structured(sam, co$times, out$colours, co$colours, out$div_times, out$div_cols, co$div_from, include_div_nodes = FALSE)
+    tr.nodiv <- build_coal_tree.structured(sam, co$times, out$tip_colours, co$colours, out$div_times, out$div_cols, co$div_from, include_div_nodes = FALSE)
     tree.nodiv <- read.tree(text = tr.nodiv$full)
     
     times.nodiv <- node.depth.edgelength(tree.nodiv)
@@ -528,13 +528,13 @@ test_that("Outbreak simulation likelihood matches computer outbreak likelihood",
     MRCAs <- sapply(MRCAs.idx, function (x) tree.nodiv$node.label[times.ord[x]])
 
     pre <- structured_coal.preprocess_phylo(tree.nodiv)
-    comp_log_lh <- outbreaks_likelihood(pre, MRCAs, out$div_times, out$A, out$K, out$N, out$exp_probs, concentration)
+    comp_log_lh <- outbreaks_likelihood(pre, MRCAs, out$div_times, out$A, out$K, out$N, out$exp_probs)
     sim_log_lh <- out$full_lh
 
     comp <- structured_coal.likelihood(pre, MRCAs, out$div_times, out$A, out$K, out$N)
 
     for (i in out$div_cols){
-      sam.gt <- sam[which(out$colours==i)]
+      sam.gt <- sam[which(out$tip_colours==i)]
       coal.gt  <- co$times[which(co$colours==i)]
 
       for (j in c(1:length(co$div_from))) {

@@ -1,7 +1,7 @@
 offset <- 2
 
 #' @export
-infer_outbreaks <- function(phy,
+outbreaks_infer <- function(phy,
                             prior_i, 
                             prior_N, 
                             prior_N.sample, 

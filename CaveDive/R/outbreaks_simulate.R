@@ -30,5 +30,5 @@ outbreaks_simulate <- function(poi_rate, concentration, sampling_times, r_mean, 
     full_lh <- co$log_lh + 
                sum(sapply((div_cols), function(i) length(which(colouring==i)) * log(expansion_probs[i])))
 
-    return(list(co=co, n_exp=n_exp, N=N, K=K, A=A, colours=colouring, div_times=div_times, div_cols=div_cols, exp_probs=expansion_probs, rates=rates, rate.ints=rate.ints, full_lh=full_lh))
+    return(list(co=co, n_exp=n_exp, N=N, K=K, A=A, tip_colours=colouring, div_times=div_times, div_cols=div_cols, exp_probs=expansion_probs, rates=rates, rate.ints=rate.ints, full_lh=full_lh))
 } 
