@@ -11,7 +11,7 @@ set.seed(12345678)
 poi_rate <- 3
 concentration <- 3
 
-n_tips <- 100
+n_tips <- 200
 sam <- runif(n_tips, 0, 10)
 sam <- sam - max(sam)
 sam <- sam[order(-sam)]
@@ -134,7 +134,7 @@ dev.off()
 
 pdf(file=paste0("times_hist.pdf"), width = 5, height = 5)
 plt <- ggplot(times.df, aes(times)) +
-         geom_histogram(colour="darkgreen", fill="white", binwidth = 1) + 
+         geom_histogram(colour="darkgreen", fill="white", binwidth = 0.01) + 
          theme(aspect.ratio=1)
 plot(plt)
 dev.off()
