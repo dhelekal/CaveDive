@@ -1,0 +1,137 @@
+\documentclass{report}
+
+% set font encoding for PDFLaTeX, XeLaTeX, or LuaTeX
+\usepackage{ifxetex,ifluatex}
+
+\if\ifxetex T\else\ifluatex T\else F\fi\fi T%
+  \usepackage{fontspec}
+\else
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{lmodern}
+\fi
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{bm}
+\usepackage{bbm}
+\usepackage{mathtools}
+\usepackage{physics}
+
+\usepackage{enumitem}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
+
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,}
+
+\usepackage[parfill]{parskip}
+\usepackage{lipsum}
+\usepackage[export]{adjustbox}
+\usepackage{listings}
+
+\usepackage{xparse} 
+\usepackage{subfig} 
+\usepackage{xparse} 
+\usepackage{float}
+
+\usepackage[sorting=none]{biblatex} 
+
+%%%%%This is an image table command, can likely be deleted
+\newcommand{\subf}[2]{
+
+%
+{\small 
+\begin{tabular}
+  [t]{@{}c@{}} #1\ 
+  \#2 
+\end{tabular}
+}
+
+%
+} 
+
+\makeatletter
+\renewcommand*\env@matrix[1][c]{\hskip -\arraycolsep
+  \let\@ifnextchar\new@ifnextchar
+  \array{*\c@MaxMatrixCols #1}}
+\makeatother
+%%%%%% Tensor Product
+\NewDocumentCommand{\tens}{e{_^}}{ 
+\mathbin{\mathop{\otimes}\displaylimits \IfValueT{#1}{_{#1}} \IfValueT{#2}{^{#2}} }}
+%%%%%% Add \R Reals
+\newcommand{\R}{\mathbb{R}} 
+\newcommand{\N}{\mathbb{N}} 
+\newcommand{\Z}{\mathbb{Z}} 
+%%%%%% Missing citation warn
+\newcommand{\CITEMISSING}{\colorbox{BurntOrange}{CITE ME}}
+%%%%%% Add \theorem float
+\newtheorem{theorem}{Theorem}
+%%%%%% Add \definition float
+\theoremstyle{definition} 
+\newtheorem{definition}{Definition}[section]
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%Uncomment to add citation library 
+\bibliography{lib}
+\title{Model Description}
+\author{David Helekal}
+
+\begin{document}
+\chapter{Model}
+\section{Coalescent with Local Population Structure}
+We now present novel local phylodynamic model.
+In order to help illustrate the concepts behind this model, consider the following scenario.:
+Suppose we sequence the genomes of a set of pathogenic bacterial samples. 
+At an unknown point in time a particular strain acquired a mutation which conferred resistance to a widely used antibiotic. This increases the strain's fitness and enables it to undergo a period of rapid growth leading to a clonal expansion. Assuming that this increase in fitness occurs in a short time span, the clade -- a set of lineages sharing the same common ancestor, of this strain will behave differently in the phylogenetic tree. The clade corresponding to this strain will have a coalescent rate corresponding to a rapidly expanding population starting from a very small number of individuals.\\
+The problem of identifying hidden population structure has been proposed in \cite{volz_identification_nodate}, where a testing based approach was used to identify structure in a phylogeny, as well as in \cite{barido-sottani_multitype_2020}, where a birth-death type model was used.\\
+In our approach, we will build upon the standard coalescent model, modifying it as to allow for change points located on the branches of the phylogeny, marking the event when a particular clade starts behaving according to a different population size function than its parent clade.\\
+In our model, coalescent nodes have an added colour property, and each colour coalesces according to a colour specific, time dependent case. Nodes of non-identical colour can coalesce iff at least one of them is the last remaining node of a given colour.
+Different colours correspond to different clades, each behaving under its own growth function.\\
+Similar models have been used in epidemiology to track outbreaks \cite{maio_scotti_2016}, or transmission chains \cite{didelot_genomic_2017}.
+These models are often called structured coalescent process, effectively adding a colour property to the vertices of phylogenies.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Model}
+\section{Preliminaries}
+A given genealogy $\mathbf{g}=(V_\mathbf{g}, E_\mathbf{g}, t_\mathbf{g})$ is an incomplete, empirical sample of the underlying process.\\
+It consists of nodes $V_\mathbf{g}$, directed edges $E_\mathbf{g}$, and node labels $t_\mathbf{g}$ corresponding to event times.\\
+The genealogy $\mathbf{g}$ shall be indexed by an index set $S=1\leq i \leq N\subset \N$, with $Y\subset S$ corresponding to coalescent events and $I\subset S$ corresponding to sampling events.\\
+For convenience, assume that all edges are in the forwards time direction, i.e.: 
+\begin{gather*}
+\forall k,l \in S: (k,l)\in E_\mathbf{g} \Rightarrow t_k<t_l
+\end{gather*}
+Furthermore, all event times are ordered in descending (backwards) time order, with the first event corresponding the the most recent sample
+\begin{gather*}
+\forall k,l \in S: k<l \Rightarrow t_k > t_l
+\end{gather*}
+Under the assumption that $\mathbf{g}$ is a genealogy of a given sample, with each edge in $E_\mathbf{g}$ there is an associated unobserved set of individuals descending from one another. At some point along an edge from one lineage to another, the lineage can undergo a colour change, and become the most recent ancestor of a diverging clade. This event corresponds to this lineage somehow gaining advantage over other lineages, be it a bacterium gaining resistance against a drug, or a strain of a virus invading a completely susceptible population.
+\begin{definition}[Multiple Lineage Coalescent]\label{def:model}
+Given $M$ colours, $M$ population size functions $\mathbf{\alpha}\triangleq\{\alpha_j(t)\}_{1\leq j\leq M}$. Let $Y(t)$ be a CTMC with the state space:
+\begin{gather}
+  \Sigma = \left\{\mathbf{s}\in \Z_+: |\mathbf{s}|\geq1\right\}
+\end{gather}
+and the transition rates
+\begin{gather}\label{eq:multirate}
+\begin{align}
+\mathbf{s}&\to\mathbf{s}-\mathbf{e_j} &\quad& \binom{s_j}{2}\alpha_j^{-1}(t)&\quad&1\leq j\leq M\\
+\mathbf{s}&\to\mathbf{s}-\mathbf{e_j}+\mathbf{e_k}&\quad& \delta_{1,j}\beta s_k&\quad&1\leq j,k\leq M
+\end{align}
+\end{gather}
+Where $\beta$ is an unknown rate.
+\end{definition}
+The interpretation of this model in backwards (coalescent) time is that each node corresponds to a single specific clade (colour). Nodes of the same clade coalesce at i.i.d rates, according to a clade specific growth functions, until reaching the most recent common ancestor (MRCA) of given clade. The MRCA then changes type (colour) to that of any other clade that is extant at a given time. \\
+Under the hypothesis, along each of the edges from the parent of a clade MRCA to the MRCA lies a point in that characterises the time of divergence of the clade, after which the clade starts to undergo clonal expansion.
+\section{Full Generative Model}
+We now proceed to define the full model that will be used for inference and simulations. First we note that as the coalescent process is backwards in time, our model will have to be backwards in time as well.\\
+Assume $k$ individuals ${x_1, x_2, ... ,x_k}$ have been sampled, with $k$ fixed and known.
+The $k$ individuals can be partitioned into $n+1$ colours corresponding to clades, with $n \sim \texttt{poi}(\theta)$. We denote the indicator of colouring of an individual with $I_{c_j}(\cdot)$ Each individual is assigned to clade $j\in {1,...,n+1}$ with probability $p_j$. In other words $P[I_{c_j}(x_i) =1] = p_j$.
+The probability vector $p = (p_i)_{1,..,n+1}$ is drawn from a dirichlet distribution with a given concentration $\alpha$, i.e. $p\sim\texttt{dirichlet}(\alpha)$.
+Next, expansion parameters such as carrying capacity, expansion rate, and time of divergence time of expansion are sampled. The case of background population can be viewed as an expansion that has happened sufficiently long ago that it is effectively constant. As such for background population we only sample carrying capacity.
+Finally, with all parameters sampled, we proceed to simulate a genealogy under model described in \ref{def:model}.
+\chapter{References}
+\printbibliography
+\end{document}
