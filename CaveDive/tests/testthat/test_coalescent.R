@@ -321,7 +321,7 @@ test_that("structured_coal.preprocess_phylo works", {
     A <- c(5.1, 0.3)
     K <- c(100,100)
 
-    div_times <- c(-25, -80, -Inf)
+    div_times <- c(-25, -60, -Inf)
     div_cols <- c(1, 2, 3)
     rates <- list(function (s) sat.rate(s, K[1], A[1], div_times[1]), function (s) sat.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
     rate.ints <- list(function(t,s) sat.rate.int(t, s, K[1], A[1], div_times[1]), function(t,s) sat.rate.int(t, s, K[2], A[2], div_times[2]), function(t,s) constant.rate.int(t,s,N))
@@ -351,7 +351,7 @@ test_that("extract_lineage_times works", {
     A <- c(5.1, 0.3)
     K <- c(100,100)
 
-    div_times <- c(-25, -80, -Inf)
+    div_times <- c(-25, -60, -Inf)
     div_cols <- c(1, 2, 3)
     rates <- list(function (s) sat.rate(s, K[1], A[1], div_times[1]), function (s) sat.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
     rate.ints <- list(function(t,s) sat.rate.int(t, s, K[1], A[1], div_times[1]), function(t,s) sat.rate.int(t, s, K[2], A[2], div_times[2]), function(t,s) constant.rate.int(t,s,N))
@@ -404,7 +404,7 @@ test_that("Structured Coalescent likelihood with only one clade matches neutral 
     A <- c(5.1, 0.3)
     K <- c(100,100)
 
-    div_times <- c(-25, -80, -Inf)
+    div_times <- c(-25, -60, -Inf)
     div_cols <- c(1, 2, 3)
     rates <- list(function (s) sat.rate(s, K[1], A[1], div_times[1]), function (s) sat.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
     rate.ints <- list(function(t,s) sat.rate.int(t, s, K[1], A[1], div_times[1]), function(t,s) sat.rate.int(t, s, K[2], A[2], div_times[2]), function(t,s) constant.rate.int(t,s,N))
@@ -439,7 +439,7 @@ test_that("Simulation Likelihood matches product of colour specific likelihoods"
     A <- c(5.1, 0.3)
     K <- c(100,100)
 
-    div_times <- c(-25, -80, -Inf)
+    div_times <- c(-25, -60, -Inf)
     div_cols <- c(1, 2, 3)
     rates <- list(function (s) sat.rate(s, K[1], A[1], div_times[1]), function (s) sat.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
     rate.ints <- list(function(t,s) sat.rate.int(t, s, K[1], A[1], div_times[1]), function(t,s) sat.rate.int(t, s, K[2], A[2], div_times[2]), function(t,s) constant.rate.int(t,s,N))
@@ -488,6 +488,8 @@ test_that("Simulation Likelihood matches product of colour specific likelihoods"
       }
     }
 
+    log_lh <- log_lh + log(1/factorial(length(div_times)-1))
+
     expect_equal(log_lh, co$log_lh)
     expect_equal(comp$log_lh, co$log_lh)
 })
@@ -503,11 +505,11 @@ test_that("Outbreak simulation likelihood matches computer outbreak likelihood",
     sam <- sam - max(sam)
     sam <- sam[order(-sam)]
 
-    r_mean <- 1
+    r_mean <- 0
     r_sd <- 1
 
-    K_mean <- 4
-    K_sd <- 0.5
+    K_mean <- 6
+    K_sd <- 0.2
 
     time_shape <- floor(n_tips/3)
     time_rate <- 5**(-1)
