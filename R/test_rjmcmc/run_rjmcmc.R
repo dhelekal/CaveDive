@@ -22,8 +22,12 @@ r_sd <- 1
 K_mean <- 5
 K_sd <- 0.5
 
-time_shape <- 20
-time_rate <- 1**(-1)
+
+time_var <- 40
+time_mean <- 80
+
+time_shape <- (time_mean**2)/(time_var**2)
+time_rate <- time_mean/(time_var**2)
 
 sim <- outbreaks_simulate(poi_rate, concentration, sam, r_mean, r_sd, K_mean, K_sd, time_rate, time_shape)
 
