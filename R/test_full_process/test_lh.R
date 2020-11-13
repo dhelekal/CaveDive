@@ -1,7 +1,7 @@
 library(CaveDive)
 library(ape)
 library(testthat)
- set.seed(1123456)
+set.seed(1123456)
     
     n_tips <- 100
     poi_rate <- 2

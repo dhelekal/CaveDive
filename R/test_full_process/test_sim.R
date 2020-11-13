@@ -6,29 +6,23 @@ library(ggtree)
 library(treeio)
 library(viridis)
 
-set.seed(12345678)
+#set.seed(12345678)
 
 n_tips <- 100
-poi_rate <- 3
+n_exp <- 3
 concentration <- 2
-
-sam <- runif(n_tips, 0, 0.1)
-
-r_mean <- 1
-r_sd <- 1
 
 K_mean <- 5
 K_sd <- 0.5
 
-time_shape <- 30
-time_rate <- 5**(-1)
+para <- clonal_tree_process.simulate_params(n_exp, n_tips, concentration, K_mean, K_sd, sampling_scale=c(0,20), r_mean=0, r_sd_mult=1, time_mean_sd_mult=8)
+out <- clonal_tree_process.simulate_tree(para$n_exp, para$N, para$K, para$A, para$sampling_times, para$tip_colours, para$div_times, para$div_cols, para$exp_probs)
 
-out <- outbreaks_simulate(poi_rate, concentration, sam, r_mean, r_sd, K_mean, K_sd, time_rate, time_shape)
 co <- out$co
 
-tree.div.str <- build_coal_tree.structured(sam, co$times, out$colours, co$colours, out$div_times, out$div_cols, co$div_from, include_div_nodes = TRUE)
+tree.div.str <- build_coal_tree.structured(para$sampling_times, co$times, para$tip_colours, co$colours, para$div_times, para$div_cols, co$div_from, include_div_nodes = TRUE)
 tree.div <- read.tree(text = tree.div.str$full)
-tree.plt <- plot_structured_tree(tree.div, out$n_exp)
+tree.plt <- plot_structured_tree(tree.div, para$n_exp)
 
 pdf(file="tree_structured.pdf")
 plot(tree.plt)

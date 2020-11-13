@@ -123,6 +123,7 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                     func <- function(s) rate_int_sum(Neg.rate.ints, comb_ns, n_col)(t,s)
                     dfun <- function(s) sum(sapply(c(1:n_col), function (x) if(comb_ns[x] == 0) 0 else comb_ns[x]*Neg.rates[[x]](t+s)))
                     return(inv_rates(func, Fs, dfun))
+
                 }
 
                 w_t <- inv_t_inhomogenous_exp_conditional(rate_int_sum(Neg.rate.ints, comb_ns, n_col),
@@ -158,13 +159,19 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                     future_lineages[which_colour] <- future_lineages[which_colour] - 1
                     sam_idx <- sam_idx + 1
                 } else {
-                    t <- t0 - div_times[div_idx]
 
                     which_div <- div_events[div_idx]
                     if (extant_lineages[which_div] != 1) {
                         warning("Divergence event registered at this time but lineage MRCA has not been reached. This is likely a bug")
+                        warning(paste0("time: ", t))
+                        warning(paste0("time increment: ", s))
+                        warning(paste0("lineage diverging: ", which_div))
+                        warning(paste0("p_coal: ", p_coal))
+                        warning(paste0("extant_lineages vector: ", extant_lineages, "\n"))
+                        warning(paste0("comb_ns vector: ", comb_ns, "\n"))
                         return(-1)
                     }
+                    t <- t0 - div_times[div_idx]
                     ### choose which lineage to diverge from
                     extant_lineages[which_div] <- extant_lineages[which_div] - 1 
                     
@@ -381,5 +388,16 @@ choose_reaction <- function(rates) {
 }
 
 rate_int_sum <- function(rate_ints, comb_ns, n_col) {
-    return(function(t,s) sum(sapply(c(1:n_col), function (x) if(comb_ns[x] == 0) 0 else comb_ns[x]*rate_ints[[x]](t, s))))
+    out <- function(t,s){
+        rate_vec <- sapply(c(1:n_col), function (x) if(comb_ns[x] == 0) 0 else comb_ns[x]*rate_ints[[x]](t, s))
+        rate_vec2 <- sapply(c(1:n_col), function (x) if(comb_ns[x] == 0) 0 else rate_ints[[x]](t, s))
+        if(!all(rate_vec >= 0)) {
+            warning("Negative rates encountered")
+            warning(paste0("rate vec: ", rate_vec2, "\n"))
+            warning(paste0("t0 at error: ", t))
+            warning(paste0("s at error: ", s))
+        }
+        return(sum(rate_vec))
+    }
+    return(out)
 }
