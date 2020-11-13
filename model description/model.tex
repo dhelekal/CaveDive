@@ -82,7 +82,16 @@
 \chapter{Model}
 \section{Coalescent with Local Population Structure}
 We now present novel local phylodynamic model.
-In order to help illustrate the concepts behind this model, consider the following scenario.:
+In order to help illustrate the concepts behind this model, consider the following scenario:
+Suppose there is a parent population of bacteria of interest evolving through time. At any point in time, a particular individual within this population gains a significant evolutionary advantage. This advantage enables the individual and its progeny to undergo a rapid clonal expansion as it gains the ability to colonise a particular niche, eventually reaching a constant population size equilibrium. We will associate the clade corresponding to the clonal expansion with a particular colouring. 
+The clonal expansion process may repeat throughout time, giving rise to several clades. The clonal expansions may for example correspond to process such a bacterial strain gaining antibiotic resistance, or being newly introduced into a hospital.
+
+In general, we will assume that the clonal expansion process happens relatively rarely. We will also assume the parent population is at eqillibrium. As under this scenario populations reach a constant population size in the limit this assumption can be interpreted that the clonal expansion that gave rise to the parent population has happened a very long time ago.
+
+At present a researcher collects a random set of $N$ samples from the population of interest, containing at least some of the clades produced by the clonal expansion process described above. Each sample belongs to one of the $k$ clonal expansion clades with multinomial probability $\theta_i$, $\pmb{\theta} = [\theta_1, ..., \theta_i, ..., \theta_{k-1}, \theta_{k}]$. 
+The researcher then sequences the genomes of the samples and infers the corresponding phylogenetic using any of the popular available methods.
+The resulting phylogeny can be viewed as a realisation of the following backwards time process. Select $K$ clade colours, and an associated clade sampling membership probability vector $\pmb{\theta}$. For each of the $N$ samples $s_i$, assign a colouring $c_i$.
+
 Suppose we sequence the genomes of a set of pathogenic bacterial samples. 
 At an unknown point in time a particular strain acquired a mutation which conferred resistance to a widely used antibiotic. This increases the strain's fitness and enables it to undergo a period of rapid growth leading to a clonal expansion. Assuming that this increase in fitness occurs in a short time span, the clade -- a set of lineages sharing the same common ancestor, of this strain will behave differently in the phylogenetic tree. The clade corresponding to this strain will have a coalescent rate corresponding to a rapidly expanding population starting from a very small number of individuals.\\
 The problem of identifying hidden population structure has been proposed in \cite{volz_identification_nodate}, where a testing based approach was used to identify structure in a phylogeny, as well as in \cite{barido-sottani_multitype_2020}, where a birth-death type model was used.\\
