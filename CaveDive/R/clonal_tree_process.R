@@ -15,7 +15,7 @@ clonal_tree_process.simulate_params <- function(n_exp, n_tips, concentration, K_
             warning("Maximum sampling iterations exceeded.")
             return (NA)
         }
-        exp_probs <- rdirichlet(1, rep(concentration, n_exp))
+        exp_probs <- rdirichlet(1, concentration)
         colouring <- rmultinom(n_tips, 1, exp_probs)
         colouring <- sapply(c(1:n_tips), function (i) which(colouring[,i]>0))
         it <- it + 1

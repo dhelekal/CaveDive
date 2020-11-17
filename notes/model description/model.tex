@@ -88,18 +88,15 @@ The clonal expansion process may repeat throughout time, giving rise to several 
 
 In general, we will assume that the clonal expansion process happens relatively rarely. We will also assume the parent population is at eqillibrium. As under this scenario populations reach a constant population size in the limit this assumption can be interpreted that the clonal expansion that gave rise to the parent population has happened a very long time ago.
 
-At present a researcher collects a random set of $N$ samples from the population of interest, containing at least some of the clades produced by the clonal expansion process described above. Each sample belongs to one of the $k$ clonal expansion clades with multinomial probability $\theta_i$, $\pmb{\theta} = [\theta_1, ..., \theta_i, ..., \theta_{k-1}, \theta_{k}]$. 
-The researcher then sequences the genomes of the samples and infers the corresponding phylogenetic using any of the popular available methods.
-The resulting phylogeny can be viewed as a realisation of the following backwards time process. Select $K$ clade colours, and an associated clade sampling membership probability vector $\pmb{\theta}$. For each of the $N$ samples $s_i$, assign a colouring $c_i$.
+At present a researcher collects a random set of $N$ samples from the population of interest, containing at least some of the clades produced by the clonal expansion process described above. Each sample belongs to one of the $k$ clonal expansion clades with multinomial probability $\theta_i$, $\pmb{\theta} = [\theta_1, ..., \theta_i, ..., \theta_{k-1}, \theta_{k}]$.
 
-Suppose we sequence the genomes of a set of pathogenic bacterial samples. 
-At an unknown point in time a particular strain acquired a mutation which conferred resistance to a widely used antibiotic. This increases the strain's fitness and enables it to undergo a period of rapid growth leading to a clonal expansion. Assuming that this increase in fitness occurs in a short time span, the clade -- a set of lineages sharing the same common ancestor, of this strain will behave differently in the phylogenetic tree. The clade corresponding to this strain will have a coalescent rate corresponding to a rapidly expanding population starting from a very small number of individuals.\\
-The problem of identifying hidden population structure has been proposed in \cite{volz_identification_nodate}, where a testing based approach was used to identify structure in a phylogeny, as well as in \cite{barido-sottani_multitype_2020}, where a birth-death type model was used.\\
-In our approach, we will build upon the standard coalescent model, modifying it as to allow for change points located on the branches of the phylogeny, marking the event when a particular clade starts behaving according to a different population size function than its parent clade.\\
-In our model, coalescent nodes have an added colour property, and each colour coalesces according to a colour specific, time dependent case. Nodes of non-identical colour can coalesce iff at least one of them is the last remaining node of a given colour.
-Different colours correspond to different clades, each behaving under its own growth function.\\
-Similar models have been used in epidemiology to track outbreaks \cite{maio_scotti_2016}, or transmission chains \cite{didelot_genomic_2017}.
-These models are often called structured coalescent process, effectively adding a colour property to the vertices of phylogenies.
+The researcher then sequences the genomes of the samples and infers the corresponding phylogenetic using any of the popular available methods.
+The resulting phylogeny can be viewed as a realisation of the following backwards time process. 
+
+Select $K$ clade colours, and an associated clade sampling membership probability vector $\pmb{\theta}$. For each of the $N$ samples $s_i$ forming the leaves of the phylogeny, assign a colouring $c_i$. The samples of identical colour then coalesce with each other with rate governed by a colour specific population size function $\alpha_i(t)$. As it is assumed each colour is formed by a clonal expansion at time $t^{Div}_{i}$, $\alpha_i(t)$ vanishes to zero at the time of the expansion, and as such all coalescence within clade of colour $c_i$ happens almost surely before $t^{Div}_{i}$. Upon reaching the time of clonal expansion the MRCA then chnages colour to that of another clade extant at the time. The clade of the colour the MRCA changes to will be referred to as the parent clade. The MRCA is then added to the parent clade as a leaf. 
+The process continues until all only one individual remains.
+
+The coalescent process given leaf colouring and growth function parameters described above is characterised mathematically in the following section.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -134,13 +131,78 @@ Where $\beta$ is an unknown rate.
 \end{definition}
 The interpretation of this model in backwards (coalescent) time is that each node corresponds to a single specific clade (colour). Nodes of the same clade coalesce at i.i.d rates, according to a clade specific growth functions, until reaching the most recent common ancestor (MRCA) of given clade. The MRCA then changes type (colour) to that of any other clade that is extant at a given time. \\
 Under the hypothesis, along each of the edges from the parent of a clade MRCA to the MRCA lies a point in that characterises the time of divergence of the clade, after which the clade starts to undergo clonal expansion.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Full Generative Model}
-We now proceed to define the full model that will be used for inference and simulations. First we note that as the coalescent process is backwards in time, our model will have to be backwards in time as well.\\
-Assume $k$ individuals ${x_1, x_2, ... ,x_k}$ have been sampled, with $k$ fixed and known.
-The $k$ individuals can be partitioned into $n+1$ colours corresponding to clades, with $n \sim \texttt{poi}(\theta)$. We denote the indicator of colouring of an individual with $I_{c_j}(\cdot)$ Each individual is assigned to clade $j\in {1,...,n+1}$ with probability $p_j$. In other words $P[I_{c_j}(x_i) =1] = p_j$.
-The probability vector $p = (p_i)_{1,..,n+1}$ is drawn from a dirichlet distribution with a given concentration $\alpha$, i.e. $p\sim\texttt{dirichlet}(\alpha)$.
-Next, expansion parameters such as carrying capacity, expansion rate, and time of divergence time of expansion are sampled. The case of background population can be viewed as an expansion that has happened sufficiently long ago that it is effectively constant. As such for background population we only sample carrying capacity.
-Finally, with all parameters sampled, we proceed to simulate a genealogy under model described in \ref{def:model}.
+Given a population sample of $N$ individuals indexed by $F$, $X_F = \{x_i\}_{i \in F}$, first determine the number of recent clonal expansions k:
+\begin{gather}
+k \sim \texttt{poi}(\phi)
+\end{gather}
+Then simulate the $k+1$ clonal expansion probability vector $\pmb{\theta}$:
+\begin{gather}
+\pmb{\theta} \sim \texttt{dirichlet}(\psi), \quad \psi \in \R_+^{k+1} 
+\end{gather}
+Given the number of expansions $k$ and expansion probabilities $\pmb{\theta}$, partition $F$ into $k+1$ mutually disjoint subsets $\mathbf{f}=\{f_1, ... f_k, f_{k+1}\}$ with $\bigcup\limits_{i=1}^{k+1} f_{i} = F$ with the probability $P[j\in f_{i}]=\theta_i\quad \forall i,\forall j \in F$.  
+Each partition corresponds to an individual colour characterising a clonal expansion. For convenience, we will set $f_{k+1}$ to be the index set of the tips corresponding to the ancestral subpopulation.
+
+For each of the $k$ expansions $f_i$, define the parent subpopulation by $\rho_i$.
+
+Individual subpopulations then follow the coalescent process described above in \ref{def:model}, governed by population size functions $\alpha^{-1}_{j}(t)$. To each of $\alpha^{-1}_{j}$ corresponds a set of parameters:
+\begin{gather}
+\begin{aligned}
+T_{div_{j}}\in\R_+ \quad&\text{The time of divergence}\\
+r_j\in\R_+\quad&\text{The growth rate of the subpopulation}\\
+N_j\in\R_+\quad&\text{The carrying capacity}
+\end{aligned}
+\end{gather}
+In the case of the ancestral subpopulation $f_{k+1}$, we assume that the divergence event happened a very long time ago. As by definition $\alpha(t) \rightarrow N$ as $t-T_{div}\rightarrow -\infty$, we approximate $\alpha_{k+1}(t) \approx N_{k+1}$ and as such $\alpha^{-1}_{k+1}(t) \approx 1/N_{k+1}$. The parameters $T_{div_{j}}, r_j, N_j$ are simulated from appropriate (prior) distributions.
+Finally, without loss of generality, assume that divergence events are indexed in descending order by the time of divergence
+\begin{gather}
+i > j \Leftrightarrow T_{div_i} < T_{div_j}  
+\end{gather}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Posterior}
+The posterior for the full process is:
+\begin{gather}
+\begin{aligned}
+P(k, \mathbf{f}, \pmb{\theta}, \pmb{T_{div}}, \mathbf{r}, \mathbf{N}\mid\mathbf{g}) &\propto \mathcal{L}(\mathbf{g}\mid k, \mathbf{f}, \pmb{\rho}, \pmb{\theta}, \pmb{T_{div}}, \mathbf{r}, \mathbf{N})\\
+&\cross \mathcal{L}(\mathbf{f}\mid\pmb{\theta}, k)\\
+&\cross \pi(\pmb{\rho}\mid\mathbf{T_{div}})\\
+&\cross \pi(\mathbf{T_{div}}, \mathbf{r}, \mathbf{N}\mid k)\\
+&\cross\pi(\pmb{\theta}\mid k)\pi(k)
+\end{aligned}
+\end{gather}
+As the model dimensionality varies with $k$, the posterior has to be integrated via RJ-MCMC. Furthermore as $\pmb{\theta}$ has to be a multinomial probability vector, it must be rescaled with every transdimensional move so that it sums to one, leading to non-unitary determinants. For inference we use the following priors:
+The prior on the parental clades of individual clonal expansions
+\begin{gather}
+\pi(\pmb{\rho}\mid \mathbf{T_{div}}) 
+\end{gather}
+is assumed to be uniform probability that the clonal expansion diverged from any other subpopulation extant at the time, i.e.:
+\begin{gather}
+\pi(\pmb{\rho}\mid \mathbf{T_{div}}) = \prod\limits_{i=1}^{k} \mathbbm{1}_{\{x:x>i\}}(\rho_i)\frac{1}{k+1-i}  
+\end{gather}
+The prior on functions of effective population size can be expressed as
+\begin{gather}
+\pi(\mathbf{T_{div}}, \mathbf{r}, \mathbf{N}\mid k) = \pi(N_{k+1})\prod\limits_{i=1}^{k}\pi(N_i)\pi(T_{div_i})\pi(r_i)
+\end{gather}
+For $\pi(N_i)\quad \forall i\in\{0,...,k-1,k\}$, log-normal distributions parametrised by mean $\mu_N$ and standard deviation $\sigma_N$ provided by the decision maker are used.\\
+$\pi(r_i)\quad \forall i\in\{1,...,k-1,k\}$, log-normal distributions parametrised by mean $\mu_r$ and standard deviation $\sigma_r$ provided by the decision maker are used.\\
+For prior on membership probabilities
+\begin{gather}
+\pi(\pmb{\theta}\mid k)
+\end{gather}
+$k$-dimensional $\texttt{dirichlet}(\psi)$ is used, with $\psi$ supplied by the decision maker.
+
+For prior on the number of clonal expansions
+\begin{gather}
+\pi(k)
+\end{gather}
+we use poisson distribution $\texttt{poi}(1)$
 \chapter{References}
 \printbibliography
 \end{document}
