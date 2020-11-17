@@ -25,9 +25,9 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
         return(-1)
     }
 
-    extant_lineages <- rep(0, n_col)
+    extant_lineages <- as.integer(rep(0, n_col))
+    future_lineages <- as.integer(sapply(div_events, function (x) sum(colours_desc==x)))
 
-    future_lineages <- sapply(div_events, function (x) sum(colours_desc==x))
     future_lineages <- future_lineages[order(div_events)]
 
     coalescent_times <- rep(0, length(times_desc)-1)
@@ -62,15 +62,21 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                 t <- t0 - div_times[div_idx]
 
                 which_div <- div_events[div_idx]
-                if (extant_lineages[which_div] != 1) {
+                if (!all(!is.na(extant_lineages)) || extant_lineages[which_div] != 1) {
                     warning("Divergence event registered at this time but lineage MRCA has not been reached. This is likely a bug")
+                    warning(paste0("lineage diverging node count: ", extant_lineages[which_div]))
+                    warning(paste0("time: ", t))
+                    warning(paste0("time increment: ", s))
+                    warning(paste0("lineage diverging: ", which_div))
+                    warning(paste0("extant_lineages vector: ", extant_lineages, "\n"))
                     return(-1)
                 }
                 ### choose which lineage to diverge from
                 extant_lineages[which_div] <- extant_lineages[which_div] - 1 
                     
                 non_zero_l <- which(extant_lineages > 0)
-                i <- sample(non_zero_l, 1)
+
+                i <- non_zero_l[runif(1,1,length(non_zero_l)+1)]
 
                 log_lh <- log_lh + log(1/length(non_zero_l))
 
@@ -131,6 +137,29 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                                                             1,
                                                             t,
                                                             s)
+                if(is.na(w_t)) {
+                    warning("Numeric inverse transform failed: failed to find initial bisection interval")
+                    warning(paste0("time: ", t))
+                    warning(paste0("time increment: ", s))
+                    warning(paste0("lineage diverging: ", which_div))
+                    warning(paste0("p_coal: ", p_coal))
+                    warning(paste0("extant_lineages vector: ", extant_lineages, "\n"))
+                    warning(paste0("opt: ", opt))
+                    warning(paste0("comb_ns vector: ", comb_ns, "\n"))
+                    return(-1)
+                } 
+
+                if(is.infinite(w_t)) {
+                    warning("Numeric inverse transform failed: infinity returned")
+                    warning(paste0("time: ", t))
+                    warning(paste0("time increment: ", s))
+                    warning(paste0("lineage diverging: ", which_div))
+                    warning(paste0("p_coal: ", p_coal))
+                    warning(paste0("extant_lineages vector: ", extant_lineages, "\n"))
+                    warning(paste0("opt: ", opt))
+                    warning(paste0("comb_ns vector: ", comb_ns, "\n"))
+                    return(-1)
+                } 
                 ### Compute rates for each lineage
                 rates <- sapply(c(1:n_col), function (x) if(comb_ns[x] == 0) 0 else comb_ns[x]*Neg.rates[[x]](t+w_t))
                 i <- choose_reaction(rates)
@@ -161,8 +190,9 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                 } else {
 
                     which_div <- div_events[div_idx]
-                    if (extant_lineages[which_div] != 1) {
+                    if (!all(!is.na(extant_lineages)) || extant_lineages[which_div] != 1) {
                         warning("Divergence event registered at this time but lineage MRCA has not been reached. This is likely a bug")
+                        warning(paste0("lineage diverging node count: ", extant_lineages[which_div]))
                         warning(paste0("time: ", t))
                         warning(paste0("time increment: ", s))
                         warning(paste0("lineage diverging: ", which_div))
@@ -174,9 +204,9 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                     t <- t0 - div_times[div_idx]
                     ### choose which lineage to diverge from
                     extant_lineages[which_div] <- extant_lineages[which_div] - 1 
-                    
                     non_zero_l <- which(extant_lineages > 0)
-                    i <- sample(non_zero_l, 1)
+
+                    i <- non_zero_l[runif(1,1,length(non_zero_l)+1)]
 
                     log_lh <- log_lh + log(1/length(non_zero_l))
 

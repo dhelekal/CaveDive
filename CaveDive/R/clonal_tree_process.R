@@ -1,5 +1,5 @@
 #' @export
-clonal_tree_process.simulate_params <- function(n_exp, n_tips, concentration, K_mean, K_sd, sampling_scale=c(0,20), r_mean=0, r_sd_mult=1, time_mean_sd_mult=4) {
+clonal_tree_process.simulate_params <- function(n_exp, n_tips, concentration, K_mean, K_sd, sampling_scale=c(0,20), r_mean=0, r_sd=1, time_sd_mult=2, time_mean_sd_mult=4) {
     
     sam <- runif(n_tips, sampling_scale[1], sampling_scale[2])
     sam <- sam - max(sam)
@@ -30,7 +30,7 @@ clonal_tree_process.simulate_params <- function(n_exp, n_tips, concentration, K_
     if (n_exp > 1) {
          clade_sizes <- sapply(c(1:n_exp), function(i) length(which(colouring==i)))
          K <- rlnorm(n_exp-1, meanlog = K_mean, sdlog = K_sd)
-         A <- rlnorm(n_exp-1, meanlog = r_mean, sdlog = r_sd)
+         A <- rlnorm(n_exp-1, meanlog = r_mean, sdlog = r_sd) 
      
          mean_time_to_MRCA <- function(n, N) N*2*(1-1/n)
          var_time_to_MRCA <- function(n,N) 4*N*sum(sapply(c(2:n), function(j) 1/((j**2)*((j-1)**2))))
@@ -40,7 +40,7 @@ clonal_tree_process.simulate_params <- function(n_exp, n_tips, concentration, K_
          for (i in c(1:(n_exp-1))) {
             it <- 0
             ### centre at expected TMRCA - time_mean_sd_mult * SD
-            time_sd <- r_sd_mult*sqrt(var_time_to_MRCA(clade_sizes[i],K[i]))
+            time_sd <- time_sd_mult*sqrt(var_time_to_MRCA(clade_sizes[i],K[i]))
             time_mean <- mean_time_to_MRCA(clade_sizes[i],K[i])-time_mean_sd_mult*sqrt(var_time_to_MRCA(clade_sizes[i],K[i]))
             time_shape <- (time_mean**2)/(time_sd**2)    
             time_rate <- time_mean/(time_sd**2)
@@ -80,10 +80,10 @@ clonal_tree_process.simulate_params <- function(n_exp, n_tips, concentration, K_
 #' @export
 clonal_tree_process.simulate_tree <- function(n_exp, N, K, A, sampling_times, tip_colours, div_times, div_cols, exp_probs) {
 
-    rates <- lapply(c(1:(n_exp-1)), function(i) return(function (s) sat.rate(s, K[i], A[i], div_times[i])))
+    rates <- if(n_exp > 1) lapply(c(1:(n_exp-1)), function(i) return(function (s) sat.rate(s, K[i], A[i], div_times[i]))) else list()
     rates[[n_exp]] <- function (s) constant.rate(s, N)
 
-    rate.ints <- lapply(c(1:(n_exp-1)), function(i) return(function (t, s) sat.rate.int(t, s, K[i], A[i], div_times[i])))
+    rate.ints <- if(n_exp > 1) lapply(c(1:(n_exp-1)), function(i) return(function (t, s) sat.rate.int(t, s, K[i], A[i], div_times[i]))) else list()
     rate.ints[[n_exp]] <- function(t, s) constant.rate.int(t, s, N)
 
     co <- structured_coal.simulate(sampling_times, tip_colours, div_times, div_cols, rates, rate.ints)

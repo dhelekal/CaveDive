@@ -54,6 +54,7 @@ inv_rates <- function(func, N, dfun=NULL){
 
         if (sign(f(hi*(10^(min_hi)))) == sg) {
             warning(paste0("Cannot find initial bisection search interval. ", "min_lo: ", 0, " min_hi: ", min_hi))
+            return(NA)
         }
 
 
