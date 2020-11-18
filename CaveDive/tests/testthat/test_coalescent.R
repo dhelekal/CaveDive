@@ -228,37 +228,6 @@ test_that("Native exponential likelihood matches simulation likelihood",
             expect_equal(log_lh_tree, log_lh.native)  
           })
 
-test_that("Native half/logistic likelihood matches simulation likelihood",
-          {
-            sam <- runif(100,0,10)
-            sam <- sam - max(sam)
-            sam <- sam[order(-sam)]
-
-            t0 <- -20
-            r <- 3
-            K <- 1
-            
-            Neg_t <- function (s) return(half_log.rate(s, K, r ,t0))
-            Neg_t.int <- function (t, s) return (half_log.rate.int(t, s, K, r, t0))
-            Neg_t.inv_int <- function(t, s) return(half_log.rate.int_inv(t, s, K, r , t0))
-            
-            co <-
-              inhomogenous_coal.simulate(sam, Neg_t, Neg_t.int, Neg_t.inv_int)
-            log_lh_tree <- co$log_likelihood
-            times <- co$coalescent_times
-
-
-            log_lh.r <- inhomogenous_coal.log_lh(sam,
-                                                times,
-                                                Neg_t,
-                                                Neg_t.int)
-
-            log_lh.native <- logexp_coalescent_loglh(sam[order(-sam)], times[order(-times)], t0, r, K, 0)
-
-            expect_equal(log_lh_tree, log_lh.r)  
-            expect_equal(log_lh_tree, log_lh.native)  
-          })
-
 test_that("Native exponential likelihood matches simulation likelihood from plot_exp_growth", 
   {
     set.seed(1)

@@ -12,7 +12,8 @@ structured_coal.simulate(
   div_times,
   div_events,
   Neg.rates,
-  Neg.rate.ints
+  Neg.rate.ints,
+  div.from = NA
 )
 }
 \arguments{
@@ -27,6 +28,8 @@ structured_coal.simulate(
 \item{Neg.rates}{Kx1 List of Functions (t)->(R+). 1/Neg(t) for each colour.}
 
 \item{Neg.rate.ints}{Kx1 List of Functions (t, s)->(R+). \int_{t}^{s} 1/Neg(\tau)\,d\tau for each colour}
+
+\item{div.from}{Kx1 List of integers denoting parents of diverging lineages. If NA parents will be randomised}
 }
 \value{
 A list consisting of the simulate coalescent times \code{coalescent_times} and the log-likelihood of the simulation \code{log_likelihood}.

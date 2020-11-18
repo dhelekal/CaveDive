@@ -8,9 +8,10 @@
 #' @param div_events Kx1 colour assignment for divergence times, i.e. which colour corresponds to which divergence time
 #' @param Neg.rates Kx1 List of Functions (t)->(R+). 1/Neg(t) for each colour.
 #' @param Neg.rate.ints Kx1 List of Functions (t, s)->(R+). \int_{t}^{s} 1/Neg(\tau)\,d\tau for each colour
+#' @param div.from Kx1 List of integers denoting parents of diverging lineages. If NA parents will be randomised
 #' @return A list consisting of the simulate coalescent times \code{coalescent_times} and the log-likelihood of the simulation \code{log_likelihood}.
 #' @export
-structured_coal.simulate <- function(sampling_times, colours, div_times, div_events, Neg.rates, Neg.rate.ints) {
+structured_coal.simulate <- function(sampling_times, colours, div_times, div_events, Neg.rates, Neg.rate.ints, div.from=NA) {
 
     sam_ord <- order(-sampling_times)
     times_desc <- sampling_times[sam_ord]
@@ -74,14 +75,16 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                 ### choose which lineage to diverge from
                 extant_lineages[which_div] <- extant_lineages[which_div] - 1 
                     
-                non_zero_l <- which(extant_lineages > 0)
-
-                i <- non_zero_l[runif(1,1,length(non_zero_l)+1)]
-
-                log_lh <- log_lh + log(1/length(non_zero_l))
+                i <- NA
+                if (is.na(div.from)) {
+                    non_zero_l <- which(extant_lineages > 0)
+                    i <- non_zero_l[runif(1,1,length(non_zero_l)+1)]
+                    log_lh <- log_lh + log(1/length(non_zero_l))
+                } else {
+                    i <- div.from[div_idx]
+                }
 
                 extant_lineages[i] <- extant_lineages[i] + 1    
-
                 div_from[div_idx] <- i
  
                 div_idx <- div_idx + 1     
@@ -204,11 +207,15 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                     t <- t0 - div_times[div_idx]
                     ### choose which lineage to diverge from
                     extant_lineages[which_div] <- extant_lineages[which_div] - 1 
-                    non_zero_l <- which(extant_lineages > 0)
-
-                    i <- non_zero_l[runif(1,1,length(non_zero_l)+1)]
-
-                    log_lh <- log_lh + log(1/length(non_zero_l))
+                    
+                    i <- NA
+                    if (is.na(div.from)) {
+                        non_zero_l <- which(extant_lineages > 0)
+                        i <- non_zero_l[runif(1,1,length(non_zero_l)+1)]
+                        log_lh <- log_lh + log(1/length(non_zero_l))
+                    } else {
+                        i <- div.from[div_idx]
+                    }
 
                     extant_lineages[i] <- extant_lineages[i] + 1    
 
