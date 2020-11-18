@@ -170,13 +170,32 @@ i > j \Leftrightarrow T_{div_i} < T_{div_j}
 The posterior for the full process is:
 \begin{gather}
 \begin{aligned}
-P(k, \mathbf{f}, \pmb{\theta}, \pmb{T_{div}}, \mathbf{r}, \mathbf{N}\mid\mathbf{g}) &\propto \mathcal{L}(\mathbf{g}\mid k, \mathbf{f}, \pmb{\rho}, \pmb{\theta}, \pmb{T_{div}}, \mathbf{r}, \mathbf{N})\\
+P(k, \mathbf{f}, \pmb{\theta}, \pmb{T_{div}}, \mathbf{r}, \mathbf{N}\mid\mathbf{g}) &\propto \mathcal{L}(\mathbf{g}\mid \mathbf{f}, \pmb{\rho}, \pmb{T_{div}}, \mathbf{r}, \mathbf{N})\\
 &\cross \mathcal{L}(\mathbf{f}\mid\pmb{\theta}, k)\\
 &\cross \pi(\pmb{\rho}\mid\mathbf{T_{div}})\\
 &\cross \pi(\mathbf{T_{div}}, \mathbf{r}, \mathbf{N}\mid k)\\
 &\cross\pi(\pmb{\theta}\mid k)\pi(k)
 \end{aligned}
 \end{gather}
+The first likelihood term 
+\begin{gather}
+\mathcal{L}(\mathbf{g}\mid\mathbf{f}, \pmb{\rho}, \pmb{T_{div}}, \mathbf{r}, \mathbf{N})
+\end{gather}
+corresponds to the likelihood of the coalescent with local population strucuture described in \ref{def:model}. It can be expressed as a product of likelihoods of clonal expansion subtrees with diverging clonal expansions added as leaves under varying population size coalescent process given the corresponding population size function $\alpha_i$.
+\begin{gather}
+\mathcal{L}(\mathbf{g}\mid\mathbf{f}, \pmb{\rho}, \pmb{T_{div}}, \mathbf{r}, \mathbf{N}) = \prod\limits_{i=1}^{k+1}\mathcal{L}(\mathbf{g}_i\mid T_{div_i}, r_i, N_i)
+\end{gather}
+Where $\mathbf{g_i}$ is the clonal expansion subtree corresponding to expansion $i$, contanining all the leaves in $f_i$, the entire clade specified by theses, as well as any divergence events $j$ added as leaves if $\rho_j = i$.
+The second term in the likelihood 
+\begin{gather}
+\mathcal{L}(\mathbf{f}\mid\pmb{\theta}, k)
+\end{gather}
+Corresponds to the likelihood of samples corresponding to given clonal expansion clades, given the clonal expansion clade sampling probabilities.
+It is simply a multinomial probability
+\begin{gather}
+\mathcal{L}(\mathbf{f}\mid\pmb{\theta}, k) = \prod\limits_{i=1}^{k}\theta_{i}^{|f_i|}  
+\end{gather}
+
 As the model dimensionality varies with $k$, the posterior has to be integrated via RJ-MCMC. Furthermore as $\pmb{\theta}$ has to be a multinomial probability vector, it must be rescaled with every transdimensional move so that it sums to one, leading to non-unitary determinants. For inference we use the following priors:
 The prior on the parental clades of individual clonal expansions
 \begin{gather}
@@ -184,25 +203,26 @@ The prior on the parental clades of individual clonal expansions
 \end{gather}
 is assumed to be uniform probability that the clonal expansion diverged from any other subpopulation extant at the time, i.e.:
 \begin{gather}
-\pi(\pmb{\rho}\mid \mathbf{T_{div}}) = \prod\limits_{i=1}^{k} \mathbbm{1}_{\{x:x>i\}}(\rho_i)\frac{1}{k+1-i}  
+\pi(\pmb{\rho}\mid \mathbf{T_{div}}) \sim \prod\limits_{i=1}^{k} \mathbbm{1}_{\{x:x>i\}}(\rho_i)\frac{1}{k+1-i}  
 \end{gather}
 The prior on functions of effective population size can be expressed as
 \begin{gather}
-\pi(\mathbf{T_{div}}, \mathbf{r}, \mathbf{N}\mid k) = \pi(N_{k+1})\prod\limits_{i=1}^{k}\pi(N_i)\pi(T_{div_i})\pi(r_i)
+\pi(\mathbf{T_{div}}, \mathbf{r}, \mathbf{N}\mid k) \sim \pi(N_{k+1})\prod\limits_{i=1}^{k}\pi(N_i)\pi(T_{div_i})\pi(r_i)
 \end{gather}
 For $\pi(N_i)\quad \forall i\in\{0,...,k-1,k\}$, log-normal distributions parametrised by mean $\mu_N$ and standard deviation $\sigma_N$ provided by the decision maker are used.\\
 $\pi(r_i)\quad \forall i\in\{1,...,k-1,k\}$, log-normal distributions parametrised by mean $\mu_r$ and standard deviation $\sigma_r$ provided by the decision maker are used.\\
+$\pi(T_{div_i})$ are assumed to be gamma distributed, parametrised by mean and variance supplied by the decision maker.\\
 For prior on membership probabilities
 \begin{gather}
-\pi(\pmb{\theta}\mid k)
+\pi(\pmb{\theta}\mid k) \sim \texttt{dirichlet}(\psi)
 \end{gather}
-$k$-dimensional $\texttt{dirichlet}(\psi)$ is used, with $\psi$ supplied by the decision maker.
+$k$-dimensional dirichlet distribution is used, with $\psi$ supplied by the decision maker.
 
 For prior on the number of clonal expansions
 \begin{gather}
-\pi(k)
+\pi(k) \sim \texttt{poi}(1)
 \end{gather}
-we use poisson distribution $\texttt{poi}(1)$
+we use poisson distribution with rate 1
 \chapter{References}
 \printbibliography
 \end{document}
