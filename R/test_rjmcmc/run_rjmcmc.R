@@ -8,46 +8,40 @@ library(viridis)
 
 set.seed(12345678)
 
-poi_rate <- 3
-concentration <- 3
-
-n_tips <- 200
-sam <- runif(n_tips, 0, 10)
-sam <- sam - max(sam)
-sam <- sam[order(-sam)]
-
-r_mean <- 1
-r_sd <- 1
+n_tips <- 100
+n_exp <- 3
+concentration <- rep(2,n_exp)
 
 K_mean <- 5
 K_sd <- 0.5
 
+para <- clonal_tree_process.simulate_params(n_exp, n_tips, concentration, K_mean, K_sd, sampling_scale=c(0,20), r_mean=0, r_sd=1, time_mean_sd_mult=10, time_sd_mult=2, rejection_mult=10)
+out <- clonal_tree_process.simulate_tree(para$n_exp, para$N, para$K, para$A, para$sampling_times, para$tip_colours, para$div_times, para$div_cols, para$exp_probs)
 
-time_var <- 40
-time_mean <- 80
+co <- out$co
 
-time_shape <- (time_mean**2)/(time_var**2)
-time_rate <- time_mean/(time_var**2)
-
-sim <- outbreaks_simulate(poi_rate, concentration, sam, r_mean, r_sd, K_mean, K_sd, time_rate, time_shape)
-
-co <- sim$co
-tip_cols <- sim$tip_colours
-div_times <- sim$div_times
-div_cols <- sim$div_cols
-
-
-tree.div.str <- build_coal_tree.structured(sam, co$times, tip_cols, co$colours, div_times, div_cols, co$div_from, include_div_nodes = TRUE)
+tree.div.str <- build_coal_tree.structured(para$sampling_times, co$times, para$tip_colours, co$colours, para$div_times, para$div_cols, co$div_from, include_div_nodes = TRUE)
 tree.div <- read.tree(text = tree.div.str$full)
-tree.plt <- plot_structured_tree(tree.div, sim$n_exp)
+tree.plt <- plot_structured_tree(tree.div, para$n_exp)
 
 pdf(file="tree_structured.pdf")
 plot(tree.plt)
 dev.off()
 
-tree.str <- build_coal_tree.structured(sam, co$times, tip_cols, co$colours, div_times, div_cols, co$div_from, include_div_nodes = FALSE, aux_root = FALSE)
+tree.str <- build_coal_tree.structured(para$sampling_times, co$times, para$tip_colours, co$colours, para$div_times, para$div_cols, co$div_from, include_div_nodes = FALSE, aux_root = FALSE)
 tree <- read.tree(text = tree.str$full)
 pre <- structured_coal.preprocess_phylo(tree)
+
+r_mean <- 0
+K_mean <- 5
+
+r_sd <-1
+K_sd <-1
+
+time_sd <- 50
+time_mean <-100
+time_shape <- (time_mean**2)/(time_sd**2)    
+time_rate <- time_mean/(time_sd**2)
 
 prior_i <- function(x) dpois(x, 3, log = TRUE)
 
@@ -61,18 +55,18 @@ prior_K <- function(x) dlnorm(x, meanlog = K_mean, sdlog = K_sd, log = TRUE)
 prior_K.sample <- function() rlnorm(1, meanlog = K_mean, sdlog = K_sd) 
 
 prior_t <- function(x) {
-       out <- dgamma(-(x - min(sam)), shape=time_shape, scale = 1/time_rate, log=TRUE)
+       out <- dgamma(-(x - min(para$sampling_times)), shape=time_shape, scale = 1/time_rate, log=TRUE)
        if(!all(out != Inf)) print("Err")
        return(out)
 }
-prior_t.sample <-function() min(sam)-rgamma(1, shape=time_shape, scale = 1/time_rate)
+prior_t.sample <-function() min(para$sampling_times)-rgamma(1, shape=time_shape, scale = 1/time_rate)
 
 
 set.seed(0)
 
 o <- outbreaks_infer(tree, prior_i,  prior_N,  prior_N.sample, 
                      prior_r, prior_r.sample,  prior_K,  prior_K.sample,  prior_t,
-                     prior_t.sample, concentration, n_it=1e6, thinning=1, debug=F)
+                     prior_t.sample, 1, n_it=4e6, thinning=5, debug=F)
 
 y <- sapply(o$dims, function(x) x)
 n <- sapply(o$para, function(x) x[[1]])

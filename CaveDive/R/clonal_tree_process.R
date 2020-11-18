@@ -1,5 +1,5 @@
 #' @export
-clonal_tree_process.simulate_params <- function(n_exp, n_tips, concentration, K_mean, K_sd, sampling_scale=c(0,20), r_mean=0, r_sd=1, time_sd_mult=2, time_mean_sd_mult=4) {
+clonal_tree_process.simulate_params <- function(n_exp, n_tips, concentration, K_mean, K_sd, sampling_scale=c(0,20), r_mean=0, r_sd=1, time_sd_mult=2, time_mean_sd_mult=4, rejection_mult=1) {
     
     sam <- runif(n_tips, sampling_scale[1], sampling_scale[2])
     sam <- sam - max(sam)
@@ -47,7 +47,7 @@ clonal_tree_process.simulate_params <- function(n_exp, n_tips, concentration, K_
 
             ##rejection criterion: within 1SD of expected TMRCA
             while (div_times[i] > min(sam) || 
-                    div_times[i] < (min(sam)-mean_time_to_MRCA(clade_sizes[i],K[i]) + 1*sqrt(var_time_to_MRCA(clade_sizes[i],K[i])))) {
+                    div_times[i] < (min(sam)-mean_time_to_MRCA(clade_sizes[i],K[i]) + rejection_mult*sqrt(var_time_to_MRCA(clade_sizes[i],K[i])))) {
                 if (it > max_it) {
                     warning("Maximum sampling iterations exceeded.")
                     return (NA)
