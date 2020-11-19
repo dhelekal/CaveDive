@@ -6,12 +6,12 @@ library(ggtree)
 library(treeio)
 library(viridis)
 
-output.dir <- "./grad2014"
+output.dir <- "./grad2014" #Name of the output directory to be created
 
 dir.create(file.path(".", output.dir))
 setwd(file.path(".", output.dir))
 
-tree <- read.tree(file = "../grad2014.nwk")
+tree <- read.tree(file = "../grad2014.nwk") #Path to newick string goes here
 tree <- makeNodeLabel(tree)
 
 pdf(file= paste0("tree.pdf"), width = 5, height = 5)
@@ -23,13 +23,13 @@ dev.off()
 
 pre <- structured_coal.preprocess_phylo(tree)
 
-r_mean <- 0
-K_mean <- 6
+r_mean <- 0 ## growth rate lognormal prior mean
+K_mean <- 6 ## carrying capacity rate lognormal prior mean
 
-r_sd <- 2
-K_sd <- 0.5
+r_sd <- 2 ## growth rate lognormal prior sd
+K_sd <- 0.5 ## carrying capacity  rate lognormal prior sd
 
-prior_i <- function(x) dpois(x, 0, log = TRUE)
+prior_i <- function(x) dpois(x, 0, log = TRUE) ### poisson 0 prior
 
 prior_N <- function(x) dlnorm(x, meanlog = K_mean, sdlog = K_sd, log = TRUE)
 prior_N.sample <- function() rlnorm(1, meanlog = K_mean, sdlog = K_sd) 
@@ -41,10 +41,10 @@ prior_K <- function(x) dlnorm(x, meanlog = K_mean, sdlog = K_sd, log = TRUE)
 prior_K.sample <- function() rlnorm(1, meanlog = K_mean, sdlog = K_sd) 
 
 prior_t <- function(x) {
-       return(log(1/abs(max(pre$nodes.df$times)-min(pre$nodes.df$times))))
-}
-prior_t.sample <-function() runif(1, min(pre$nodes.df$times), max(pre$nodes.df$times))
+       return(log(1/abs(max(pre$nodes.df$times)-min(pre$nodes.df$times)))) ### Uniform time prior
+} 
 
+prior_t.sample <-function() runif(1, min(pre$nodes.df$times), max(pre$nodes.df$times)) ### Uniform time prior
 
 set.seed(1)
 
