@@ -6,44 +6,30 @@ library(ggtree)
 library(treeio)
 library(viridis)
 
-set.seed(12345678)
+output.dir <- "./grad2014"
 
-n_tips <- 100
-n_exp <- 3
-concentration <- rep(2,n_exp)
+dir.create(file.path(".", output.dir))
+setwd(file.path(".", output.dir))
 
-K_mean <- 5
-K_sd <- 0.5
+tree <- read.tree(file = "../grad2014.nwk")
+tree <- makeNodeLabel(tree)
 
-para <- clonal_tree_process.simulate_params(n_exp, n_tips, concentration, K_mean, K_sd, sampling_scale=c(0,20), r_mean=0, r_sd=1, time_mean_sd_mult=10, time_sd_mult=2, rejection_mult=10)
-out <- clonal_tree_process.simulate_tree(para$n_exp, para$N, para$K, para$A, para$sampling_times, para$tip_colours, para$div_times, para$div_cols, para$exp_probs)
-
-co <- out$co
-
-tree.div.str <- build_coal_tree.structured(para$sampling_times, co$times, para$tip_colours, co$colours, para$div_times, para$div_cols, co$div_from, include_div_nodes = TRUE)
-tree.div <- read.tree(text = tree.div.str$full)
-tree.plt <- plot_structured_tree(tree.div, para$n_exp)
-
-pdf(file="tree_structured.pdf")
-plot(tree.plt)
+pdf(file= paste0("tree.pdf"), width = 5, height = 5)
+    plt<-ggtree(tree, ladderize=TRUE) +
+                          geom_point() +
+                          theme_tree2()
+plot(plt)
 dev.off()
 
-tree.str <- build_coal_tree.structured(para$sampling_times, co$times, para$tip_colours, co$colours, para$div_times, para$div_cols, co$div_from, include_div_nodes = FALSE, aux_root = FALSE)
-tree <- read.tree(text = tree.str$full)
 pre <- structured_coal.preprocess_phylo(tree)
 
 r_mean <- 0
-K_mean <- 5
+K_mean <- 6
 
-r_sd <-1
-K_sd <-1
+r_sd <- 2
+K_sd <- 0.5
 
-time_sd <- 50
-time_mean <-100
-time_shape <- (time_mean**2)/(time_sd**2)    
-time_rate <- time_mean/(time_sd**2)
-
-prior_i <- function(x) dpois(x, 3, log = TRUE)
+prior_i <- function(x) dpois(x, 0, log = TRUE)
 
 prior_N <- function(x) dlnorm(x, meanlog = K_mean, sdlog = K_sd, log = TRUE)
 prior_N.sample <- function() rlnorm(1, meanlog = K_mean, sdlog = K_sd) 
@@ -55,18 +41,16 @@ prior_K <- function(x) dlnorm(x, meanlog = K_mean, sdlog = K_sd, log = TRUE)
 prior_K.sample <- function() rlnorm(1, meanlog = K_mean, sdlog = K_sd) 
 
 prior_t <- function(x) {
-       out <- dgamma(x, shape=time_shape, scale = 1/time_rate, log=TRUE)
-       if(!all(out != Inf)) print("Err")
-       return(out)
+       return(log(1/abs(max(pre$nodes.df$times)-min(pre$nodes.df$times))))
 }
-prior_t.sample <-function() min(para$sampling_times)-rgamma(1, shape=time_shape, scale = 1/time_rate)
+prior_t.sample <-function() runif(1, min(pre$nodes.df$times), max(pre$nodes.df$times))
 
 
-set.seed(0)
+set.seed(1)
 
 o <- outbreaks_infer(tree, prior_i,  prior_N,  prior_N.sample, 
                      prior_r, prior_r.sample,  prior_K,  prior_K.sample,  prior_t,
-                     prior_t.sample, 1, n_it=4e6, thinning=5, debug=F)
+                     prior_t.sample, 1, n_it=1e6, thinning=2, debug=F)
 
 y <- sapply(o$dims, function(x) x)
 n <- sapply(o$para, function(x) x[[1]])
@@ -83,15 +67,6 @@ br.df <- data.frame(x=branches.x, br=branches.br)
 x <- c(1:length(y))
 df <- data.frame(x=x, y=y, n=n, lh=lh, prior=prior)
 
-B_set <- nodeid(tree,tree$node.label[grep("N_B", tree$node.label)]) 
-B_root<- B_set[which.min(pre$nodes.df$times[B_set])]
-B_root.edge <- pre$incoming[[B_root]]
-
-A_set <- nodeid(tree,tree$node.label[grep("N_A", tree$node.label)]) 
-A_root<- A_set[which.min(pre$nodes.df$times[A_set])]
-A_root.edge <- pre$incoming[[A_root]]
-
-save.image()
 
 png(file="trace_lh.png", width=600, height=600)
 plt <- ggplot(df, aes(x=x, y=lh)) +
@@ -110,8 +85,6 @@ dev.off()
 png(file="trace_branch.png", width=800, height=800)
 plt <- ggplot(br.df, aes(x=x, y=br)) +
        geom_point(alpha=0.1,size=0.1)+
-       geom_hline(yintercept = B_root.edge, colour="orange", alpha=1, linetype = "longdash") + 
-       geom_hline(yintercept = A_root.edge, colour="red", alpha=1, linetype = "longdash")
        theme_bw() + theme(aspect.ratio=1, legend.position = "bottom")
 plot(plt)
 dev.off()
@@ -159,8 +132,6 @@ aux.df <- data.frame(x=names(tt.br), y = freq)
 
 plt <- ggplot(aux.df, aes(x=x,y=y)) +
          geom_bar(stat="identity", fill="steelblue") + 
-         geom_vline(xintercept = B_root.edge, colour="orange", linetype = "longdash") + 
-         geom_vline(xintercept = A_root.edge, colour="red", linetype = "longdash") + 
          theme(aspect.ratio=1)
 plot(plt)
 dev.off()
@@ -185,3 +156,6 @@ pdf(file="tree_freq.pdf", width = 5, height = 5)
                           theme_tree2()
 plot(plt)
 dev.off()
+
+
+setwd(file.path(".", ".."))

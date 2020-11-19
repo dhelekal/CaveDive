@@ -207,7 +207,6 @@ move_update_branch <- function(x_prev, pre) { ### update branch
   incoming <- pre$incoming
 
   root <- pre$root_idx
-  which_half <- pre$which_half
 
   div.branch_upd <- div.branch
   div.times_upd <- div.times

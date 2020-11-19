@@ -250,7 +250,7 @@ structured_coal.preprocess_phylo <- function(phy){
     edges.child <- phy$edge[,2]
     edges.len <- phy$edge.length
 
-    nodes.df <- data.frame(id=nodes, times=times, is_tip=is_tip)#, children=children)
+    nodes.df <- data.frame(id=nodes, times=times, is_tip=is_tip)
     edges.df <- data.frame(node.parent=edges.parent, node.child=edges.child, length=edges.len, id=c(1:length(edges.parent)))
 
     nodes.df <- nodes.df[order(nodes.df$id), ]
@@ -261,24 +261,7 @@ structured_coal.preprocess_phylo <- function(phy){
     edges.incoming <- lapply(nodes.df$id, function (x) edges.df$id[which(edges.df$node.child==x)])
     edges.incoming <- lapply(edges.incoming, function (x) if (length(x) > 0) x else NA)
 
-    which_half <- rep(2, nrow(edges.df))
     root <- which(is.na(edges.incoming))
-    left_edge <- edges.outgoing[[root]][1]
-    right_edge <- edges.outgoing[[root]][2]
-
-    left_clade <- extract.clade(phy, edges.df$node.child[left_edge])
-    right_clade <- extract.clade(phy, edges.df$node.child[right_edge])
-
-    left_nodes <- nodeid(phy, left_clade$node.label)
-    right_nodes <- nodeid(phy, right_clade$node.label)
-
-    for (i in left_nodes) {
-        inc <- edges.incoming[[i]]
-        out <- edges.outgoing[[i]]
-        to_set <- c(inc,out)
-        to_set <- to_set[which(!is.na(to_set))]
-        which_half[to_set] <- 1
-    }
 
     clades.list <- lapply(nodes.df$id[which(nodes.df$is_tip==FALSE)], function(x) extract.clade(phy, x))
 
@@ -291,7 +274,6 @@ structured_coal.preprocess_phylo <- function(phy){
                 outgoing = edges.outgoing,
                 t_min = t_min, 
                 t_max = t_max,
-                which_half = which_half,
                 root_idx = root))
 }
 
