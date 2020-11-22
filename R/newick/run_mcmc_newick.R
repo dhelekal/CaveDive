@@ -6,12 +6,12 @@ library(ggtree)
 library(treeio)
 library(viridis)
 
-output.dir <- "./grad2014" #Name of the output directory to be created
+output.dir <- "./uhlemann2014" #Name of the output directory to be created
 
 dir.create(file.path(".", output.dir))
 setwd(file.path(".", output.dir))
 
-tree <- read.tree(file = "../grad2014.nwk") #Path to newick string goes here
+tree <- read.tree(file = "../uhlemann2014.nwk") #Path to newick string goes here
 tree <- makeNodeLabel(tree)
 
 pdf(file= paste0("tree.pdf"), width = 5, height = 5)
@@ -24,12 +24,12 @@ dev.off()
 pre <- structured_coal.preprocess_phylo(tree)
 
 r_mean <- 0 ## growth rate lognormal prior mean
-K_mean <- 6 ## carrying capacity rate lognormal prior mean
+K_mean <- 2.5 ## carrying capacity rate lognormal prior mean
 
 r_sd <- 2 ## growth rate lognormal prior sd
-K_sd <- 0.5 ## carrying capacity  rate lognormal prior sd
+K_sd <- 1 ## carrying capacity  rate lognormal prior sd
 
-prior_i <- function(x) dpois(x, 0, log = TRUE) ### poisson 0 prior
+prior_i <- function(x) dpois(x, 1, log = TRUE) ### poisson 1 prior
 
 prior_N <- function(x) dlnorm(x, meanlog = K_mean, sdlog = K_sd, log = TRUE)
 prior_N.sample <- function() rlnorm(1, meanlog = K_mean, sdlog = K_sd) 
@@ -41,7 +41,7 @@ prior_K <- function(x) dlnorm(x, meanlog = K_mean, sdlog = K_sd, log = TRUE)
 prior_K.sample <- function() rlnorm(1, meanlog = K_mean, sdlog = K_sd) 
 
 prior_t <- function(x) {
-       return(log(1/abs(max(pre$nodes.df$times)-min(pre$nodes.df$times)))) ### Uniform time prior
+       return(length(x)*log(1/abs(max(pre$nodes.df$times)-min(pre$nodes.df$times)))) ### Uniform time prior
 } 
 
 prior_t.sample <-function() runif(1, min(pre$nodes.df$times), max(pre$nodes.df$times)) ### Uniform time prior
@@ -50,7 +50,7 @@ set.seed(1)
 
 o <- outbreaks_infer(tree, prior_i,  prior_N,  prior_N.sample, 
                      prior_r, prior_r.sample,  prior_K,  prior_K.sample,  prior_t,
-                     prior_t.sample, 1, n_it=1e6, thinning=2, debug=F)
+                     prior_t.sample, 1, n_it=1e5, thinning=1, debug=TRUE)
 
 y <- sapply(o$dims, function(x) x)
 n <- sapply(o$para, function(x) x[[1]])

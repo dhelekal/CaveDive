@@ -13,6 +13,8 @@ outbreaks_infer <- function(phy,
                             prior_t.sample,
                             concentration,
                             n_it=1e6, thinning=1, debug=FALSE) {
+
+    if (debug) warning("Running in debug mode with only priors in use.")
     i_0 <- 0
     N_0 <- prior_N.sample()
 
@@ -39,20 +41,14 @@ outbreaks_infer <- function(phy,
     }
 
 
-    prop_branch_time <- function(times, div.branch) log((times-nodes$times[edges$node.parent[div.branch]]) /
-                                       pre$edges.df$length[div.branch]) + 
-                                       log(pre$edges.df$length[div.branch]/total_branch_len)
+    prop_branch_time <- function(times, div.branch) (log(1/pre$edges.df$length[div.branch]) + 
+                                                     log(pre$edges.df$length[div.branch]/total_branch_len))
 
 
     prop_branch_time.sample <- function() {
-        out <- vector(mode = "list", length = 2)
         edges <- pre$edges.df
 
-        inner_branches <- edges$id[which(edges$node.child>pre$n_tips)] 
-        edges_subs <- edges[inner_branches,]
-        total_len <- sum(edges_subs$length)
-
-        r <- runif(1, 0, total_len)
+        r <- runif(1, 0, total_branch_len)
         i <- 0 
         len <- 0
     
@@ -81,15 +77,6 @@ outbreaks_infer <- function(phy,
                                          prior_t, 
                                          prior_probs,
                                          pre),
-                function(x, i, x_given, i_given) prop.cond_lh(x,
-                                                              i,
-                                                              x_given, 
-                                                              i_given, 
-                                                              function(x_init) para.log_lh(x_init,
-                                                                                           prior_r, 
-                                                                                           prior_K, 
-                                                                                           prop_branch_time),
-                                                              pre),
                 function(x_prev, i_prev) prop.sampler(x_prev,
                                                       i_prev, 
                                                       pre, 
@@ -97,6 +84,10 @@ outbreaks_infer <- function(phy,
                                                                                   prior_K.sample, 
                                                                                   prop_branch_time.sample),
                                                       prob.initialiser,
+                                                      function(x_init) para.log_lh(x_init,
+                                                                                           prior_r, 
+                                                                                           prior_K, 
+                                                                                           prop_branch_time),
                                                       fn_log_J,
                                                       fn_log_J_inv
                                                       ),
@@ -105,22 +96,25 @@ outbreaks_infer <- function(phy,
 }
 
 prob.initialiser <- function(x_prev, i_prev) {
-    new_exp_p <- 1/(i_prev+2)
+    qr <- 0
     old_probs <- x_prev[[2]]
-    old_probs <- old_probs*(1-new_exp_p)
-    return(c(old_probs, new_exp_p))
+    which_split <- sample.int((i_prev+1),1)
+    u <- runif(1,0, old_probs[which_split])
+    new_probs <- c(old_probs, u)
+    new_probs[which_split] <- new_probs[which_split] - u
+
+    qr <- qr - log(1/(i_prev+1)) - log(1/old_probs[which_split])
+    qr <- qr + log(1/(i_prev+1)) + log(1/(i_prev+1))
+
+    return(list(probs_next = new_probs, qr=qr))
 }
 
 fn_log_J <- function(i_prev, x_prev, x_next) {
-    new_exp_p <- 1/(i_prev+2)
-    return(log(1-new_exp_p)*(i_prev+1) + log(new_exp_p))
+    return(0)
 }
 
-fn_log_J_inv <- function(i_prev, x_prev, x_next) {
-    probs <- x_prev[[2]]
-    old_p_inv <- 1/probs[(i_prev+1)]
-    scale <- 1/sum(probs[-(i_prev+1)])
-    return(log(scale)*(i_prev) + log(old_p_inv))
+fn_log_J_inv <- function(i_prev, x_prev, x_next, which_mdl_rm) {
+    return(0)
 }
 
 para.initialiser <- function(prior_r, prior_K, prior_branch_time, pre){
@@ -175,24 +169,22 @@ log_prior <- function(x, i, prior_i, prior_r, prior_K, prior_t, prior_probs, pre
       all(K > 0) &&
       all(rates > 0) &&
       all(N > 0) && 
-      all(probs>0) &&
+      all(probs > 0) &&
       abs(sum(probs)-1) < 1e-6 &&
       all(!is.na(div.branch)) &&
-      all(div.times > pre$nodes.df$times[pre$edges.df$node.parent[div.branch]]) &&
-      all(div.times < pre$nodes.df$times[pre$edges.df$node.child[div.branch]])) 
+      all(div.times > pre$nodes.df$times[pre$edges.df$node.parent[div.branch]]) && ## technically last two inequalities part of likelihood
+      all(div.times < pre$nodes.df$times[pre$edges.df$node.child[div.branch]]))    ## but they assign 0 likelihood and easier to check here
+
     {
         MRCAs <- sapply(pre$edges.df$node.child[div.branch], function(x) if (x > n_tips) pre$phy$node.label[x-n_tips] else NA)
 
-        if (all(!is.na(MRCAs))) {
-            prior <- prior_i(i) + prior_probs(probs)
+        if (all(!is.na(MRCAs)) && length(unique(MRCAs))==length(MRCAs)) { ## use prior to disallow two trivially overlapping partitions
+            prior <- prior_i(i) + prior_probs(probs) + sum(prior_N(N))
             if (i > 0) {
                 prior <- prior + 
                          sum(prior_r(rates)) +
                          sum(prior_K(K)) + 
-                         sum(prior_N(N)) + 
                          sum(prior_t(div.times))
-            }  else {
-                prior <- prior + sum(prior_N(N))
             }
         } else {
             prior <- -Inf
