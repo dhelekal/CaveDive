@@ -35,13 +35,18 @@ prior_N <- function(x) dlnorm(x, meanlog = K_mean, sdlog = K_sd, log = TRUE)
 prior_N.sample <- function() rlnorm(1, meanlog = K_mean, sdlog = K_sd) 
 
 prior_r <- function(x) dlnorm(x, meanlog = r_mean, sdlog = r_sd, log = TRUE) 
-prior_r.sample <- function(x) rlnorm(1, meanlog = r_mean, sdlog = r_sd) 
+prior_r.sample <- function() rlnorm(1, meanlog = r_mean, sdlog = r_sd) 
 
 prior_K <- function(x) dlnorm(x, meanlog = K_mean, sdlog = K_sd, log = TRUE)
 prior_K.sample <- function() rlnorm(1, meanlog = K_mean, sdlog = K_sd) 
 
 prior_t <- function(x) {
-       return(length(x)*log(1/abs(max(pre$nodes.df$times)-min(pre$nodes.df$times)))) ### Uniform time prior
+       if (all(x < max(pre$nodes.df$times)) && all(x > min(pre$nodes.df$times))) {
+              out <- length(x)*log(1/abs(max(pre$nodes.df$times)-min(pre$nodes.df$times)))
+       } else {
+              out <- -Inf 
+       }
+       return(out) ### Uniform time prior
 } 
 
 prior_t.sample <-function() runif(1, min(pre$nodes.df$times), max(pre$nodes.df$times)) ### Uniform time prior

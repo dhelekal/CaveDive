@@ -2,12 +2,12 @@
 ###div_event list of r, K, x_0, branch
 offset <- 2
 
-prop.sampler <- function (x_prev, i_prev, pre, para.initialiser, prob.initialiser, initialiser.log_lh, fn_log_J, fn_log_J_inv){
+prop.sampler <- function (x_prev, i_prev, pre, para.initialiser, initialiser.log_lh, fn_log_J, fn_log_J_inv){
   p <- 1 
   r <- runif(1,0,2) 
 
   if (r < p) { ## transdimensional
-    x_prop <- transdimensional.sampler(x_prev, i_prev, pre, para.initialiser, prob.initialiser, initialiser.log_lh, fn_log_J, fn_log_J_inv)
+    x_prop <- transdimensional.sampler(x_prev, i_prev, pre, para.initialiser, initialiser.log_lh, fn_log_J, fn_log_J_inv)
     x_next <- x_prop$x_next
     i_next <- x_prop$i_next
     
@@ -24,20 +24,29 @@ prop.sampler <- function (x_prev, i_prev, pre, para.initialiser, prob.initialise
   return(list(x_next=x_next,i_next=i_next, qr=qr, log_J=log_J))
 }
 
-transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, prob.initialiser, initialiser.log_lh, fn_log_J, fn_log_J_inv) {
+transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, initialiser.log_lh, fn_log_J, fn_log_J_inv) {
   which_move <- sample.int(2, size=1)
   log_J <- 0
   qr <- 0
   if (which_move==1) { ### increase dim
     i_next <- i_prev + 1
     x_next <- x_prev
+    
     x_next[[i_next + offset]] <- para.initialiser()
 
-    probs_prop <- prob.initialiser(x_prev, i_prev)
-    x_next[[2]] <- probs_prop$probs_next
+    old_probs <- x_prev[[2]]
+    which_split <- sample.int((i_prev+1),1)
+    u <- runif(1, 0, old_probs[which_split])
+    new_probs <- c(old_probs, u)
+    new_probs[which_split] <- new_probs[which_split] - u
 
-    qr <- qr + probs_prop$qr
-    qr <- qr - initialiser.log_lh(x_next[[i_next + offset]]) ## proposal new model lh
+    x_next[[2]] <- new_probs
+
+    qr <- qr - log(1/(i_prev+1)) - log(1/old_probs[which_split])
+    qr <- qr - initialiser.log_lh(x_next[[i_next + offset]]) 
+    qr <- qr + log(1/(i_prev+1)) + log(1/(i_prev+1))
+
+    if(abs(sum(x_next[[2]]) - 1) > 1e-8) warning("prob sum error")
 
     log_J <- fn_log_J(i_prev, x_prev, x_next)
    } else { ### decrease dim
@@ -59,6 +68,8 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, prob
       qr <- qr - log(1/i_prev) ## proposal merge with this probaility
       qr <- qr + initialiser.log_lh(x_prev[[(which_elem+offset)]]) ## reverse lh of adding that model
       qr <- qr + log(1/i_prev) + log(1/x_next[[2]][which_merge]) ##pick the same split from uniform
+      
+      if(abs(sum(x_next[[2]]) - 1) > 1e-8) warning("prob sum error")
 
       log_J <- fn_log_J_inv(i_prev, x_prev, x_next, which_elem)
     } else {
@@ -71,7 +82,7 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, prob
 within_model.sampler <- function(x_prev, i_prev, pre) {
 
   if (i_prev > 0) {
-    which_move <- sample.int(5, size=1)
+    which_move <- sample(c(1,2,3,4,5), size=1)
   } else {
     which_move <- 4
   }
@@ -215,8 +226,10 @@ move_update_branch <- function(x_prev, pre) { ### update branch
   old_len <- edges$length[div.branch]
   new_len <- edges$length[div.branch_upd]
 
-  rel_pos <- (div.times-nodes$times[edges$node.parent[div.branch]])/old_len
-  div.times_upd <- nodes$times[edges$node.parent[div.branch_upd]] + new_len*rel_pos
+  qr <- qr - log(1/new_len)
+  qr <- qr + log(1/old_len)
+  
+  div.times_upd <- runif(1, nodes$times[edges$node.parent[div.branch_upd]], nodes$times[edges$node.child[div.branch_upd]])
   
   x_next[[1]] <- rates
   x_next[[2]] <- K

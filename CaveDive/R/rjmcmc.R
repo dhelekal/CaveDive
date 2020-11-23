@@ -37,7 +37,7 @@ rjmcmc <- function(likelihood, prior, proposal.sampler, x0, i0, max_it, thinning
         if (lh_prop > -Inf){
             a <- lh_prop+prior_prop
             b <- lh_prev+prior_prev
-            
+
             mh <- qr + a - b
 
             alpha <- min(mh+prop_Jacc, 0)
