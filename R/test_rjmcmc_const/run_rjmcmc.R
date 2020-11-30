@@ -79,15 +79,6 @@ br.df <- data.frame(x=branches.x, br=branches.br)
 
 x <- c(1:length(y))
 df <- data.frame(x=x, y=y, n=n, lh=lh, prior=prior)
-
-B_set <- nodeid(tree,tree$node.label[grep("N_B", tree$node.label)]) 
-B_root<- B_set[which.min(pre$nodes.df$times[B_set])]
-B_root.edge <- pre$incoming[[B_root]]
-
-A_set <- nodeid(tree,tree$node.label[grep("N_A", tree$node.label)]) 
-A_root<- A_set[which.min(pre$nodes.df$times[A_set])]
-A_root.edge <- pre$incoming[[A_root]]
-
 save.image()
 
 png(file="trace_lh.png", width=600, height=600)
@@ -107,8 +98,6 @@ dev.off()
 png(file="trace_branch.png", width=800, height=800)
 plt <- ggplot(br.df, aes(x=x, y=br)) +
        geom_point(alpha=0.1,size=0.1)+
-       geom_hline(yintercept = B_root.edge, colour="orange", alpha=1, linetype = "longdash") + 
-       geom_hline(yintercept = A_root.edge, colour="red", alpha=1, linetype = "longdash")
        theme_bw() + theme(aspect.ratio=1, legend.position = "bottom")
 plot(plt)
 dev.off()
@@ -156,8 +145,6 @@ aux.df <- data.frame(x=names(tt.br), y = freq)
 
 plt <- ggplot(aux.df, aes(x=x,y=y)) +
          geom_bar(stat="identity", fill="steelblue") + 
-         geom_vline(xintercept = B_root.edge, colour="orange", linetype = "longdash") + 
-         geom_vline(xintercept = A_root.edge, colour="red", linetype = "longdash") + 
          theme(aspect.ratio=1)
 plot(plt)
 dev.off()
