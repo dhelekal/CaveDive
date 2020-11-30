@@ -6,7 +6,7 @@ library(ggtree)
 library(treeio)
 library(viridis)
 
-output.dir <- "./uhlemann2014" #Name of the output directory to be created
+output.dir <- "./uhlemann2014_2" #Name of the output directory to be created
 
 dir.create(file.path(".", output.dir))
 setwd(file.path(".", output.dir))
@@ -49,13 +49,13 @@ prior_t <- function(x) {
        return(out) ### Uniform time prior
 } 
 
-prior_t.sample <-function() runif(1, min(pre$nodes.df$times), max(pre$nodes.df$times)) ### Uniform time prior
+prior_t.sample <- function() runif(1, min(pre$nodes.df$times), max(pre$nodes.df$times)) ### Uniform time prior
 
-set.seed(1)
+set.seed(5)
 
 o <- outbreaks_infer(tree, prior_i,  prior_N,  prior_N.sample, 
                      prior_r, prior_r.sample,  prior_K,  prior_K.sample,  prior_t,
-                     prior_t.sample, 1, n_it=1e5, thinning=1, debug=TRUE)
+                     prior_t.sample, 1, n_it=1e5, thinning=1, debug=F)
 
 y <- sapply(o$dims, function(x) x)
 n <- sapply(o$para, function(x) x[[1]])

@@ -32,10 +32,10 @@ outbreaks_infer <- function(phy,
     total_branch_len <- sum(edges_subs$length)
 
     prior_probs <- function(probs) {
-        out <- log(ddirichlet(probs, alpha=rep(concentration, length(probs))))
-        if(out == Inf) {
-            print("err prob prior")
-            print(probs)
+
+        out <- -Inf
+        if (abs(sum(probs)-1) < 1e-8 && all(probs > 0)) {
+            out <- ddirichlet(t(matrix(probs)), alpha=rep(concentration, length(probs)), log=TRUE)
         }
         return(out) 
     }
@@ -44,7 +44,9 @@ outbreaks_infer <- function(phy,
         return(length(div.edges)*log(1/length(inner_branches)))
     }
  
-    prop_branch_time <- function(times, div.branch) (log(1/length(inner_branches)) + log(1/(max(pre$nodes.df$times) - min(pre$nodes.df$times))))
+    prop_branch_time <- function(times, div.branch) {
+        return(log(1/length(inner_branches)) + log(1/(max(pre$nodes.df$times) - min(pre$nodes.df$times))))
+    }
 
     prop_branch_time.sample <- function() {
         edges <- pre$edges.df
@@ -117,9 +119,7 @@ para.log_lh <- function(x, prior_r, prior_K, prior_branch_time) {
     div.times <- x[[3]]
     div.branch <- x[[4]]
 
-    out <- 0
-    out <- out + prior_r(rates) + prior_K(K) + prior_branch_time(div.times, div.branch)
-
+    out <- prior_branch_time(div.times, div.branch) + prior_r(rates) + prior_K(K)
     return(out)
 }
 
@@ -142,21 +142,21 @@ log_prior <- function(x, i, prior_i, prior_r, prior_K, prior_t, prior_probs, pri
     }
 
     if (
-      i >= 0 &&
+      (i >= 0) &&
       all(K > 0) &&
       all(rates > 0) &&
       all(N > 0) && 
-      all(probs > 0) &&
-      abs(sum(probs)-1) < 1e-8 &&
-      all(!is.na(div.branch)))# &&
-      #all(div.times > pre$nodes.df$times[pre$edges.df$node.parent[div.branch]]) && ## technically last two inequalities part of likelihood
-      #all(div.times < pre$nodes.df$times[pre$edges.df$node.child[div.branch]]))    ## but they assign 0 likelihood and easier to check here
+      all(probs >= 0) &&
+      (abs(sum(probs)-1) < 1e-8) &&
+      all(!is.na(div.branch)) &&
+      all(div.times > pre$nodes.df$times[pre$edges.df$node.parent[div.branch]]) && ## technically last two inequalities part of likelihood
+      all(div.times < pre$nodes.df$times[pre$edges.df$node.child[div.branch]]))    ## but they assign 0 likelihood and easier to check here
 
     {
+        prior <- prior_i(i) + prior_probs(probs) + prior_N(N)
         MRCAs <- sapply(pre$edges.df$node.child[div.branch], function(x) if (x > n_tips) pre$phy$node.label[x-n_tips] else NA)
 
-        if (all(!is.na(MRCAs)) && length(unique(MRCAs))==length(MRCAs)) { ## use prior to disallow two trivially overlapping partitions
-            prior <- prior_i(i) + prior_probs(probs) + sum(prior_N(N))
+        if (all(!is.na(MRCAs))){
             if (i > 0) {
                 prior <- prior + 
                          sum(prior_edges(div.branch)) +

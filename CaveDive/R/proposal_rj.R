@@ -42,9 +42,12 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
 
     x_next[[2]] <- new_probs
 
-    qr <- qr - log(1/(i_prev+1)) - log(1/old_probs[which_split])
+    qr <- qr - log(1/(i_prev+1))
+    qr <- qr - log(1/(i_prev+1)) ## permutations as unordered
+    qr <- qr - log(1/old_probs[which_split])
     qr <- qr - initialiser.log_lh(x_next[[i_next + offset]]) 
-    qr <- qr + log(1/(i_prev+1)) + log(1/(i_prev+1))
+    qr <- qr + log(1/(i_prev+1))
+    qr <- qr + log(1/(i_prev+1))
 
     if(abs(sum(x_next[[2]]) - 1) > 1e-8) warning("prob sum error")
 
@@ -52,6 +55,7 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
    } else { ### decrease dim
     x_next <- x_prev
     if (i_prev > 0) {
+      i_next <- i_prev - 1
       which_elem <- sample.int(i_prev, size=1)
       x_next <- x_next[-(which_elem+offset)]
 
@@ -62,14 +66,16 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
 
       x_next[[2]][which_merge] <- x_next[[2]][which_merge] + which_prob
       
-      i_next <- i_prev - 1
 
       qr <- qr - log(1/i_prev) ## proposal remove model 
       qr <- qr - log(1/i_prev) ## proposal merge with this probaility
       qr <- qr + initialiser.log_lh(x_prev[[(which_elem+offset)]]) ## reverse lh of adding that model
-      qr <- qr + log(1/i_prev) + log(1/x_next[[2]][which_merge]) ##pick the same split from uniform
+      qr <- qr + log(1/i_prev)
+      qr <- qr + log(1/i_prev) ## permutations as unordered
+      qr <- qr + log(1/x_next[[2]][which_merge]) ##pick the same split from uniform
       
       if(abs(sum(x_next[[2]]) - 1) > 1e-8) warning("prob sum error")
+      if(length(x_next[[2]]) != (i_next+1)) warning("prob length error")
 
       log_J <- fn_log_J_inv(i_prev, x_prev, x_next, which_elem)
     } else {
@@ -141,9 +147,6 @@ move_update_rates <- function(x_prev, pre) { ### update rates
   div.branch <- x_prev[[4]]
 
   if(length(rates) > 1) print(length(rates))
-
-  K_upd <- K
-  rates_upd <- rates
 
   rates_upd <- rnorm(1, mean=rates, sd=1) 
   K_upd  <- rnorm(1, mean=K, sd=1)
@@ -250,16 +253,21 @@ move_update_N <- function(N_prev, pre) {
 
 
 move_update_probs <- function(probs, pre) {
-  d <- 1e-2
-  delta <- runif(1, -d, d)
 
-  which <- sample.int(length(probs), 2, replace=T)
+  k <- length(probs)
+  which <- sample.int(k, 2, replace=T)
 
+  i1 <- which[1]
+  i2 <- which[2]
+ 
   probs_upd <- probs
-  probs_upd[which] <- probs_upd[which] + c(delta, -delta)
+  u <- runif(1,0,probs[i1])
 
-  qr <- -log(1/(2*d)) - log(1/((length(probs)**2)))  ## proposal lh
-  qr <- qr + log(1/(2*d)) + log(1/((length(probs)**2)))## reverse lh
+  probs_upd[i1] <- probs_upd[i1] - u
+  probs_upd[i2] <- probs_upd[i2] + u
+
+  qr <- -log(1/probs[i1]) - log(1/((k**2)))  ## proposal lh
+  qr <- qr + log(1/probs_upd[i2]) + log(1/((k**2)))## reverse lh
   
   return(list(probs_next=probs_upd, qr=qr))
 }  

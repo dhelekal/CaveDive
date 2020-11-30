@@ -49,6 +49,7 @@ rjmcmc <- function(likelihood, prior, proposal.sampler, x0, i0, max_it, thinning
             if (r < alpha) {
                 lh_prev <- lh_prop
                 prior_prev <- prior_prop
+
                 x_prev <- x_prop
                 i_prev <- i_prop
             }
