@@ -343,7 +343,6 @@ extract_lineage_times <- function(phylo.preprocessed, div.MRCA.nodes, div.times)
     empty_tips <- FALSE
     partition_counts <- rep(0, k_div)
 
-
     n_tips <- phylo.preprocessed$n_tips
 
     MRCA.idx <- nodeid(phylo.preprocessed$phy, div.MRCA.nodes)-n_tips

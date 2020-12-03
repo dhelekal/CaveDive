@@ -15,14 +15,8 @@ outbreaks_infer <- function(phy,
                             n_it=1e6, thinning=1, debug=FALSE) {
 
     if (debug) warning("Running in debug mode with only priors in use.")
-    i_0 <- 0
-    N_0 <- prior_N.sample()
 
-    x_0 <- list()
-    x_0[[1]] <- N_0 
-    x_0[[2]] <- c(1)
-
-    pre <- structured_coal.preprocess_phylo(tree)
+    pre <- structured_coal.preprocess_phylo(phy)
     edges <- pre$edges.df
     nodes <- pre$nodes.df
     n_tips <- pre$n_tips
@@ -30,6 +24,28 @@ outbreaks_infer <- function(phy,
     inner_branches <- edges$id[which(edges$node.child>pre$n_tips)] 
     edges_subs <- edges[inner_branches,]
     total_branch_len <- sum(edges_subs$length)
+
+
+    all_times <- extract_lineage_times(pre, pre$phy$node.label[pre$root_idx-pre$n_tips], -Inf)
+
+    log_lh <- function(n){
+        if (n > 0){
+            lh <- coalescent_loglh(all_times$sam.times[[1]],
+                        all_times$coal.times[[1]],
+                        n,
+                        0)
+        } else {
+            lh <- Inf
+        }
+        return(lh)
+    }
+
+    N_0 <- optim(x0, log_lh, control = list(maxit = 2000000))$par
+
+    i_0 <- 0
+    x_0 <- list()
+    x_0[[1]] <- N_0 
+    x_0[[2]] <- c(1)
 
     prior_probs <- function(probs) {
 
