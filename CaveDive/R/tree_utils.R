@@ -120,7 +120,7 @@ build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_co
     node_name_prefix <- paste0("N_", LETTERS[i])
 
     ### add any divergence event times as sampling times to this lineage, mark them with D[j] where j is the number of lineage diverging
-    if(length(div_from) > 0) idx_set <- c(1:length(div_from)) else idx_set <- 0
+    if(length(div_from) > 0) idx_set <- c(1:length(div_from)) else idx_set <- c()
     for (j in idx_set) {
       if (div_from[j] == i) {
 
@@ -147,7 +147,7 @@ build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_co
   subtrees.ret <- sapply(subtrees, function (x) paste0(x,";"))
 
   ### Next build the combined tree
-  if(length(div_events) > 1) idx_set <- c(1:(length(div_events)-1)) else idx_set <- 0
+  if(length(div_events) > 1) idx_set <- c(1:(length(div_events)-1)) else idx_set <- c()
   for(i in idx_set){
     child <- div_events[i]
     parent <- div_from[i]

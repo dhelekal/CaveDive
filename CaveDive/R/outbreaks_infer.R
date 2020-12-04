@@ -27,7 +27,6 @@ outbreaks_infer <- function(phy,
 
 
     all_times <- extract_lineage_times(pre, pre$phy$node.label[pre$root_idx-pre$n_tips], -Inf)
-    print(all_times)
 
     const_log_lh <- function(n){
         if (n > 0){
