@@ -120,8 +120,8 @@ build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_co
     node_name_prefix <- paste0("N_", LETTERS[i])
 
     ### add any divergence event times as sampling times to this lineage, mark them with D[j] where j is the number of lineage diverging
-
-    for (j in c(1:length(div_from))) {
+    if(length(div_from) > 0) idx_set <- c(1:length(div_from)) else idx_set <- 0
+    for (j in idx_set) {
       if (div_from[j] == i) {
 
         if (include_div_nodes) {
@@ -147,7 +147,8 @@ build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_co
   subtrees.ret <- sapply(subtrees, function (x) paste0(x,";"))
 
   ### Next build the combined tree
-  for(i in c(1:(length(div_events)-1))){
+  if(length(div_events) > 1) idx_set <- c(1:(length(div_events)-1)) else idx_set <- 0
+  for(i in idx_set){
     child <- div_events[i]
     parent <- div_from[i]
 
@@ -173,11 +174,13 @@ build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_co
 #' @export
 plot_structured_tree <- function(tree, n_lineages){
 
+     if (n_lineages > 1) exp_lins <- c(1:(n_lineages-1)) else exp_lins <- c()
+
     labs <- c(tree$node.label, tree$tip.label)
 
     lineages <- lapply(c(1:n_lineages), function (x) labs[grep(paste0("[N,X,S]_",LETTERS[x]), labs)])
 
-    lin_names <- c(sapply(c(1:(n_lineages-1)), function (x) paste0("expansion ",x)), "neutral")
+    lin_names <- c(sapply(exp_lins, function (x) paste0("expansion ",x)), "neutral")
 
     lineage_labs <- unlist(lineages)
     membership <- unlist(lapply(c(1:length(lineages)), function (x) rep(lin_names[x], length(lineages[[x]]))))
