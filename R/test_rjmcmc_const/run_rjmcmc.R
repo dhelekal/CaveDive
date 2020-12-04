@@ -20,7 +20,7 @@ sam <- sam[order(-sam)]
 r_mean <- 1
 r_sd <- 1
 
-K_mean <- 5
+K_mean <- 4
 K_sd <- 0.5
 
 
@@ -63,7 +63,7 @@ set.seed(0)
 
 o <- outbreaks_infer(tree, prior_i,  prior_N,  prior_N.sample, 
                      prior_r, prior_r.sample,  prior_K,  prior_K.sample,  prior_t,
-                     prior_t.sample, concentration, n_it=1e6, thinning=1, debug=F)
+                     prior_t.sample, concentration, n_it=1e5, thinning=1, debug=F)
 
 y <- sapply(o$dims, function(x) x)
 n <- sapply(o$para, function(x) x[[1]])

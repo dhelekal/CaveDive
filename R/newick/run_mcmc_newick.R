@@ -55,7 +55,7 @@ set.seed(5)
 
 o <- outbreaks_infer(tree, prior_i,  prior_N,  prior_N.sample, 
                      prior_r, prior_r.sample,  prior_K,  prior_K.sample,  prior_t,
-                     prior_t.sample, 1, n_it=1e5, thinning=1, debug=F)
+                     prior_t.sample, 1, n_it=5e6, thinning=4, debug=F)
 
 y <- sapply(o$dims, function(x) x)
 n <- sapply(o$para, function(x) x[[1]])
