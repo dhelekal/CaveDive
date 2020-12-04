@@ -245,9 +245,9 @@ move_update_branch <- function(x_prev, pre) { ### update branch
 
 move_update_N <- function(N_prev, pre) {
 
-  N_upd <- rnorm(1, mean = N_prev, sd = 1)
-  qr <- -dnorm(N_upd, mean = N_prev, sd = 1, log=TRUE) ## proposal lh
-  qr <- qr + dnorm(N_prev, mean = N_upd, sd = 1, log=TRUE) ## reverse lh
+  N_upd <- rnorm(1, mean = N_prev, sd = 2)
+  qr <- -dnorm(N_upd, mean = N_prev, sd = 2, log=TRUE) ## proposal lh
+  qr <- qr + dnorm(N_prev, mean = N_upd, sd = 2, log=TRUE) ## reverse lh
   return(list(N_next = N_upd, qr=qr))
 }
 

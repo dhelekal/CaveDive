@@ -27,10 +27,11 @@ outbreaks_infer <- function(phy,
 
 
     all_times <- extract_lineage_times(pre, pre$phy$node.label[pre$root_idx-pre$n_tips], -Inf)
+    print(all_times)
 
-    log_lh <- function(n){
+    const_log_lh <- function(n){
         if (n > 0){
-            lh <- coalescent_loglh(all_times$sam.times[[1]],
+            lh <- -coalescent_loglh(all_times$sam.times[[1]],
                         all_times$coal.times[[1]],
                         n,
                         0)
@@ -40,9 +41,9 @@ outbreaks_infer <- function(phy,
         return(lh)
     }
 
-    N_0 <- optim(x0, log_lh, control = list(maxit = 2000000))$par
+    N_0 <- optim(1, const_log_lh, lower=1e-3, upper=1e5, method="Brent", control = list(maxit = 2000000))$par
 
-    i_0 <- 0
+    i_0 <- 0 
     x_0 <- list()
     x_0[[1]] <- N_0 
     x_0[[2]] <- c(1)
