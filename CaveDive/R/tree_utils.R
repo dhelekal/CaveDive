@@ -7,7 +7,6 @@
 
 build_coal_tree <- function(sampling_times, coalescent_times, leaf_names=NULL,node_name_prefix="N", terminate_string = TRUE) {
   set.seed(1)
-  coal_times_desc <- coalescent_times[order(-coalescent_times)]
   sam_ord <- order(-sampling_times)
   times_desc <- sampling_times[sam_ord]
 
@@ -29,44 +28,48 @@ build_coal_tree <- function(sampling_times, coalescent_times, leaf_names=NULL,no
   coal_idx <- 1
   s_idx <- 1
   t <- times_desc[1]
-  
-  while (coal_idx <= length(coalescent_times)) {
-    if (s_idx < length(times_desc) &&
-        (times_desc[s_idx + 1] > coal_times_desc[coal_idx])) {
-      s_idx <- s_idx + 1
-      t <- times_desc[s_idx]
-      extant_entries <- c(extant_entries, s_idx)
-      extant_times <- c(extant_times, t)
-    } else {
-      t <- coal_times_desc[coal_idx]
-      coal_node1_idx <-
-        trunc(runif(1, 1, length(extant_entries) + 1))
-      
-      coal_node1 <- extant_entries[coal_node1_idx]
-      ct1 <- extant_times[coal_node1_idx]
-      
-      extant_times <- extant_times[-coal_node1_idx]
-      extant_entries <- extant_entries[-coal_node1_idx]
-      
-      br_len_1 <- ct1 - t
-      entry1 <- tree_nodes[coal_node1]
-      
-      coal_node2_idx <-
-        trunc(runif(1, 1, length(extant_entries) + 1))
-      coal_node2 <- extant_entries[coal_node2_idx]
-      ct2 <- extant_times[coal_node2_idx]
-      br_len_2 <- ct2 - t
-      entry2 <- tree_nodes[coal_node2]
-      
-      tree_nodes[coal_node2] <- paste0("(", entry1,
-                                       ":", br_len_1,
-                                       ",",
-                                       entry2,
-                                       ":", br_len_2, ")",node_name_prefix,coal_idx)
-      extant_times[coal_node2_idx] <- t
-      coal_idx <- coal_idx + 1
+  if (length(coalescent_times) > 0) {
+    coal_times_desc <- coalescent_times[order(-coalescent_times)]
+    while (coal_idx <= length(coalescent_times)) {
+      if (s_idx < length(times_desc) &&
+          (times_desc[s_idx + 1] > coal_times_desc[coal_idx])) {
+        s_idx <- s_idx + 1
+        t <- times_desc[s_idx]
+        extant_entries <- c(extant_entries, s_idx)
+        extant_times <- c(extant_times, t)
+      } else {
+        t <- coal_times_desc[coal_idx]
+        coal_node1_idx <-
+          trunc(runif(1, 1, length(extant_entries) + 1))
+        
+        coal_node1 <- extant_entries[coal_node1_idx]
+        ct1 <- extant_times[coal_node1_idx]
+        
+        extant_times <- extant_times[-coal_node1_idx]
+        extant_entries <- extant_entries[-coal_node1_idx]
+        
+        br_len_1 <- ct1 - t
+        entry1 <- tree_nodes[coal_node1]
+        
+        coal_node2_idx <-
+          trunc(runif(1, 1, length(extant_entries) + 1))
+        coal_node2 <- extant_entries[coal_node2_idx]
+        ct2 <- extant_times[coal_node2_idx]
+        br_len_2 <- ct2 - t
+        entry2 <- tree_nodes[coal_node2]
+        
+        tree_nodes[coal_node2] <- paste0("(", entry1,
+                                         ":", br_len_1,
+                                         ",",
+                                         entry2,
+                                         ":", br_len_2, ")",node_name_prefix,coal_idx)
+        extant_times[coal_node2_idx] <- t
+        coal_idx <- coal_idx + 1
+      }
     }
   }
+
+
   if (terminate_string) {
     tree_str <- paste0(tree_nodes[extant_entries[1]], ";")
   } else{
@@ -105,7 +108,8 @@ build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_co
   node_subs <- lapply(c(1:length(div_times)), function(x) which(coalescent_colours==x))
 
   if (!include_div_nodes) {
-    subtree_MRCA <- sapply(c(1:length(div_times)), function(x) min(coalescent_times[node_subs[[x]]]))
+    subtree_MRCA <- sapply(c(1:length(div_times)), 
+      function(x) if (length(node_subs[[x]]) > 0) min(coalescent_times[node_subs[[x]]]) else coalescent_times[leaf_subs[[x]]][1])
   }
 
   ### First generate appropriate subtrees.
@@ -137,7 +141,12 @@ build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_co
     tree <- build_coal_tree(sam_subs, coal_subs, leaf_names=leaf_names, node_name_prefix=node_name_prefix, terminate_string = FALSE)
 
     if (include_div_nodes && div_times[i] > -Inf) {
-        branch_len <- min(coal_subs)-div_times[i]
+        if(length(coal_subs) > 0) {
+          branch_len <- min(coal_subs)-div_times[i]
+        } else {
+          if (length(sam_subs) > 1) warning("Illegal state encountered")
+          branch_len <- sam_subs[1]
+        }
         tree <- paste0("(",tree,":",branch_len,")","X_",LETTERS[i])
     }
 
