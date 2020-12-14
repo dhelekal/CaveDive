@@ -147,8 +147,6 @@ Then simulate the $k+1$ clonal expansion probability vector $\pmb{\theta}$:
 Given the number of expansions $k$ and expansion probabilities $\pmb{\theta}$, partition $F$ into $k+1$ mutually disjoint subsets $\mathbf{f}=\{f_1, ... f_k, f_{k+1}\}$ with $\bigcup\limits_{i=1}^{k+1} f_{i} = F$ with the probability $P[j\in f_{i}]=\theta_i\quad \forall i,\forall j \in F$.  
 Each partition corresponds to an individual colour characterising a clonal expansion. For convenience, we will set $f_{k+1}$ to be the index set of the tips corresponding to the ancestral subpopulation.
 
-For each of the $k$ expansions $f_i$, define the parent subpopulation by $\rho_i$.
-
 Individual subpopulations then follow the coalescent process described above in \ref{def:model}, governed by population size functions $\alpha^{-1}_{j}(t)$. To each of $\alpha^{-1}_{j}$ corresponds a set of parameters:
 \begin{gather}
 \begin{aligned}
@@ -157,11 +155,15 @@ r_j\in\R_+\quad&\text{The growth rate of the subpopulation}\\
 N_j\in\R_+\quad&\text{The carrying capacity}
 \end{aligned}
 \end{gather}
+
+Upon reaching time of divergence, a subpopulation then changes colour to that of its parent subpopulation $\rho_i$. $\rho_i$ are selected uniformly at random from all extant populations at time $T_{div_{i}}$.
+
 In the case of the ancestral subpopulation $f_{k+1}$, we assume that the divergence event happened a very long time ago. As by definition $\alpha(t) \rightarrow N$ as $t-T_{div}\rightarrow -\infty$, we approximate $\alpha_{k+1}(t) \approx N_{k+1}$ and as such $\alpha^{-1}_{k+1}(t) \approx 1/N_{k+1}$. The parameters $T_{div_{j}}, r_j, N_j$ are simulated from appropriate (prior) distributions.
-Finally, without loss of generality, assume that divergence events are indexed in descending order by the time of divergence
+Finally, without loss of generality, assume that divergence events are indexed in descending order by the time of divergence.
 \begin{gather}
 i > j \Leftrightarrow T_{div_i} < T_{div_j}  
 \end{gather}
+Finally, simulate the sampling times $\mathbf{t}=\{t_i\}_{i\in F}$ such that for all expansions $j$, $t_i < T_{div_j}$, for all $i \in f_j$. In other words, all sampling for a given clade must happen after the clade diverges. 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
