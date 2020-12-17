@@ -28,6 +28,8 @@ outbreaks_infer <- function(phy,
 
     all_times <- extract_lineage_times(pre, pre$phy$node.label[pre$root_idx-pre$n_tips], -Inf)
 
+    tree_height <- max(pre$nodes.df$times) - min(pre$nodes.df$times)
+
     const_log_lh <- function(n){
         if (n > 0){
             lh <- -coalescent_loglh(all_times$sam.times[[1]],
@@ -61,7 +63,7 @@ outbreaks_infer <- function(phy,
     }
  
     prop_branch_time <- function(times, div.branch) {
-        return(log(1/length(inner_branches)) + log(1/(max(pre$nodes.df$times) - min(pre$nodes.df$times))))
+        return(log(1/length(inner_branches)) + log(1/tree_height))
     }
 
     prop_branch_time.sample <- function() {
@@ -98,7 +100,8 @@ outbreaks_infer <- function(phy,
                                                                                            prior_K, 
                                                                                            prop_branch_time),
                                                       fn_log_J,
-                                                      fn_log_J_inv
+                                                      fn_log_J_inv,
+                                                      pop_scale=(tree_height/2) ### good enough approximation of the population size
                                                       ),
                 x_0, i_0, n_it, thinning)
     return(o)

@@ -419,3 +419,4 @@ rate_int_sum <- function(rate_ints, comb_ns, n_col) {
     }
     return(out)
 }
+

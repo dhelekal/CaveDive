@@ -2,9 +2,11 @@
 ###div_event list of r, K, x_0, branch
 offset <- 2
 
-prop.sampler <- function (x_prev, i_prev, pre, para.initialiser, initialiser.log_lh, fn_log_J, fn_log_J_inv){
+prop.sampler <- function (x_prev, i_prev, pre, para.initialiser, initialiser.log_lh, fn_log_J, fn_log_J_inv, pop_scale=10){
   p <- 1 
   r <- runif(1,0,2) 
+
+  jump_scale <- pop_scale/10
 
   if (r < p) { ## transdimensional
     x_prop <- transdimensional.sampler(x_prev, i_prev, pre, para.initialiser, initialiser.log_lh, fn_log_J, fn_log_J_inv)
@@ -14,7 +16,7 @@ prop.sampler <- function (x_prev, i_prev, pre, para.initialiser, initialiser.log
     log_J <- x_prop$log_J
     qr <- x_prop$qr 
   } else { ## within-model
-    x_prop <- within_model.sampler(x_prev, i_prev, pre)
+    x_prop <- within_model.sampler(x_prev, i_prev, pre, jump_scale)
     x_next <- x_prop$x_next
     i_next <- i_prev
     
@@ -85,7 +87,7 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
   return(list(x_next=x_next, i_next=i_next, log_J=log_J, qr=qr))
 }
 
-within_model.sampler <- function(x_prev, i_prev, pre) {
+within_model.sampler <- function(x_prev, i_prev, pre, scale) {
 
   if (i_prev > 0) {
     which_move <- sample(c(1,2,3,4,5), size=1)
@@ -94,20 +96,20 @@ within_model.sampler <- function(x_prev, i_prev, pre) {
   }
 
   if (which_move==1) {
-    x_prop <- make_move(x_prev, i_prev, pre, move_update_rates)
+    x_prop <- make_move(x_prev, i_prev, pre, move_update_rates, scale)
     x_next <- x_prop$x_next
     qr <- x_prop$qr
   } else if(which_move==2) {
-    x_prop <- make_move(x_prev, i_prev, pre, move_update_time)
+    x_prop <- make_move(x_prev, i_prev, pre, move_update_time, scale)
     x_next <- x_prop$x_next
     qr <- x_prop$qr
   } else if(which_move==3) {
-    x_prop <- make_move(x_prev, i_prev, pre, move_update_branch)
+    x_prop <- make_move(x_prev, i_prev, pre, move_update_branch, scale)
     x_next <- x_prop$x_next
     qr <- x_prop$qr
   } else if(which_move==4) {
     N_prev <- x_prev[[1]]
-    N_prop <- move_update_N(N_prev, pre)
+    N_prop <- move_update_N(N_prev, pre, scale)
     N_next <- N_prop$N_next
     qr <- N_prop$qr
 
@@ -126,10 +128,10 @@ within_model.sampler <- function(x_prev, i_prev, pre) {
   return(list(x_next=x_next,qr=qr))
 }
 
-make_move <- function(x_prev, i_prev, pre, move) {
+make_move <- function(x_prev, i_prev, pre, move, scale) {
     which_model <- offset+sample.int(i_prev, size=1)
     mdl_prev <- x_prev[[which_model]] 
-    mdl_prop <- move(mdl_prev, pre)
+    mdl_prop <- move(mdl_prev, pre, scale)
     mdl_next <- mdl_prop$x_next
     qr <- mdl_prop$qr
     x_next <- x_prev
@@ -137,7 +139,7 @@ make_move <- function(x_prev, i_prev, pre, move) {
     return(list(x_next=x_next, qr=qr))
 }
 
-move_update_rates <- function(x_prev, pre) { ### update rates
+move_update_rates <- function(x_prev, pre, scale) { ### update rates
   
   x_next <- vector(mode = "list", length = length(x_prev))
 
@@ -149,10 +151,10 @@ move_update_rates <- function(x_prev, pre) { ### update rates
   if(length(rates) > 1) print(length(rates))
 
   rates_upd <- rnorm(1, mean=rates, sd=1) 
-  K_upd  <- rnorm(1, mean=K, sd=1)
+  K_upd  <- rnorm(1, mean=K, sd=1*scale)
 
-  qr <- -dnorm(rates_upd, mean=rates, sd=1, log=TRUE) - dnorm(K_upd, mean=K, sd=1, log=TRUE) ## proposal lh
-  qr <- qr + dnorm(rates, mean=rates_upd, sd=1, log=TRUE) + dnorm(K, mean=K_upd, sd=1, log=TRUE) ## reverse lh
+  qr <- -dnorm(rates_upd, mean=rates, sd=1, log=TRUE) - dnorm(K_upd, mean=K, sd=1*scale, log=TRUE) ## proposal lh
+  qr <- qr + dnorm(rates, mean=rates_upd, sd=1, log=TRUE) + dnorm(K, mean=K_upd, sd=1*scale, log=TRUE) ## reverse lh
 
   x_next[[1]] <- rates_upd 
   x_next[[2]] <- K_upd
@@ -162,7 +164,7 @@ move_update_rates <- function(x_prev, pre) { ### update rates
   return(list(x_next=x_next,qr=qr))
 }
 
-move_update_time <- function(x_prev, pre) { ### update time
+move_update_time <- function(x_prev, pre, scale) { ### update time
   
   x_next <- vector(mode = "list", length = length(x_prev))
 
@@ -171,10 +173,12 @@ move_update_time <- function(x_prev, pre) { ### update time
   div.times <- x_prev[[3]]
   div.branch <- x_prev[[4]]
 
-  div.times_upd <- rnorm(1, mean=div.times, sd=1)
+  len_scale <- pre$edges.df$length[div.branch]/10
 
-  qr <- -dnorm(div.times_upd, mean=div.times, sd=1, log=TRUE) ##proposal lh
-  qr <- qr + dnorm(div.times, mean=div.times_upd, sd=1, log=TRUE) ##reversal lh
+  div.times_upd <- rnorm(1, mean=div.times, sd=1*len_scale)
+
+  qr <- -dnorm(div.times_upd, mean=div.times, sd=1*len_scale, log=TRUE) ##proposal lh
+  qr <- qr + dnorm(div.times, mean=div.times_upd, sd=1*len_scale, log=TRUE) ##reversal lh
 
   x_next[[1]] <- rates
   x_next[[2]] <- K
@@ -184,7 +188,7 @@ move_update_time <- function(x_prev, pre) { ### update time
   return(list(x_next=x_next, qr=qr))
 }
 
-move_update_branch <- function(x_prev, pre) { ### update branch
+move_update_branch <- function(x_prev, pre, scale) { ### update branch
   x_next <- vector(mode = "list", length = length(x_prev))
 
   rates <- x_prev[[1]]
@@ -243,11 +247,11 @@ move_update_branch <- function(x_prev, pre) { ### update branch
 }
 
 
-move_update_N <- function(N_prev, pre) {
+move_update_N <- function(N_prev, pre, scale) {
 
-  N_upd <- rnorm(1, mean = N_prev, sd = 2)
-  qr <- -dnorm(N_upd, mean = N_prev, sd = 2, log=TRUE) ## proposal lh
-  qr <- qr + dnorm(N_prev, mean = N_upd, sd = 2, log=TRUE) ## reverse lh
+  N_upd <- rnorm(1, mean = N_prev, sd = 1*scale)
+  qr <- -dnorm(N_upd, mean = N_prev, sd = 1*scale, log=TRUE) ## proposal lh
+  qr <- qr + dnorm(N_prev, mean = N_upd, sd = 1*scale, log=TRUE) ## reverse lh
   return(list(N_next = N_upd, qr=qr))
 }
 
