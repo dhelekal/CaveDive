@@ -115,20 +115,27 @@ Furthermore, all event times are ordered in descending (backwards) time order, w
 \forall k,l \in S: k<l \Rightarrow t_k > t_l
 \end{gather*}
 Under the assumption that $\mathbf{g}$ is a genealogy of a given sample, with each edge in $E_\mathbf{g}$ there is an associated unobserved set of individuals descending from one another. At some point along an edge from one lineage to another, the lineage can undergo a colour change, and become the most recent ancestor of a diverging clade. This event corresponds to this lineage somehow gaining advantage over other lineages, be it a bacterium gaining resistance against a drug, or a strain of a virus invading a completely susceptible population.
+
 \begin{definition}[Multiple Lineage Coalescent]\label{def:model}
-Given $M$ colours, $M$ population size functions $\mathbf{\alpha}\triangleq\{\alpha_j(t)\}_{1\leq j\leq M}$. Let $Y(t)$ be a CTMC with the state space:
-\begin{gather}
-  \Sigma = \left\{\mathbf{s}\in \Z_+: |\mathbf{s}|\geq1\right\}
+Given $M$ colours, $M$ population size functions $\mathbf{\alpha}\triangleq\{\alpha_j(t)\}_{1\leq j\leq M}$, the set of $M-1$ divergence times $T_{div}$, the set of $M-1$ divergence events $D$, the set of tips $S\subset \N, \quad S=\{1,2,...,N\}$, and the associated sampling times $T_{sam}\triangleq \left\{t^s_i\right\}_{i \in S}$.\\
+Let $\pmb\Pi(t)$ be a continuous time markov chain defined on the state space of the partitions of $S$ denoted by $\Pi$, each associated with a colouring via the function $H: \Pi\cross\R^+ \mapsto \{1,...M\}$. The initial state is given by $\pmb\Pi(0) = \{1\}, \{2\}, ... , \{N-1\}, \{N\}$.
+
+Denote the number of extant partitions of given colour $j$ at time $t$ by $|C_j(t)| \triangleq |\{\pi \in \Pi(t) : H(\pi, t) = j \}|$
+
+And transition rates
+\begin{gather}\label{eq:transitions}
+q_{(\pi_i,\pi_j), (\pi_i\cup\pi_j)}=\lim\limits_{h \downarrow 0}\frac{1}{h}\mathbf{P}\left[\pi_i \cup \pi_j \in \pmb\Pi(t+h)\mid \pi_i, \pi_j \in \pmb\Pi(t), \pi_i \neq \pi_j \right]  
 \end{gather}
-and the transition rates
-\begin{gather}\label{eq:multirate}
-\begin{align}
-\mathbf{s}&\to\mathbf{s}-\mathbf{e_j} &\quad& \binom{s_j}{2}\alpha_j^{-1}(t)&\quad&1\leq j\leq M\\
-\mathbf{s}&\to\mathbf{s}-\mathbf{e_j}+\mathbf{e_k}&\quad& \delta_{1,j}\beta s_k&\quad&1\leq j,k\leq M
-\end{align}
+given by
+\begin{gather}\label{eq:rates}
+q_{(\pi_i,\pi_j), (\pi_i\cup\pi_j)} = \sum\limits_{k=1}^{M} \delta_k(H(\pi_i,t))\delta_k(H(\pi_j,t))\frac{\binom{C_k(t)}{2}}{\alpha_k(t)}
 \end{gather}
-Where $\beta$ is an unknown rate.
 \end{definition}
+Finally, $H$ is defined recursively with $\forall \pi_i \in \pmb\Pi(0), H(\pi_i,0) = c_{i,0}$ with $c_{i,0}$ given. For fixed $t$ and and $\forall \pi \in \pmb\Pi(t)$, The colouring function satisfies $H(\pi, t) = H(\pi_0,t)\quad \forall \pi_0 \in \pmb\Pi(0) : \pi_0 \subset \pi$. In time, $H$ is defined so that $\forall \pi \in \pmb\Pi(0) : H(\pi,0) = j,\quad \forall t>0 \quad H(\pi, t) = \begin{cases} 
+      j & t < T_{div_j} \\
+      d_j & t \geq T_{div_j}
+   \end{cases}$\\
+   
 The interpretation of this model in backwards (coalescent) time is that each node corresponds to a single specific clade (colour). Nodes of the same clade coalesce at i.i.d rates, according to a clade specific growth functions, until reaching the most recent common ancestor (MRCA) of given clade. The MRCA then changes type (colour) to that of any other clade that is extant at a given time. \\
 Under the hypothesis, along each of the edges from the parent of a clade MRCA to the MRCA lies a point in that characterises the time of divergence of the clade, after which the clade starts to undergo clonal expansion.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
