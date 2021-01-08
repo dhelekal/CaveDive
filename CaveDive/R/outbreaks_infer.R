@@ -181,7 +181,7 @@ log_prior <- function(x, i, prior_i, prior_r, prior_K, prior_t, prior_probs, pri
                          sum(prior_edges(div.branch)) +
                          sum(prior_r(rates)) +
                          sum(prior_K(K)) + 
-                         sum(prior_t(div.times))
+                         sum(prior_t(div.times)) + lgamma(i+1)
             }
         } else {
             prior <- -Inf
