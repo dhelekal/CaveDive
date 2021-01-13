@@ -57,10 +57,6 @@ outbreaks_infer <- function(phy,
         }
         return(out) 
     }
-
-    prior_edges <- function(div.edges) { ### this is actually the partition probability
-        return(length(div.edges)*log(1/length(inner_branches)))
-    }
  
     prop_branch_time <- function(times, div.branch) {
         return(log(1/length(inner_branches)) + log(1/tree_height))
@@ -87,7 +83,6 @@ outbreaks_infer <- function(phy,
                                          prior_K, 
                                          prior_t, 
                                          prior_probs,
-                                         prior_edges,
                                          pre),
                 function(x_prev, i_prev) prop.sampler(x_prev,
                                                       i_prev, 
@@ -142,7 +137,7 @@ para.log_lh <- function(x, prior_r, prior_K, prior_branch_time) {
     return(out)
 }
 
-log_prior <- function(x, i, prior_i, prior_r, prior_K, prior_t, prior_probs, prior_edges, pre) {
+log_prior <- function(x, i, prior_i, prior_r, prior_K, prior_t, prior_probs, pre) {
 
     n_tips <- pre$n_tips
     N <- x[[1]]
@@ -178,7 +173,6 @@ log_prior <- function(x, i, prior_i, prior_r, prior_K, prior_t, prior_probs, pri
         if (all(!is.na(MRCAs))){
             if (i > 0) {
                 prior <- prior + 
-                         sum(prior_edges(div.branch)) +
                          sum(prior_r(rates)) +
                          sum(prior_K(K)) + 
                          sum(prior_t(div.times))

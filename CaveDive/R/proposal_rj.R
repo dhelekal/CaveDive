@@ -71,7 +71,6 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
       qr <- qr - log(1/i_prev) ## proposal remove model 
       qr <- qr - log(1/i_prev) ## proposal merge with this probaility
       qr <- qr + initialiser.log_lh(x_prev[[(which_elem+offset)]]) ## reverse lh of adding that model
-      qr <- qr + log(1/i_prev) ## permutations as unordered
       qr <- qr + log(1/i_prev) ## reverse pick same prob for split 
       qr <- qr + log(1/x_next[[2]][which_merge]) ##pick the same split from uniform
       
