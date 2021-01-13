@@ -167,9 +167,9 @@ log_prior <- function(x, i, prior_i, prior_r, prior_K, prior_t, prior_probs, pri
       all(N > 0) && 
       all(probs >= 0) &&
       (abs(sum(probs)-1) < 1e-8) &&
-      all(!is.na(div.branch)) &&
-      all(div.times > pre$nodes.df$times[pre$edges.df$node.parent[div.branch]]) && ## technically last two inequalities part of likelihood
-      all(div.times < pre$nodes.df$times[pre$edges.df$node.child[div.branch]]))    ## but they assign 0 likelihood and easier to check here
+      all(!is.na(div.branch)) )# &&
+      #all(div.times > pre$nodes.df$times[pre$edges.df$node.parent[div.branch]]) && ## technically last two inequalities part of likelihood
+      #all(div.times < pre$nodes.df$times[pre$edges.df$node.child[div.branch]]))    ## but they assign 0 likelihood and easier to check here
 
     {
         prior <- prior_i(i) + prior_probs(probs) + prior_N(N)
@@ -181,7 +181,7 @@ log_prior <- function(x, i, prior_i, prior_r, prior_K, prior_t, prior_probs, pri
                          sum(prior_edges(div.branch)) +
                          sum(prior_r(rates)) +
                          sum(prior_K(K)) + 
-                         sum(prior_t(div.times)) + lgamma(i+1)
+                         sum(prior_t(div.times))
             }
         } else {
             prior <- -Inf

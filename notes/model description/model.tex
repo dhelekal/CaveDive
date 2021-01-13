@@ -103,8 +103,8 @@ The coalescent process given leaf colouring and growth function parameters descr
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Model}
 \section{Preliminaries}
-A given genealogy $\mathbf{g}=(V_\mathbf{g}, E_\mathbf{g}, t_\mathbf{g})$ is an incomplete, empirical sample of the underlying process.\\
-It consists of nodes $V_\mathbf{g}$, directed edges $E_\mathbf{g}$, and node labels $t_\mathbf{g}$ corresponding to event times.\\
+A given genealogy $\mathbf{g}=(V_\mathbf{g}, E_\mathbf{g}, t_\mathbf{g}, c_\mathbf{g})$ is an incomplete, empirical sample of the underlying process.\\
+It consists of nodes $V_\mathbf{g}$, directed edges $E_\mathbf{g}$, node labels $t_\mathbf{g}$ corresponding to event times, and node labels $c_\mathbf{g}$ corresponding to node colouring.\\
 The genealogy $\mathbf{g}$ shall be indexed by an index set $S=1\leq i \leq N\subset \N$, with $Y\subset S$ corresponding to coalescent events and $I\subset S$ corresponding to sampling events.\\
 For convenience, assume that all edges are in the forwards time direction, i.e.: 
 \begin{gather*}
@@ -117,8 +117,9 @@ Furthermore, all event times are ordered in descending (backwards) time order, w
 Under the assumption that $\mathbf{g}$ is a genealogy of a given sample, with each edge in $E_\mathbf{g}$ there is an associated unobserved set of individuals descending from one another. At some point along an edge from one lineage to another, the lineage can undergo a colour change, and become the most recent ancestor of a diverging clade. This event corresponds to this lineage somehow gaining advantage over other lineages, be it a bacterium gaining resistance against a drug, or a strain of a virus invading a completely susceptible population.
 
 \begin{definition}[Multiple Lineage Coalescent]\label{def:model}
-Given $M$ colours, $M$ population size functions $\mathbf{\alpha}\triangleq\{\alpha_j(t)\}_{1\leq j\leq M}$, the set of $M-1$ divergence times $T_{div}$, the set of $M-1$ divergence events $D$, the set of tips $S\subset \N, \quad S=\{1,2,...,N\}$, and the associated sampling times $T_{sam}\triangleq \left\{t^s_i\right\}_{i \in S}$.\\
-Let $\pmb\Pi(t)$ be a continuous time markov chain defined on the state space of the partitions of $S$ denoted by $\Pi$, each associated with a colouring via the function $H: \Pi\cross\R^+ \mapsto \{1,...M\}$. The initial state is given by $\pmb\Pi(0) = \{1\}, \{2\}, ... , \{N-1\}, \{N\}$.
+Given $M$ colours, $M$ population size functions $\mathbf{\alpha}\triangleq\{\alpha_j(t)\}_{1\leq j\leq M}$, the set of $M-1$ divergence times $T_{div} = \{t_{div_j}\}_{1\leq j<M}$, the set of $M-1$ divergence events $D = \{d_j\}_{1\leq j<M}$, the set of tips $I\subset \N, \quad I=\{1,2,...,N\}$, and the associated sampling times $T_{sam}\triangleq \left\{t^s_i\right\}_{i \in I}$.
+Assume that the indexing is such that the divergence times are in ascending order.\\
+Let $\pmb\Pi(t)$ be a continuous time markov chain defined on the state space of the partitions of $I$ denoted by $\Pi$, each associated with a colouring via the function $H: \Pi\cross\R^+ \mapsto \{1,...M\}$. The initial state is given by $\pmb\Pi(0) = \{1\}, \{2\}, ... , \{N-1\}, \{N\}$.
 
 Denote the number of extant partitions of given colour $j$ at time $t$ by $|C_j(t)| \triangleq |\{\pi \in \Pi(t) : H(\pi, t) = j \}|$
 
@@ -136,13 +137,17 @@ Finally, $H$ is defined recursively with $\forall \pi_i \in \pmb\Pi(0), H(\pi_i,
       d_j & t \geq T_{div_j}
    \end{cases}$\\
    
-The interpretation of this model in backwards (coalescent) time is that each node corresponds to a single specific clade (colour). Nodes of the same clade coalesce at i.i.d rates, according to a clade specific growth functions, until reaching the most recent common ancestor (MRCA) of given clade. The MRCA then changes type (colour) to that of any other clade that is extant at a given time. \\
-Under the hypothesis, along each of the edges from the parent of a clade MRCA to the MRCA lies a point in that characterises the time of divergence of the clade, after which the clade starts to undergo clonal expansion.
+While the model is defined in terms of partitions, when working with genealogies we typically work with trees. The tree corresponding to a particular realisation of the partition based model is obtained by identifying all $\pi \in \pmb\Pi(t)\forall t$ with $V_\mathbf{g}$. The leaves $V_I$ consist of all partitions $\pi \in \pmb\pi(0)$, while internal nodes $V_Y$ consist of all subsequent partitions $\forall t, \forall\pi\in \pmb\Pi(t) : \pi \notin \pmb\Pi(0)$. The edges $V_\mathbf{g}$ and times $t_\mathbf{g}$ are given by the jump chain. The colouring $c_\mathbf{g}$ is obtained through the colouring function $H$. 
+
+The interpretation of this model in backwards (coalescent) time is that each node corresponds to a single specific clade (colour). Nodes of the same clade coalesce at i.i.d rates, according to a clade specific growth functions, until reaching the most recent common ancestor (MRCA) of given clade. The MRCA then changes type (colour) to that given by the corresponding divergence event at corresponding divergence time time. 
+
+Within-colour transitions and their rates are independent of different colours. As such the transitions involving partitions of one colour  are independent of transitions involving partitions of other colours given divergence events and times. This allows us to split the likelihood computation into a product of colour-specific likelihoods, that can be computed under coalescent with variable population size.\\
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Full Generative Model}
+\section{Full Model}
 Given a population sample of $N$ individuals indexed by $F$, $X_F = \{x_i\}_{i \in F}$, first determine the number of recent clonal expansions k:
 \begin{gather}
 k \sim \texttt{poi}(\phi)
@@ -154,23 +159,46 @@ Then simulate the $k+1$ clonal expansion probability vector $\pmb{\theta}$:
 Given the number of expansions $k$ and expansion probabilities $\pmb{\theta}$, partition $F$ into $k+1$ mutually disjoint subsets $\mathbf{f}=\{f_1, ... f_k, f_{k+1}\}$ with $\bigcup\limits_{i=1}^{k+1} f_{i} = F$ with the probability $P[j\in f_{i}]=\theta_i\quad \forall i,\forall j \in F$.  
 Each partition corresponds to an individual colour characterising a clonal expansion. For convenience, we will set $f_{k+1}$ to be the index set of the tips corresponding to the ancestral subpopulation.
 
-Individual subpopulations then follow the coalescent process described above in \ref{def:model}, governed by population size functions $\alpha^{-1}_{j}(t)$. To each of $\alpha^{-1}_{j}$ corresponds a set of parameters:
+The sample along with the initial colour assignment then follows the coalescent process described above in \ref{def:model}, governed by population size functions $\alpha^{-1}_{j}(t)$. To each $\alpha^{-1}_{j}$ corresponds a set of parameters:
 \begin{gather}
 \begin{aligned}
-T_{div_{j}}\in\R_+ \quad&\text{The time of divergence}\\
+t_{div_{j}}\in\R_+ \quad&\text{The time of divergence}\\
 r_j\in\R_+\quad&\text{The growth rate of the subpopulation}\\
 N_j\in\R_+\quad&\text{The carrying capacity}
 \end{aligned}
 \end{gather}
+The divergence events $d_i$ are simulated so that an expansion with divergence time $t_{div_j}$ merges with and thus changes colour to that of an expansion chosen uniformly at random from all expansions with time of divergence after $t_{div_j}$, i.e. an expansion that is extant at time $t_{div_j}$.
 
-Upon reaching time of divergence, a subpopulation then changes colour to that of its parent subpopulation $\rho_i$. $\rho_i$ are selected uniformly at random from all extant populations at time $T_{div_{i}}$.
-
-In the case of the ancestral subpopulation $f_{k+1}$, we assume that the divergence event happened a very long time ago. As by definition $\alpha(t) \rightarrow N$ as $t-T_{div}\rightarrow -\infty$, we approximate $\alpha_{k+1}(t) \approx N_{k+1}$ and as such $\alpha^{-1}_{k+1}(t) \approx 1/N_{k+1}$. The parameters $T_{div_{j}}, r_j, N_j$ are simulated from appropriate (prior) distributions.
-Finally, without loss of generality, assume that divergence events are indexed in descending order by the time of divergence.
+In the case of the ancestral subpopulation $f_{k+1}$, we assume that the divergence event happened a very long time ago. As by definition $\alpha(t) \rightarrow N$ as $T_{div}-t\rightarrow -\infty$, we approximate $\alpha_{k+1}(t) \approx N_{k+1}$ and as such $\alpha^{-1}_{k+1}(t) \approx 1/N_{k+1}$. The parameters $T_{div_{j}}, r_j, N_j$ are simulated from appropriate (prior) distributions.
+Finally, without loss of generality, assume that divergence events are indexed in ascending order by the time of divergence in coalescent time.
 \begin{gather}
-i > j \Leftrightarrow T_{div_i} < T_{div_j}  
+i > j \Leftrightarrow T_{div_i} > T_{div_j}  
 \end{gather}
-Finally, simulate the sampling times $\mathbf{t}=\{t_i\}_{i\in F}$ such that for all expansions $j$, $t_i < T_{div_j}$, for all $i \in f_j$. In other words, all sampling for a given clade must happen after the clade diverges. 
+Sampling times $\mathbf{t}=\{t_i\}_{i\in F}$ are simulated from the same distribution for all $f$. It is required that for all expansions $j$, $t_i < T_{div_j}$, for all $i \in f_j$. In other words, all sampling for a given clade must happen after the clade diverges.
+\subsubsection{Choice of effective population size functions}
+While the parent clade is assumed to be at equilibrium, the population size functions of the diverging clades have to satisfy several properties.\\
+First we introduce the variable $\tau = -t + T_{max} - T_{div}$ which denotes time relative to a divergence event of a given clade, where $T_{div}$ denotes the divergence time and $T_{max}$ denotes the time of the most recent sample.
+In our model we assume that the diverging subpopulation only appears after the divergence event, and as such it is required that at time $\tau=0$ the population vanishes $\alpha(\tau)=0$. Furthermore, we are looking for a monotone decreasing function in $\tau$, that exhibits saturating behaviour as $\tau$ grows large.
+Initially, functions exhibiting a period of exponential growth were investigated, however these were ill-posed numerically.
+Hence we arrived at the following function
+\begin{gather}
+\alpha(\tau) = K\frac{r\tau^2}{1+r\tau^2}
+\end{gather} 
+Where $K$ is the carrying capacity and $r$ is the growth rate.
+This function  exhibits saturating behaviour, symmetry around zero, and numerically stable behaviour due to both not relying on time-offsetting exponentials, and separately also having a more gradual decay around zero.\\
+\begin{figure}[H]
+  \centering
+     \includegraphics[width=0.4\textwidth]{../R/alpha_plots}
+    \caption{$\alpha(\tau)$ under different parameters, with $T_{div}=20$}
+\end{figure}
+The integral of the reciprocal $\alpha^{-1}(\tau)$ under this formulation is then given by 
+\begin{gather}
+\begin{aligned}\label{eq:rint}
+&\int_{t}^{t+s}\alpha^{-1}(\tau)\,d\tau\\ &= \frac{1}{K}\left[-\frac{1}{r(\tau-T_{max}+T_{div})}+\tau-T_{max}+T_{div}\right]_{t}^{t+s}
+\end{aligned}
+\end{gather}
+As $t+s$ approaches the divergence time relative to the most recent sample $T_{div} - T_{max}$, the rate integral \ref{eq:rint} approaches infinity, and as such all coalescence within a clade happens before time of divergence with probability one.
+\subsubsection{Summary}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
