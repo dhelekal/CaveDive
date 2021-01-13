@@ -148,16 +148,16 @@ Within-colour transitions and their rates are independent of different colours. 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Full Model}
-Given a population sample of $N$ individuals indexed by $F$, $X_F = \{x_i\}_{i \in F}$, first determine the number of recent clonal expansions k:
+Given a population sample of $N$ individuals indexed by $F$, $X_F = \{x_i\}_{i \in F}$, first determine the number of recent clonal expansions $M-1$:
 \begin{gather}
-k \sim \texttt{poi}(\phi)
+M-1 \sim \texttt{poi}(\phi)
 \end{gather}
-Then simulate the $k+1$ clonal expansion probability vector $\pmb{\theta}$:
+Then simulate the $M$ clonal expansion probability vector $\pmb{\theta}$:
 \begin{gather}
-\pmb{\theta} \sim \texttt{dirichlet}(\psi), \quad \psi \in \R_+^{k+1} 
+\pmb{\theta} \sim \texttt{dirichlet}(\psi), \quad \psi \in \R_+^{M} 
 \end{gather}
-Given the number of expansions $k$ and expansion probabilities $\pmb{\theta}$, partition $F$ into $k+1$ mutually disjoint subsets $\mathbf{f}=\{f_1, ... f_k, f_{k+1}\}$ with $\bigcup\limits_{i=1}^{k+1} f_{i} = F$ with the probability $P[j\in f_{i}]=\theta_i\quad \forall i,\forall j \in F$.  
-Each partition corresponds to an individual colour characterising a clonal expansion. For convenience, we will set $f_{k+1}$ to be the index set of the tips corresponding to the ancestral subpopulation.
+Given the number of expansions $M-1$ and expansion probabilities $\pmb{\theta}$, partition $F$ into $M$ mutually disjoint subsets $\mathbf{f}=\{f_1, ... f_M-1, f_{M}\}$ with $\bigcup\limits_{i=1}^{M} f_{i} = F$ with the probability $P[j\in f_{i}]=\theta_i\quad \forall i,\forall j \in F$.  
+Each partition corresponds to an individual colour characterising a clonal expansion. For convenience, we will set $f_{M}$ to be the index set of the tips corresponding to the parent subpopulation.
 
 The sample along with the initial colour assignment then follows the coalescent process described above in \ref{def:model}, governed by population size functions $\alpha^{-1}_{j}(t)$. To each $\alpha^{-1}_{j}$ corresponds a set of parameters:
 \begin{gather}
@@ -169,7 +169,7 @@ N_j\in\R_+\quad&\text{The carrying capacity}
 \end{gather}
 The divergence events $d_i$ are simulated so that an expansion with divergence time $t_{div_j}$ merges with and thus changes colour to that of an expansion chosen uniformly at random from all expansions with time of divergence after $t_{div_j}$, i.e. an expansion that is extant at time $t_{div_j}$.
 
-In the case of the ancestral subpopulation $f_{k+1}$, we assume that the divergence event happened a very long time ago. As by definition $\alpha(t) \rightarrow N$ as $T_{div}-t\rightarrow -\infty$, we approximate $\alpha_{k+1}(t) \approx N_{k+1}$ and as such $\alpha^{-1}_{k+1}(t) \approx 1/N_{k+1}$. The parameters $T_{div_{j}}, r_j, N_j$ are simulated from appropriate (prior) distributions.
+In the case of the parent subpopulation $f_{M}$, we assume that the divergence event happened a very long time ago. As by definition $\alpha(t) \rightarrow N$ as $T_{div}-t\rightarrow -\infty$, we approximate $\alpha_{M}(t) \approx N_{M}$ and as such $\alpha^{-1}_{M}(t) \approx 1/N_{M}$. The parameters $T_{div_{j}}, r_j, N_j$ are simulated from appropriate (prior) distributions.
 Finally, without loss of generality, assume that divergence events are indexed in ascending order by the time of divergence in coalescent time.
 \begin{gather}
 i > j \Leftrightarrow T_{div_i} > T_{div_j}  
@@ -177,28 +177,74 @@ i > j \Leftrightarrow T_{div_i} > T_{div_j}
 Sampling times $\mathbf{t}=\{t_i\}_{i\in F}$ are simulated from the same distribution for all $f$. It is required that for all expansions $j$, $t_i < T_{div_j}$, for all $i \in f_j$. In other words, all sampling for a given clade must happen after the clade diverges.
 \subsubsection{Choice of effective population size functions}
 While the parent clade is assumed to be at equilibrium, the population size functions of the diverging clades have to satisfy several properties.\\
-First we introduce the variable $\tau = -t + T_{max} - T_{div}$ which denotes time relative to a divergence event of a given clade, where $T_{div}$ denotes the divergence time and $T_{max}$ denotes the time of the most recent sample.
+First we introduce the variable $\tau = -t - T_{max} + T_{div}$ which denotes time relative to a divergence event of a given clade, where $T_{div}$ denotes the divergence time and $T_{max}$ denotes the time of the most recent sample.
 In our model we assume that the diverging subpopulation only appears after the divergence event, and as such it is required that at time $\tau=0$ the population vanishes $\alpha(\tau)=0$. Furthermore, we are looking for a monotone decreasing function in $\tau$, that exhibits saturating behaviour as $\tau$ grows large.
 Initially, functions exhibiting a period of exponential growth were investigated, however these were ill-posed numerically.
 Hence we arrived at the following function
 \begin{gather}
-\alpha(\tau) = K\frac{r\tau^2}{1+r\tau^2}
+\alpha(\tau) = N\frac{r\tau^2}{1+r\tau^2}
 \end{gather} 
-Where $K$ is the carrying capacity and $r$ is the growth rate.
-This function  exhibits saturating behaviour, symmetry around zero, and numerically stable behaviour due to both not relying on time-offsetting exponentials, and separately also having a more gradual decay around zero.\\
-\begin{figure}[H]
+Where $N$ is the carrying capacity and $r$ is the growth rate.
+This function  exhibits saturating behaviour, symmetry around zero, and numerically stable behaviour.\\
+While the intepretation of the carrying capacity $N$ is straightforward, we find $r$ to be best intepreted by considering the time to when the population reaches half the carrying capacity $T_mid$ as a function of $r$. It is straightforward to show that $T_{mid}(r) = \frac{1}{\sqrt{r}}$ 
+\begin{figure}[H].
   \centering
-     \includegraphics[width=0.4\textwidth]{../R/alpha_plots}
+     \includegraphics[width=0.4\textwidth]{../R/test_mcmc/alpha_plots}
     \caption{$\alpha(\tau)$ under different parameters, with $T_{div}=20$}
 \end{figure}
 The integral of the reciprocal $\alpha^{-1}(\tau)$ under this formulation is then given by 
 \begin{gather}
 \begin{aligned}\label{eq:rint}
-&\int_{t}^{t+s}\alpha^{-1}(\tau)\,d\tau\\ &= \frac{1}{K}\left[-\frac{1}{r(\tau-T_{max}+T_{div})}+\tau-T_{max}+T_{div}\right]_{t}^{t+s}
+&\int_{t}^{t+s}\alpha^{-1}(\tau)\,d\tau\\ &= \frac{1}{N}\left[-\frac{1}{r(-\tau-T_{max}+T_{div})}-\tau-T_{max}+T_{div}\right]_{t}^{t+s}
 \end{aligned}
 \end{gather}
 As $t+s$ approaches the divergence time relative to the most recent sample $T_{div} - T_{max}$, the rate integral \ref{eq:rint} approaches infinity, and as such all coalescence within a clade happens before time of divergence with probability one.
+
+For the purposes of our model, we simulate the parameters $N_j, r_j, t_{div_j} \forall j \in \{1,...,M-1\}$ as well as the parent population size $N_{M}$ under the following scheme.\\
+First simulate the parent population size $N_{M}$:
+\begin{gather}
+N_{M} \sim \texttt{lognorm}(\mu_{anc}, \sigma_{anc})
+\end{gather}
+Next simulate the carrying capacities for the $M-1$ expansions
+\begin{gather}
+N_{j} \sim \texttt{lognorm}(N_{M}, \sigma_{exp}) \quad\forall j \in \{1,...,M-1\}
+\end{gather}
+as well as the corresponding divergence times
+\begin{gather}
+t_{div_j} \sim U\{(\beta N_{M}, N_{M})\} \quad\forall j \in \{1,...,M-1\}
+\end{gather}
+where $\beta \in (0,1)$
+and growth rates
+\begin{gather}
+r_{j} \sim \texttt{lognorm}(\mu_r, \sigma_r) \quad\forall j \in \{1,...,M-1\}
+\end{gather} 
 \subsubsection{Summary}
+We now summarise the entire simulation procedure
+\begin{gather}
+\begin{aligned}
+&\pi(M-1) &=& \texttt{poi}(\phi) &\quad&\text{Number of expansions} \\
+&\pi(\pmb\theta\mid M) &=& \texttt{dirichlet}(\psi) &\quad&\text{Expansion Membership Probabilities} \\
+&\pi(\mathbf{f\mid\pmb\theta}) &=& \texttt{multinom}(\theta; M) &\quad&\text{Expansion Membership Assignment} \\
+&\pi(N_M) &=& \texttt{lognorm}(\mu_{anc},\sigma_{anc}) &\quad&\text{Parent Population Size}\\
+&\pi(N_j\mid N_{M}) &=& \texttt{lognorm}(N_{M},\sigma_{exp}) &\quad&\text{Carrying Capacities}\\
+&\pi(t_{div_j}\mid N_{M}) &=& U\{(\beta N_{M},N_{M})\} &\quad&\text{Expansion Times}\\
+&\pi(r_j) &=& \texttt{lognorm}(\mu_{r},\sigma_{r}) &\quad&\text{Growth Rates}\\
+&\pi(d_j) &=& U\{\{i\in \{1 ... M+1\} : i > j\}\} &\quad&\text{Parent Populations}\\
+\end{aligned}
+\end{gather}
+
+For convenience, we will summarise $\pi(N_M)\pi(N_j\mid N_{M})\pi(t_{div_j}\mid N_{M})\pi(r_j) \quad \forall j$ as $\pi(\pmb\alpha)$ and $\pi(t_{div_j}\mid N_{M})\quad \forall j$ as $\pi(T_{div}\mid\pmb\alpha)$
+
+The tip times $T_{sam}$ are simulated separately and considered given. Furthermore $T_{sam} \perp M, \mathbf{f}, \pmb{\theta}, \pmb\alpha, D, T_{div}$.
+
+The genealogy $\mathbf{g}$ is simulated under the Coalescent with Local Population structure described in \ref{def:model} denoted by $\texttt{lpcoal}$:
+\begin{gather}
+\pi(\mathbf{g}\mid M, \mathbf{f}, \pmb\alpha, T_{div}, D, T_{sam}) = \texttt{lpcoal}(M, \mathbf{f}, \pmb\alpha, T_{div}, D, T_{sam})
+\end{gather} 
+
+$\phi, \psi, \mu_{anc}, \sigma_{anc}, \mu_r, \sigma_r, \sigma_{exp}, \beta$ are hyperamaters and considered given.
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -207,59 +253,15 @@ As $t+s$ approaches the divergence time relative to the most recent sample $T_{d
 The posterior for the full process is:
 \begin{gather}
 \begin{aligned}
-P(k, \mathbf{f}, \pmb{\theta}, \pmb{T_{div}}, \mathbf{r}, \mathbf{N}\mid\mathbf{g}) &\propto \mathcal{L}(\mathbf{g}\mid \mathbf{f}, \pmb{\rho}, \pmb{T_{div}}, \mathbf{r}, \mathbf{N})\\
-&\cross \mathcal{L}(\mathbf{f}\mid\pmb{\theta}, k)\\
-&\cross \pi(\pmb{\rho}\mid\mathbf{T_{div}})\\
-&\cross \pi(\mathbf{T_{div}}, \mathbf{r}, \mathbf{N}\mid k)\\
-&\cross\pi(\pmb{\theta}\mid k)\pi(k)
+P(k, \mathbf{f}, \pmb{\theta}, \pmb{T_{div}}, \mathbf{r}, \mathbf{N}\mid\mathbf{g})
+&\propto \pi(\mathbf{g}\mid M, \mathbf{f}, \pmb\alpha, T_{div}, D)\\
+&\cross \pi(\pmb\alpha\mid M)\\
+&\cross \pi(D\mid M)\\
+&\cross \pi(\mathbf{f}\mid\pmb{\theta}, M)\\
+&\cross\pi(\pmb{\theta}\mid M)\pi(M)
 \end{aligned}
 \end{gather}
-The first likelihood term 
-\begin{gather}
-\mathcal{L}(\mathbf{g}\mid\mathbf{f}, \pmb{\rho}, \pmb{T_{div}}, \mathbf{r}, \mathbf{N})
-\end{gather}
-corresponds to the likelihood of the coalescent with local population strucuture described in \ref{def:model}. It can be expressed as a product of likelihoods of clonal expansion subtrees with diverging clonal expansions added as leaves under varying population size coalescent process given the corresponding population size function $\alpha_i$.
-\begin{gather}
-\mathcal{L}(\mathbf{g}\mid\mathbf{f}, \pmb{\rho}, \pmb{T_{div}}, \mathbf{r}, \mathbf{N}) = \prod\limits_{i=1}^{k+1}\mathcal{L}(\mathbf{g}_i\mid T_{div_i}, r_i, N_i)
-\end{gather}
-Where $\mathbf{g_i}$ is the clonal expansion subtree corresponding to expansion $i$, contanining all the leaves in $f_i$, the entire clade specified by theses, as well as any divergence events $j$ added as leaves if $\rho_j = i$.
-The second term in the likelihood 
-\begin{gather}
-\mathcal{L}(\mathbf{f}\mid\pmb{\theta}, k)
-\end{gather}
-Corresponds to the likelihood of samples corresponding to given clonal expansion clades, given the clonal expansion clade sampling probabilities.
-It is simply a multinomial probability
-\begin{gather}
-\mathcal{L}(\mathbf{f}\mid\pmb{\theta}, k) = \prod\limits_{i=1}^{k}\theta_{i}^{|f_i|}  
-\end{gather}
 
-As the model dimensionality varies with $k$, the posterior has to be integrated via RJ-MCMC. Furthermore as $\pmb{\theta}$ has to be a multinomial probability vector, it must be rescaled with every transdimensional move so that it sums to one, leading to non-unitary determinants. For inference we use the following priors:
-The prior on the parental clades of individual clonal expansions
-\begin{gather}
-\pi(\pmb{\rho}\mid \mathbf{T_{div}}) 
-\end{gather}
-is assumed to be uniform probability that the clonal expansion diverged from any other subpopulation extant at the time, i.e.:
-\begin{gather}
-\pi(\pmb{\rho}\mid \mathbf{T_{div}}) \sim \prod\limits_{i=1}^{k} \mathbbm{1}_{\{x:x>i\}}(\rho_i)\frac{1}{k+1-i}  
-\end{gather}
-The prior on functions of effective population size can be expressed as
-\begin{gather}
-\pi(\mathbf{T_{div}}, \mathbf{r}, \mathbf{N}\mid k) \sim \pi(N_{k+1})\prod\limits_{i=1}^{k}\pi(N_i)\pi(T_{div_i})\pi(r_i)
-\end{gather}
-For $\pi(N_i)\quad \forall i\in\{0,...,k-1,k\}$, log-normal distributions parametrised by mean $\mu_N$ and standard deviation $\sigma_N$ provided by the decision maker are used.\\
-$\pi(r_i)\quad \forall i\in\{1,...,k-1,k\}$, log-normal distributions parametrised by mean $\mu_r$ and standard deviation $\sigma_r$ provided by the decision maker are used.\\
-$\pi(T_{div_i})$ are assumed to be gamma distributed, parametrised by mean and variance supplied by the decision maker.\\
-For prior on membership probabilities
-\begin{gather}
-\pi(\pmb{\theta}\mid k) \sim \texttt{dirichlet}(\psi)
-\end{gather}
-$k$-dimensional dirichlet distribution is used, with $\psi$ supplied by the decision maker.
-
-For prior on the number of clonal expansions
-\begin{gather}
-\pi(k) \sim \texttt{poi}(1)
-\end{gather}
-we use poisson distribution with rate 1
 \chapter{References}
 \printbibliography
 \end{document}
