@@ -117,7 +117,7 @@ Furthermore, all event times are ordered in descending (backwards) time order, w
 Under the assumption that $\mathbf{g}$ is a genealogy of a given sample, with each edge in $E_\mathbf{g}$ there is an associated unobserved set of individuals descending from one another. At some point along an edge from one lineage to another, the lineage can undergo a colour change, and become the most recent ancestor of a diverging clade. This event corresponds to this lineage somehow gaining advantage over other lineages, be it a bacterium gaining resistance against a drug, or a strain of a virus invading a completely susceptible population.
 
 \begin{definition}[Multiple Lineage Coalescent]\label{def:model}
-Given $M$ colours, $M$ population size functions $\mathbf{\alpha}\triangleq\{\alpha_j(t)\}_{1\leq j\leq M}$, the set of $M-1$ divergence times $T_{div} = \{t_{div_j}\}_{1\leq j<M}$, the set of $M-1$ divergence events $D = \{d_j\}_{1\leq j<M}$, the set of tips $I\subset \N, \quad I=\{1,2,...,N\}$, and the associated sampling times $T_{sam}\triangleq \left\{t^s_i\right\}_{i \in I}$.
+Given $M$ colours, $M$ population size functions $\mathbf{\alpha}\triangleq\{\alpha_j(t)\}_{1\leq j\leq M}$, the set of $M-1$ divergence times $T_{div} \triangleq \{t_{div_j}\}_{1\leq j<M}$, the set of $M-1$ divergence events $D \triangleq \{d_j\}_{1\leq j<M}$, the set of tips $I\subset \N, \quad I=\{1,2,...,N\}$, and the associated sampling times $T_{sam}\triangleq \left\{t^s_i\right\}_{i \in I}$.
 Assume that the indexing is such that the divergence times are in ascending order.\\
 Let $\pmb\Pi(t)$ be a continuous time markov chain defined on the state space of the partitions of $I$ denoted by $\Pi$, each associated with a colouring via the function $H: \Pi\cross\R^+ \mapsto \{1,...M\}$. The initial state is given by $\pmb\Pi(0) = \{1\}, \{2\}, ... , \{N-1\}, \{N\}$.
 
@@ -152,14 +152,14 @@ Given a population sample of $N$ individuals indexed by $F$, $X_F = \{x_i\}_{i \
 \begin{gather}
 M-1 \sim \texttt{poi}(\phi)
 \end{gather}
-Then simulate the $M$ clonal expansion probability vector $\pmb{\theta}$:
+Then simulate the $M$-dimensional clonal expansion probability vector $\pmb{\theta}$:
 \begin{gather}
 \pmb{\theta} \sim \texttt{dirichlet}(\psi), \quad \psi \in \R_+^{M} 
 \end{gather}
-Given the number of expansions $M-1$ and expansion probabilities $\pmb{\theta}$, partition $F$ into $M$ mutually disjoint subsets $\mathbf{f}=\{f_1, ... f_M-1, f_{M}\}$ with $\bigcup\limits_{i=1}^{M} f_{i} = F$ with the probability $P[j\in f_{i}]=\theta_i\quad \forall i,\forall j \in F$.  
+Given the number of expansions $M-1$ and expansion probabilities $\pmb{\theta}$, partition $F$ into $M$ mutually disjoint subsets $\mathbf{f}=\{f_1, ... f_{M-1}, f_{M}\}$ with $\bigcup\limits_{i=1}^{M} f_{i} = F$ with the probability $P[j\in f_{i}]=\theta_i\quad \forall i,\forall j \in F$.  
 Each partition corresponds to an individual colour characterising a clonal expansion. For convenience, we will set $f_{M}$ to be the index set of the tips corresponding to the parent subpopulation.
 
-The sample along with the initial colour assignment then follows the coalescent process described above in \ref{def:model}, governed by population size functions $\alpha^{-1}_{j}(t)$. To each $\alpha^{-1}_{j}$ corresponds a set of parameters:
+The sample along with the initial colour assignment then follows the coalescent process described above in \ref{def:model}, governed by population size functions $\alpha_{j}(t)$. To each $\alpha_{j}$ corresponds a set of parameters:
 \begin{gather}
 \begin{aligned}
 t_{div_{j}}\in\R_+ \quad&\text{The time of divergence}\\
@@ -186,7 +186,7 @@ Hence we arrived at the following function
 \end{gather} 
 Where $N$ is the carrying capacity and $r$ is the growth rate.
 This function  exhibits saturating behaviour, symmetry around zero, and numerically stable behaviour.\\
-While the intepretation of the carrying capacity $N$ is straightforward, we find $r$ to be best intepreted by considering the time to when the population reaches half the carrying capacity $T_mid$ as a function of $r$. It is straightforward to show that $T_{mid}(r) = \frac{1}{\sqrt{r}}$ 
+While the intepretation of the carrying capacity $N$ is straightforward, we find $r$ to be best intepreted by considering the time to when the population reaches half the carrying capacity $T_{mid}$ as a function of $r$. It is straightforward to show that $T_{mid}(r) = \frac{1}{\sqrt{r}}$ 
 \begin{figure}[H].
   \centering
      \includegraphics[width=0.4\textwidth]{../R/test_mcmc/alpha_plots}
