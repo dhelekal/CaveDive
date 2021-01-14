@@ -225,13 +225,15 @@ We now summarise the entire simulation procedure
 &\pi(M-1) &=& \texttt{poi}(\phi) &\quad&\text{Number of expansions} \\
 &\pi(\pmb\theta\mid M) &=& \texttt{dirichlet}(\psi) &\quad&\text{Expansion Membership Probabilities} \\
 &\pi(\mathbf{f\mid\pmb\theta}) &=& \texttt{multinom}(\theta; M) &\quad&\text{Expansion Membership Assignment} \\
-&\pi(N_M) &=& \texttt{lognorm}(\mu_{anc},\sigma_{anc}) &\quad&\text{Parent Population Size}\\
-&\pi(N_j\mid N_{M}) &=& \texttt{lognorm}(N_{M},\sigma_{exp}) &\quad&\text{Carrying Capacities}\\
-&\pi(t_{div_j}\mid N_{M}) &=& U\{(\beta N_{M},N_{M})\} &\quad&\text{Expansion Times}\\
-&\pi(r_j) &=& \texttt{lognorm}(\mu_{r},\sigma_{r}) &\quad&\text{Growth Rates}\\
-&\pi(d_j) &=& U\{\{i\in \{1 ... M+1\} : i > j\}\} &\quad&\text{Parent Populations}\\
+&\pi(N_M) &=& \texttt{lognorm}(\mu_{anc},\sigma_{anc})\forall j \in [M-1] &\quad&\text{Parent Population Size}\\
+&\pi(N_j\mid N_{M}) &=& \texttt{lognorm}(N_{M},\sigma_{exp})\forall j \in [M-1] &\quad&\text{Carrying Capacities}\\
+&\pi(t_{div_j}\mid N_{M}) &=& U\{(\beta N_{M},N_{M})\}\forall j \in [M-1] &\quad&\text{Expansion Times}\\
+&\pi(r_j) &=& \texttt{lognorm}(\mu_{r},\sigma_{r})\forall j \in [M-1] &\quad&\text{Growth Rates}\\
+&\pi(d_j) &=& U\{\{i\in \{1 ... M+1\} : t_{div_i} > t_{div_j}\}\} &\quad&\text{Parent Populations}\\
 \end{aligned}
 \end{gather}
+
+Note that the expansion parameters are exchangeable.
 
 For convenience, we will summarise $\pi(N_M)\pi(N_j\mid N_{M})\pi(t_{div_j}\mid N_{M})\pi(r_j) \quad \forall j$ as $\pi(\pmb\alpha)$ and $\pi(t_{div_j}\mid N_{M})\quad \forall j$ as $\pi(T_{div}\mid\pmb\alpha)$
 
@@ -253,14 +255,16 @@ $\phi, \psi, \mu_{anc}, \sigma_{anc}, \mu_r, \sigma_r, \sigma_{exp}, \beta$ are 
 The posterior for the full process is:
 \begin{gather}
 \begin{aligned}
-P(k, \mathbf{f}, \pmb{\theta}, \pmb{T_{div}}, \mathbf{r}, \mathbf{N}\mid\mathbf{g})
+P(M-1, \mathbf{f}, \pmb{\theta}, \pmb{T_{div}}, \mathbf{r}, \mathbf{N}\mid\mathbf{g})
 &\propto \pi(\mathbf{g}\mid M, \mathbf{f}, \pmb\alpha, T_{div}, D)\\
 &\cross \pi(\pmb\alpha\mid M)\\
 &\cross \pi(D\mid M)\\
 &\cross \pi(\mathbf{f}\mid\pmb{\theta}, M)\\
-&\cross\pi(\pmb{\theta}\mid M)\pi(M)
+&\cross\pi(\pmb{\theta}\mid M)\pi(M)\\
+&\cross (M-1)!
 \end{aligned}
 \end{gather}
+The final $(M-1)!$ term is due to expansions being exchangeable.
 
 \chapter{References}
 \printbibliography
