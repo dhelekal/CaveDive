@@ -318,7 +318,7 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.t
             
         }
         log_lh <- log_lh + coalescent_loglh(times$sam.times[[k_div]], times$coal.times[[k_div]], neutral.size, t_max)
-        log_lh <- log_lh + log(1/factorial(length(div.times)-1))
+        log_lh <- log_lh -lgamma(length(div.times))#+ log(1/factorial(length(div.times)-1))
     }
 
     return(list(log_lh = log_lh, sam.times = times$sam.times, coal.times = times$coal.times, partition_counts=partition_counts))

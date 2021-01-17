@@ -45,7 +45,7 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
     x_next[[2]] <- new_probs
 
     qr <- qr - log(1/(i_prev+1))
-    qr <- qr - log(1/(i_prev+1)) ## permutations as unordered
+    #qr <- qr - log(1/(i_prev+1)) ## permutations as unordered
     qr <- qr - log(1/old_probs[which_split])
     qr <- qr - initialiser.log_lh(x_next[[i_next + offset]]) 
     qr <- qr + log(1/(i_prev+1))
@@ -72,6 +72,7 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
       qr <- qr - log(1/i_prev) ## proposal merge with this probaility
       qr <- qr + initialiser.log_lh(x_prev[[(which_elem+offset)]]) ## reverse lh of adding that model
       qr <- qr + log(1/i_prev) ## reverse pick same prob for split 
+      #qr <- qr + log(1/i_prev) ## permutations as unordered
       qr <- qr + log(1/x_next[[2]][which_merge]) ##pick the same split from uniform
       
       if(abs(sum(x_next[[2]]) - 1) > 1e-8) warning("prob sum error")
@@ -145,8 +146,6 @@ move_update_rates <- function(x_prev, pre, scale) { ### update rates
   K <- x_prev[[2]]
   div.times <- x_prev[[3]]
   div.branch <- x_prev[[4]]
-
-  if(length(rates) > 1) print(length(rates))
 
   rates_upd <- rnorm(1, mean=rates, sd=1) 
   K_upd  <- rnorm(1, mean=K, sd=1*scale)

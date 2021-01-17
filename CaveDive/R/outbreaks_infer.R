@@ -28,7 +28,7 @@ outbreaks_infer <- function(phy,
 
     all_times <- extract_lineage_times(pre, pre$phy$node.label[pre$root_idx-pre$n_tips], -Inf)
 
-    tree_height <- max(pre$nodes.df$times) - min(pre$nodes.df$times)
+    tree_height <- max(nodes$times) - min(nodes$times)
 
     const_log_lh <- function(n){
         if (n > 0){
@@ -83,7 +83,7 @@ outbreaks_infer <- function(phy,
                                          prior_K, 
                                          prior_t, 
                                          prior_probs,
-                                         pre),
+                                         pre, length(inner_branches)),
                 function(x_prev, i_prev) prop.sampler(x_prev,
                                                       i_prev, 
                                                       pre, 
@@ -137,17 +137,21 @@ para.log_lh <- function(x, prior_r, prior_K, prior_branch_time) {
     return(out)
 }
 
-log_prior <- function(x, i, prior_i, prior_r, prior_K, prior_t, prior_probs, pre) {
+log_prior <- function(x, i, prior_i, prior_r, prior_K, prior_t, prior_probs, pre, ll) {
 
     n_tips <- pre$n_tips
     N <- x[[1]]
     probs <- x[[2]]
 
     if (i > 0) {
-        rates <- sapply(c(1:i), function(j) x[[j+offset]][[1]])
-        K <- sapply(c(1:i), function(j) x[[j+offset]][[2]])
         div.times <- sapply(c(1:i), function(j) x[[j+offset]][[3]])
-        div.branch <- sapply(c(1:i), function(j) x[[j+offset]][[4]])
+
+        div_ord <- order(-div.times)
+        div.times <- div.times[div_ord]
+
+        rates <- sapply(div_ord, function(j) x[[j+offset]][[1]])
+        K <- sapply(div_ord, function(j) x[[j+offset]][[2]])
+        div.branch <- sapply(div_ord, function(j) x[[j+offset]][[4]])
     } else {
         rates <- c()
         K <- c()
@@ -162,12 +166,12 @@ log_prior <- function(x, i, prior_i, prior_r, prior_K, prior_t, prior_probs, pre
       all(N > 0) && 
       all(probs >= 0) &&
       (abs(sum(probs)-1) < 1e-8) &&
-      all(!is.na(div.branch)) )# &&
-      #all(div.times > pre$nodes.df$times[pre$edges.df$node.parent[div.branch]]) && ## technically last two inequalities part of likelihood
-      #all(div.times < pre$nodes.df$times[pre$edges.df$node.child[div.branch]]))    ## but they assign 0 likelihood and easier to check here
+      all(!is.na(div.branch)) &&
+      all(div.times > pre$nodes.df$times[pre$edges.df$node.parent[div.branch]]) && ## technically last two inequalities part of likelihood
+      all(div.times < pre$nodes.df$times[pre$edges.df$node.child[div.branch]]))    ## but they assign 0 likelihood and easier to check here
 
     {
-        prior <- prior_i(i) + prior_probs(probs) + prior_N(N)
+        prior <- prior_i(i) + prior_probs(probs) + prior_N(N) + lgamma(i+1)
         MRCAs <- sapply(pre$edges.df$node.child[div.branch], function(x) if (x > n_tips) pre$phy$node.label[x-n_tips] else NA)
 
         if (all(!is.na(MRCAs))){
@@ -202,10 +206,14 @@ log_lh <- function(x, i, pre, exclude_lh=FALSE){
         probs <- x[[2]]
 
         if (i > 0) {
-            rates <- sapply(c(1:i), function(j) x[[j+offset]][[1]])
-            K <- sapply(c(1:i), function(j) x[[j+offset]][[2]])
             div.times <- sapply(c(1:i), function(j) x[[j+offset]][[3]])
-            div.branch <- sapply(c(1:i), function(j) x[[j+offset]][[4]])
+
+            div_ord <- order(-div.times)
+            div.times <- div.times[div_ord]
+
+            rates <- sapply(div_ord, function(j) x[[j+offset]][[1]])
+            K <- sapply(div_ord, function(j) x[[j+offset]][[2]])
+            div.branch <- sapply(div_ord, function(j) x[[j+offset]][[4]])
         } else {
             rates <- c()
             K <- c()
