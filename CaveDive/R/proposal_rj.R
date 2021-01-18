@@ -33,8 +33,9 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
   if (which_move==1) { ### increase dim
     i_next <- i_prev + 1
     x_next <- x_prev
+    N_prev <- x_prev[[1]]
     
-    x_next[[i_next + offset]] <- para.initialiser()
+    x_next[[i_next + offset]] <- para.initialiser(N_prev)
 
     old_probs <- x_prev[[2]]
     which_split <- sample.int((i_prev+1),1)
@@ -45,9 +46,8 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
     x_next[[2]] <- new_probs
 
     qr <- qr - log(1/(i_prev+1))
-    #qr <- qr - log(1/(i_prev+1)) ## permutations as unordered
     qr <- qr - log(1/old_probs[which_split])
-    qr <- qr - initialiser.log_lh(x_next[[i_next + offset]]) 
+    qr <- qr - initialiser.log_lh(x_next[[i_next + offset]], N_prev) 
     qr <- qr + log(1/(i_prev+1))
     qr <- qr + log(1/(i_prev+1))
 
@@ -56,6 +56,7 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
     log_J <- fn_log_J(i_prev, x_prev, x_next)
    } else { ### decrease dim
     x_next <- x_prev
+    N_prev <- x_prev[[1]]
     if (i_prev > 0) {
       i_next <- i_prev - 1
       which_elem <- sample.int(i_prev, size=1)
@@ -70,9 +71,8 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
       
       qr <- qr - log(1/i_prev) ## proposal remove model 
       qr <- qr - log(1/i_prev) ## proposal merge with this probaility
-      qr <- qr + initialiser.log_lh(x_prev[[(which_elem+offset)]]) ## reverse lh of adding that model
+      qr <- qr + initialiser.log_lh(x_prev[[(which_elem+offset)]], N_prev) ## reverse lh of adding that model
       qr <- qr + log(1/i_prev) ## reverse pick same prob for split 
-      #qr <- qr + log(1/i_prev) ## permutations as unordered
       qr <- qr + log(1/x_next[[2]][which_merge]) ##pick the same split from uniform
       
       if(abs(sum(x_next[[2]]) - 1) > 1e-8) warning("prob sum error")
