@@ -24,38 +24,39 @@ dev.off()
 pre <- structured_coal.preprocess_phylo(tree)
 
 r_mean <- 0 ## growth rate lognormal prior mean
-K_mean <- 2.5 ## carrying capacity rate lognormal prior mean
+N_mean <- 4 ## carrying capacity rate lognormal prior mean
 
 r_sd <- 2 ## growth rate lognormal prior sd
 K_sd <- 1 ## carrying capacity  rate lognormal prior sd
+N_sd <- 3
 
 prior_i <- function(x) dpois(x, 1, log = TRUE) ### poisson 1 prior
 
-prior_N <- function(x) dlnorm(x, meanlog = K_mean, sdlog = K_sd, log = TRUE)
-prior_N.sample <- function() rlnorm(1, meanlog = K_mean, sdlog = K_sd) 
+prior_N <- function(x) dlnorm(x, meanlog = N_mean, sdlog = N_sd, log = TRUE)
+prior_N.sample <- function() rlnorm(1, meanlog = N_mean, sdlog = N_sd) 
 
 prior_r <- function(x) dlnorm(x, meanlog = r_mean, sdlog = r_sd, log = TRUE) 
 prior_r.sample <- function() rlnorm(1, meanlog = r_mean, sdlog = r_sd) 
 
-prior_K <- function(x) dlnorm(x, meanlog = K_mean, sdlog = K_sd, log = TRUE)
-prior_K.sample <- function() rlnorm(1, meanlog = K_mean, sdlog = K_sd) 
+prior_K_given_N <- function(x, N) dlnorm(x, meanlog = log(N), sdlog = K_sd, log = TRUE)
+prior_K_given_N.sample <- function(N) rlnorm(1, meanlog = log(N), sdlog = K_sd) 
 
-prior_t <- function(x) {
-       if (all(x < max(pre$nodes.df$times)) && all(x > min(pre$nodes.df$times))) {
-              out <- length(x)*log(1/abs(max(pre$nodes.df$times)-min(pre$nodes.df$times)))
+prior_t_given_N <- function(x, N) {
+       if (all(x < -0) && all(x > -0.5*2*N)) {
+              out <- length(x)*log(1/(0 + 0.5*2*N))
        } else {
               out <- -Inf 
        }
        return(out) ### Uniform time prior
 } 
 
-prior_t.sample <- function() runif(1, min(pre$nodes.df$times), max(pre$nodes.df$times)) ### Uniform time prior
+prior_t_given_N.sample <- function(N) runif(1,-0.5*2*N, 0) ### Uniform time prior
 
 set.seed(5)
 
 o <- outbreaks_infer(tree, prior_i,  prior_N,  prior_N.sample, 
-                     prior_r, prior_r.sample,  prior_K,  prior_K.sample,  prior_t,
-                     prior_t.sample, 1, n_it=1e6, thinning=100, debug=T)
+                     prior_r, prior_r.sample,  prior_K_given_N,  prior_K_given_N.sample,  prior_t_given_N,
+                     prior_t_given_N.sample, 1, n_it=1e6, thinning=100, debug=F)
 
 y <- sapply(o$dims, function(x) x)
 n <- sapply(o$para, function(x) x[[1]])

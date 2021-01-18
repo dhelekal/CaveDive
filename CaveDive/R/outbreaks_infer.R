@@ -9,8 +9,8 @@ outbreaks_infer <- function(phy,
                             prior_r.sample, 
                             prior_K_given_N, 
                             prior_K_given_N.sample, 
-                            prior_t_given_K,
-                            prior_t_given_K.sample,
+                            prior_t_given_N,
+                            prior_t_given_N.sample,
                             concentration,
                             n_it=1e6, thinning=1, debug=FALSE) {
 
@@ -66,23 +66,24 @@ outbreaks_infer <- function(phy,
                                          i,
                                          prior_i, 
                                          prior_r, 
+                                         prior_N,
                                          prior_K_given_N, 
-                                         prior_t_given_K, 
+                                         prior_t_given_N, 
                                          prior_probs,
-                                         pre)),
+                                         pre),
                 function(x_prev, i_prev) prop.sampler(x_prev,
                                                       i_prev, 
                                                       pre, 
                                                       function(N) para.initialiser(N, 
                                                                                    prior_r.sample,
                                                                                    prior_K_given_N.sample, 
-                                                                                   prior_t_given_K.sample,
+                                                                                   prior_t_given_N.sample,
                                                                                    pre),
                                                       function(x_init, N) para.log_lh(x_init,
-                                                                                      N
+                                                                                      N,
                                                                                       prior_r, 
                                                                                       prior_K_given_N, 
-                                                                                      prior_t_given_K,
+                                                                                      prior_t_given_N,
                                                                                       pre),
                                                       fn_log_J,
                                                       fn_log_J_inv,
@@ -100,14 +101,14 @@ fn_log_J_inv <- function(i_prev, x_prev, x_next, which_mdl_rm) {
     return(0)
 }
 
-para.initialiser <- function(N, prior_r, prior_K_given_N, prior_t_given_K, pre){
+para.initialiser <- function(N, prior_r, prior_K_given_N, prior_t_given_N, pre){
     edges <- pre$edges.df
     nodes <- pre$nodes.df
     x_next <- vector(mode = "list", length = 4)
 
     rates <- prior_r()
     K <- prior_K_given_N(N)
-    div.times <- prior_t_given_K(K)
+    div.times <- prior_t_given_N(N)
 
     ### which branches exist at time of divergence
     br_extant_before <- edges$id[which(nodes$times[edges$node.child] > div.times)]
@@ -116,7 +117,11 @@ para.initialiser <- function(N, prior_r, prior_K_given_N, prior_t_given_K, pre){
     ### filter out terminal branches as those have 0 prior mass
     extant_inner <- br_extant_after[which(edges$node.child[br_extant_after]>pre$n_tips)] 
     ### choose one at random
-    div.branch <- sample(extant_inner, 1) 
+
+    if(length(extant_inner) < 1) extant_inner <- c(NA)
+
+
+    div.branch <- extant_inner[sample.int(length(extant_inner),1)] 
 
     x_next[[1]] <- rates
     x_next[[2]] <- K
@@ -126,7 +131,9 @@ para.initialiser <- function(N, prior_r, prior_K_given_N, prior_t_given_K, pre){
     return(x_next)
 }
 
-para.log_lh <- function(x, N, prior_r, prior_K_given_N, prior_t_given_K, pre) {
+para.log_lh <- function(x, N, prior_r, prior_K_given_N, prior_t_given_N, pre) {
+    edges <- pre$edges.df
+    nodes <- pre$nodes.df
 
     rates <- x[[1]]
     K <- x[[2]]
@@ -139,12 +146,13 @@ para.log_lh <- function(x, N, prior_r, prior_K_given_N, prior_t_given_K, pre) {
 
     ### filter out terminal branches as those have 0 prior mass
     extant_inner <- br_extant_after[which(edges$node.child[br_extant_after]>pre$n_tips)] 
+    if (length(extant_inner) < 1) extant_inner <- c(NA)
 
-    out <- prior_r(rates) + prior_K_given_N(K,N) + prior_t_given_K(div.times,K) + log(1/length(extant_inner))
+    out <- prior_r(rates) + prior_K_given_N(K,N) + prior_t_given_N(div.times,N) + log(1/length(extant_inner))
     return(out)
 }
 
-log_prior <- function(x, i, prior_i, prior_r, prior_K_given_N, prior_t_given_K, prior_probs, pre) {
+log_prior <- function(x, i, prior_i, prior_r, prior_N, prior_K_given_N, prior_t_given_N, prior_probs, pre) {
 
     n_tips <- pre$n_tips
     N <- x[[1]]
@@ -186,7 +194,7 @@ log_prior <- function(x, i, prior_i, prior_r, prior_K_given_N, prior_t_given_K, 
                 prior <- prior + 
                          sum(prior_r(rates)) +
                          sum(prior_K_given_N(K,N)) + 
-                         sum(prior_t_given_K(div.times,K))
+                         sum(prior_t_given_N(div.times,N))
             }
         } else {
             prior <- -Inf
