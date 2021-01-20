@@ -11,6 +11,8 @@
   \usepackage{lmodern}
 \fi
 
+\usepackage[margin=0.5in]{geometry}
+
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsthm}
@@ -88,12 +90,12 @@ The clonal expansion process may repeat throughout time, giving rise to several 
 
 In general, we will assume that the clonal expansion process happens relatively rarely. We will also assume the parent population is at eqillibrium. As under this scenario populations reach a constant population size in the limit this assumption can be interpreted that the clonal expansion that gave rise to the parent population has happened a very long time ago.
 
-At present a researcher collects a random set of $N$ samples from the population of interest, containing at least some of the clades produced by the clonal expansion process described above. Each sample belongs to one of the $k$ clonal expansion clades with multinomial probability $\theta_i$, $\pmb{\theta} = [\theta_1, ..., \theta_i, ..., \theta_{k-1}, \theta_{k}]$.
+At present a researcher collects a random set of $N$ samples from the population of interest, containing at least some of the clades produced by the clonal expansion process described above. Each sample belongs to one of the $k$ clonal expansion clades with probability $\theta_i$, $\pmb{\theta} = [\theta_1, ..., \theta_i, ..., \theta_{k-1}, \theta_{k}]$.
 
 The researcher then sequences the genomes of the samples and infers the corresponding phylogenetic using any of the popular available methods.
 The resulting phylogeny can be viewed as a realisation of the following backwards time process. 
 
-Select $K$ clade colours, and an associated clade sampling membership probability vector $\pmb{\theta}$. For each of the $N$ samples $s_i$ forming the leaves of the phylogeny, assign a colouring $c_i$. The samples of identical colour then coalesce with each other with rate governed by a colour specific population size function $\alpha_i(t)$. As it is assumed each colour is formed by a clonal expansion at time $t^{Div}_{i}$, $\alpha_i(t)$ vanishes to zero at the time of the expansion, and as such all coalescence within clade of colour $c_i$ happens almost surely before $t^{Div}_{i}$. Upon reaching the time of clonal expansion the MRCA then chnages colour to that of another clade extant at the time. The clade of the colour the MRCA changes to will be referred to as the parent clade. The MRCA is then added to the parent clade as a leaf. 
+Select $M$ clade colours, and an associated clade sampling membership probability vector $\pmb{\theta}$. For each of the $N$ samples $s_i$ forming the leaves of the phylogeny, assign a colouring $c_i$. The samples of identical colour then coalesce with each other with rate governed by a colour specific population size function $\alpha_i(t)$. As it is assumed each colour is formed by a clonal expansion at time $t_{div_i}$, $\alpha_i(t)$ vanishes to zero at the time of the expansion, and as such all coalescence within clade of colour $c_i$ happens almost surely before $t_{div_i}$. Upon reaching the time of clonal expansion the MRCA then chnages colour to that of another clade extant at the time. The clade of the colour the MRCA changes tof will be referred to as the parent clade. The MRCA is then added to the parent clade as a leaf. 
 The process continues until all only one individual remains.
 
 The coalescent process given leaf colouring and growth function parameters described above is characterised mathematically in the following section.
@@ -108,11 +110,11 @@ It consists of nodes $V_\mathbf{g}$, directed edges $E_\mathbf{g}$, node labels 
 The genealogy $\mathbf{g}$ shall be indexed by an index set $S=1\leq i \leq N\subset \N$, with $Y\subset S$ corresponding to coalescent events and $I\subset S$ corresponding to sampling events.\\
 For convenience, assume that all edges are in the forwards time direction, i.e.: 
 \begin{gather*}
-\forall k,l \in S: (k,l)\in E_\mathbf{g} \Rightarrow t_k<t_l
+\forall k,l \in S: (k,l)\in E_\mathbf{g} \Rightarrow t_k>t_l
 \end{gather*}
 Furthermore, all event times are ordered in descending (backwards) time order, with the first event corresponding the the most recent sample
 \begin{gather*}
-\forall k,l \in S: k<l \Rightarrow t_k > t_l
+\forall k,l \in S: k<l \Rightarrow t_k < t_l
 \end{gather*}
 Under the assumption that $\mathbf{g}$ is a genealogy of a given sample, with each edge in $E_\mathbf{g}$ there is an associated unobserved set of individuals descending from one another. At some point along an edge from one lineage to another, the lineage can undergo a colour change, and become the most recent ancestor of a diverging clade. This event corresponds to this lineage somehow gaining advantage over other lineages, be it a bacterium gaining resistance against a drug, or a strain of a virus invading a completely susceptible population.
 
@@ -169,24 +171,24 @@ N_j\in\R_+\quad&\text{The carrying capacity}
 \end{gather}
 The divergence events $d_i$ are simulated so that an expansion with divergence time $t_{div_j}$ merges with and thus changes colour to that of an expansion chosen uniformly at random from all expansions with time of divergence after $t_{div_j}$, i.e. an expansion that is extant at time $t_{div_j}$.
 
-In the case of the parent subpopulation $f_{M}$, we assume that the divergence event happened a very long time ago. As by definition $\alpha(t) \rightarrow N$ as $T_{div}-t\rightarrow -\infty$, we approximate $\alpha_{M}(t) \approx N_{M}$ and as such $\alpha^{-1}_{M}(t) \approx 1/N_{M}$. The parameters $T_{div_{j}}, r_j, N_j$ are simulated from appropriate (prior) distributions.
+In the case of the parent subpopulation $f_{M}$, we assume that the divergence event happened a very long time ago. As by definition $\alpha(t) \rightarrow N$ as $t_{div}-t\rightarrow \infty$, we approximate $\alpha_{M}(t) \approx N_{M}$ and as such $\alpha^{-1}_{M}(t) \approx 1/N_{M}$. The parameters $t_{div_{j}}, r_j, N_j$ are simulated from appropriate (prior) distributions.
 Finally, without loss of generality, assume that divergence events are indexed in ascending order by the time of divergence in coalescent time.
 \begin{gather}
-i > j \Leftrightarrow T_{div_i} > T_{div_j}  
+i > j \Leftrightarrow t_{div_i} > t_{div_j}  
 \end{gather}
-Sampling times $\mathbf{t}=\{t_i\}_{i\in F}$ are simulated from the same distribution for all $f$. It is required that for all expansions $j$, $t_i < T_{div_j}$, for all $i \in f_j$. In other words, all sampling for a given clade must happen after the clade diverges.
+Sampling times $\mathbf{t}=\{t_i\}_{i\in F}$ are simulated from the same distribution for all $f$. It is required that for all expansions $j$, $t_i < t_{div_j}$, for all $i \in f_j$. In other words, all sampling for a given clade must happen before the clade diverges. As such we assign zero likelihood if any sampling occurs after clade divergence.
 \subsubsection{Choice of effective population size functions}
 While the parent clade is assumed to be at equilibrium, the population size functions of the diverging clades have to satisfy several properties.\\
-First we introduce the variable $\tau = -t - T_{max} + T_{div}$ which denotes time relative to a divergence event of a given clade, where $T_{div}$ denotes the divergence time and $T_{max}$ denotes the time of the most recent sample.
-In our model we assume that the diverging subpopulation only appears after the divergence event, and as such it is required that at time $\tau=0$ the population vanishes $\alpha(\tau)=0$. Furthermore, we are looking for a monotone decreasing function in $\tau$, that exhibits saturating behaviour as $\tau$ grows large.
+First we introduce the variable $\tau = -t + t_{div}$ which denotes time relative to a divergence event of a given clade, where $t_{div}$ denotes the divergence time.
+In our model we assume that the diverging subpopulation only appears after the divergence event, and as such it is required that at time $\tau=0$ the population vanishes $\alpha(\tau)=0$. Furthermore, we are looking for a monotone increasing function in $\tau$, that exhibits saturating behaviour as $\tau$ grows large.
 Initially, functions exhibiting a period of exponential growth were investigated, however these were ill-posed numerically.
 Hence we arrived at the following function
 \begin{gather}
 \alpha(\tau) = N\frac{r\tau^2}{1+r\tau^2}
 \end{gather} 
 Where $N$ is the carrying capacity and $r$ is the growth rate.
-This function  exhibits saturating behaviour, symmetry around zero, and numerically stable behaviour.\\
-While the intepretation of the carrying capacity $N$ is straightforward, we find $r$ to be best intepreted by considering the time to when the population reaches half the carrying capacity $T_{mid}$ as a function of $r$. It is straightforward to show that $T_{mid}(r) = \frac{1}{\sqrt{r}}$ 
+This function  exhibits saturating behaviour.\\
+While the intepretation of the carrying capacity $N$ is straightforward, we find $r$ to be best intepreted by considering the time to when the population reaches half the carrying capacity $t_{mid}$ as a function of $r$. It is straightforward to show that $t_{mid}(r) = \frac{1}{\sqrt{r}}$ 
 \begin{figure}[H].
   \centering
      \includegraphics[width=0.4\textwidth]{../R/test_mcmc/alpha_plots}
@@ -195,10 +197,10 @@ While the intepretation of the carrying capacity $N$ is straightforward, we find
 The integral of the reciprocal $\alpha^{-1}(\tau)$ under this formulation is then given by 
 \begin{gather}
 \begin{aligned}\label{eq:rint}
-&\int_{t}^{t+s}\alpha^{-1}(\tau)\,d\tau\\ &= \frac{1}{N}\left[-\frac{1}{r(-\tau-T_{max}+T_{div})}-\tau-T_{max}+T_{div}\right]_{t}^{t+s}
+&\int_{t}^{t+s}\alpha^{-1}(\tau)\,d\tau\\ &= \frac{1}{N}\left[-\frac{1}{r(-\tau+t_{div})}-\tau+t_{div}\right]_{t}^{t+s}
 \end{aligned}
 \end{gather}
-As $t+s$ approaches the divergence time relative to the most recent sample $T_{div} - T_{max}$, the rate integral \ref{eq:rint} approaches infinity, and as such all coalescence within a clade happens before time of divergence with probability one.
+As $t+s$ approaches the divergence time relative to the most recent sample $T_{div}$, the rate integral \ref{eq:rint} approaches infinity, and as such all coalescence within a clade happens before time of divergence with probability one.
 
 For the purposes of our model, we simulate the parameters $N_j, r_j, t_{div_j} \forall j \in \{1,...,M-1\}$ as well as the parent population size $N_{M}$ under the following scheme.\\
 First simulate the parent population size $N_{M}$:
@@ -224,18 +226,18 @@ We now summarise the entire simulation procedure
 \begin{aligned}
 &\pi(M-1) &=& \texttt{poi}(\phi) &\quad&\text{Number of expansions} \\
 &\pi(\pmb\theta\mid M) &=& \texttt{dirichlet}(\psi) &\quad&\text{Expansion Membership Probabilities} \\
-&\pi(\mathbf{f\mid\pmb\theta}) &=& \texttt{multinom}(\theta; M) &\quad&\text{Expansion Membership Assignment} \\
-&\pi(N_M) &=& \texttt{lognorm}(\mu_{anc},\sigma_{anc})\forall j \in [M-1] &\quad&\text{Parent Population Size}\\
-&\pi(N_j\mid N_{M}) &=& \texttt{lognorm}(N_{M},\sigma_{exp})\forall j \in [M-1] &\quad&\text{Carrying Capacities}\\
-&\pi(t_{div_j}\mid N_{M}) &=& U\{(\beta N_{M},N_{M})\}\forall j \in [M-1] &\quad&\text{Expansion Times}\\
-&\pi(r_j) &=& \texttt{lognorm}(\mu_{r},\sigma_{r})\forall j \in [M-1] &\quad&\text{Growth Rates}\\
-&\pi(d_j) &=& U\{\{i\in \{1 ... M+1\} : t_{div_i} > t_{div_j}\}\} &\quad&\text{Parent Populations}\\
+&\pi(\mathbf{f\mid\pmb\theta}) &=& \prod\limits_{j=1}^M\theta_j^{|f_j|}&\quad&\text{Expansion Membership Assignment} \\
+&\pi(N_M) &=& \texttt{lognorm}(\mu_{anc},\sigma_{anc}) &\quad&\text{Parent Population Size}\\
+&\pi(N_j\mid N_{M}) &=& \texttt{lognorm}(N_{M},\sigma_{exp})\quad\forall j \in \{1...M-1\} &\quad&\text{Carrying Capacities}\\
+&\pi(d_j\mid T_{div}, M) &=& U\{\{i\in \{1 ... M+1\} : t_{div_i} > t_{div_j}\}\} &\quad&\text{Parent Populations}\\
+&\pi(t_{div_j}\mid N_{M}) &=& \texttt{gamma}\left(\frac{\nu^2}{\kappa}, \frac{\kappa N_M}{\nu}\right) \quad\forall j \in \{1...M-1\} &\quad&\text{Expansion Times}\\
+&\pi(r_j) &=& \texttt{lognorm}(\mu_{r},\sigma_{r})\quad\forall j \in \{1...M-1\} &\quad&\text{Growth Rates}
 \end{aligned}
 \end{gather}
 
 Note that the expansion parameters are exchangeable.
 
-For convenience, we will summarise $\pi(N_M)\pi(N_j\mid N_{M})\pi(t_{div_j}\mid N_{M})\pi(r_j) \quad \forall j$ as $\pi(\pmb\alpha)$ and $\pi(t_{div_j}\mid N_{M})\quad \forall j$ as $\pi(T_{div}\mid\pmb\alpha)$
+For convenience, we will summarise $\pi(N_M)\prod\limits_{j=1}^{M-1}\pi(N_j\mid N_{M})\pi(t_{div_j}\mid N_{M})\pi(r_j)$ as $\pi(\pmb\alpha)$.
 
 The tip times $T_{sam}$ are simulated separately and considered given. Furthermore $T_{sam} \perp M, \mathbf{f}, \pmb{\theta}, \pmb\alpha, D, T_{div}$.
 
@@ -244,7 +246,7 @@ The genealogy $\mathbf{g}$ is simulated under the Coalescent with Local Populati
 \pi(\mathbf{g}\mid M, \mathbf{f}, \pmb\alpha, T_{div}, D, T_{sam}) = \texttt{lpcoal}(M, \mathbf{f}, \pmb\alpha, T_{div}, D, T_{sam})
 \end{gather} 
 
-$\phi, \psi, \mu_{anc}, \sigma_{anc}, \mu_r, \sigma_r, \sigma_{exp}, \beta$ are hyperamaters and considered given.
+$\phi, \psi, \mu_{anc}, \sigma_{anc}, \mu_r, \sigma_r, \sigma_{exp}, \nu, \kappa$ are hyperamaters and considered given. The mean of divergence times $\mathop{\mathbb{E}}[T_{div}]$ is equal to $\nu N_m$ and the probability of $t_{div}$ being further than $N_M$-distance away from the mean of divergence times is less than $\kappa$.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -256,10 +258,9 @@ The posterior for the full process is:
 \begin{gather}
 \begin{aligned}
 P(M-1, \mathbf{f}, \pmb{\theta}, \pmb{T_{div}}, \mathbf{r}, \mathbf{N}\mid\mathbf{g})
-&\propto \pi(\mathbf{g}\mid M, \mathbf{f}, \pmb\alpha, T_{div}, D)\\
+&\propto \pi(\mathbf{g}\mid M, \mathbf{f}, \pmb\alpha, D)\\
 &\cross \pi(\pmb\alpha\mid M)\\
-&\cross \pi(T_{div}\mid\pmb\alpha)\\
-&\cross \pi(D\mid M)\\
+&\cross \pi(D\mid \pmb\alpha,M)\\
 &\cross \pi(\mathbf{f}\mid\pmb{\theta}, M)\\
 &\cross\pi(\pmb{\theta}\mid M)\pi(M)\\
 &\cross (M-1)!
