@@ -194,7 +194,8 @@ log_prior <- function(x, i, prior_i, prior_r, prior_N, prior_K_given_N, prior_t_
                 prior <- prior + 
                          sum(prior_r(rates)) +
                          sum(prior_K_given_N(K,N)) + 
-                         sum(prior_t_given_N(div.times,N))
+                         sum(prior_t_given_N(div.times,N)) -
+                         lgamma(length(div.times))
             }
         } else {
             prior <- -Inf

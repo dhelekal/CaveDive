@@ -457,10 +457,10 @@ test_that("Simulation Likelihood matches product of colour specific likelihoods"
       }
     }
 
-    log_lh <- log_lh + log(1/factorial(length(div_times)-1))
+    log_lh <- log_lh - lgamma(length(div_times))
 
     expect_equal(log_lh, co$log_lh)
-    expect_equal(comp$log_lh, co$log_lh)
+    expect_equal(comp$log_lh-lgamma(length(div_times)), co$log_lh)
 })
 
 test_that("Outbreak simulation likelihood matches computer outbreak likelihood", {
@@ -520,5 +520,5 @@ test_that("Outbreak simulation likelihood matches computer outbreak likelihood",
     expect_equal(sam.gt, comp$sam.times[[i]])
     expect_equal(coal.gt, comp$coal.times[[i]])
   }
-    expect_equal(comp_log_lh, sim_log_lh)
+    expect_equal(comp_log_lh-lgamma(length(out$div_times)), sim_log_lh)
 })

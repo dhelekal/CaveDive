@@ -285,43 +285,46 @@ structured_coal.preprocess_phylo <- function(phy){
 #' @param diverging.rates growth rates for diverging lineages
 #' @param diverging.sizes asymptotic size for diverging lineages
 #' @param neutral.size size of neutral phylogeny
+#' @param times.extracted list returned by extract_lineage_times. Used instead of div.MRCA.nodes to avoid recomputing the tree partition.
 #' @return Log-likelihood
 #' @export
-structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.times, diverging.rates, diverging.sizes, neutral.size, type="Sat"){
+structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.times, diverging.rates, diverging.sizes, neutral.size, times.extracted=NA, type="Sat"){
     n_tips <- phylo.preprocessed$n_tips
 
     MRCA.idx <- nodeid(phylo.preprocessed$phy, div.MRCA.nodes)-n_tips
     k_div <- length(div.MRCA.nodes)
     log_lh <- 0
-    times <- extract_lineage_times(phylo.preprocessed, div.MRCA.nodes, div.times)
 
-    partition_counts <- times$partition_counts
+    if(is.na(times.extracted)) {
+        times.extracted <- extract_lineage_times(phylo.preprocessed, div.MRCA.nodes, div.times)
+    }
+    partition_counts <- times.extracted$partition_counts
 
-    if(times$empty_tips) {
+    if(times.extracted$empty_tips) {
         #warning("MRCA selection produced subtrees with empty tips.")
         log_lh <- -Inf
     } else {
 
-        t_max <- max(sapply(c(1:length(times$sam.times)), function (x) max(times$sam.times[[x]])))
+        t_max <- max(sapply(c(1:length(times.extracted$sam.times)), function (x) max(times.extracted$sam.times[[x]])))
 
         if (k_div > 1) range <- c(1:(k_div-1)) else range <- c()
 
         for (i in range){
             if (type == "Log-Exp") {
-                    log_lh <- log_lh + logexp_coalescent_loglh(times$sam.times[[i]], times$coal.times[[i]], div.times[i], diverging.rates[i], diverging.sizes[i], t_max)
+                    log_lh <- log_lh + logexp_coalescent_loglh(times.extracted$sam.times[[i]], times.extracted$coal.times[[i]], div.times[i], diverging.rates[i], diverging.sizes[i], t_max)
                 } else if (type=="Sat") {
-                    log_lh <- log_lh + sat_coalescent_loglh(times$sam.times[[i]], times$coal.times[[i]], div.times[i], diverging.rates[i], diverging.sizes[i], t_max)
+                    log_lh <- log_lh + sat_coalescent_loglh(times.extracted$sam.times[[i]], times.extracted$coal.times[[i]], div.times[i], diverging.rates[i], diverging.sizes[i], t_max)
                 } else {
                     warning(paste0("Unrecognised likelihood option: ", type))
                     return(NA)
                 }
             
         }
-        log_lh <- log_lh + coalescent_loglh(times$sam.times[[k_div]], times$coal.times[[k_div]], neutral.size, t_max)
-        log_lh <- log_lh -lgamma(length(div.times))#+ log(1/factorial(length(div.times)-1))
+        log_lh <- log_lh + coalescent_loglh(times.extracted$sam.times[[k_div]], times.extracted$coal.times[[k_div]], neutral.size, t_max)
+        #log_lh <- log_lh -lgamma(length(div.times))#+ log(1/factorial(length(div.times)-1))
     }
 
-    return(list(log_lh = log_lh, sam.times = times$sam.times, coal.times = times$coal.times, partition_counts=partition_counts))
+    return(list(log_lh = log_lh, sam.times = times.extracted$sam.times, coal.times = times.extracted$coal.times, partition_counts=partition_counts))
 }
 
 #' Extracts Lineage times from a parent phylogeny based on provided divergence MRCA nodes and times. 
