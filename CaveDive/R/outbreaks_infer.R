@@ -58,11 +58,7 @@ outbreaks_infer <- function(phy,
         return(out) 
     }
 
-    o <- rjmcmc(function(x, i) log_lh(x,
-                                      i, 
-                                      pre, 
-                                      debug),
-                function(x, i) log_prior(x,
+    o <- rjmcmc(function(x, i) log_posterior(x,
                                          i,
                                          prior_i, 
                                          prior_r, 
@@ -152,12 +148,30 @@ para.log_lh <- function(x, N, prior_r, prior_K_given_N, prior_t_given_N, pre) {
     return(out)
 }
 
-log_prior <- function(x, i, prior_i, prior_r, prior_N, prior_K_given_N, prior_t_given_N, prior_probs, pre) {
+log_posterior <- function(x,
+                            i, 
+                            prior_i, 
+                            prior_r, 
+                            prior_N, 
+                            prior_K_given_N, 
+                            prior_t_given_N, 
+                            prior_probs, 
+                            pre) 
+{
+    prior <- 0
+    lh <- 0
+
+    edges <- pre$edges.df
+    nodes <- pre$nodes.df
 
     n_tips <- pre$n_tips
+    root_MRCA <- pre$phy$node.label[nodes$id[which.min(nodes$times)]-n_tips]
+    root_div <- -Inf
+
+    ### Extract values
+
     N <- x[[1]]
     probs <- x[[2]]
-
     if (i > 0) {
         div.times <- sapply(c(1:i), function(j) x[[j+offset]][[3]])
 
@@ -174,6 +188,7 @@ log_prior <- function(x, i, prior_i, prior_r, prior_N, prior_K_given_N, prior_t_
         div.times <- c()
     }
 
+    ### Check that all values make sense and lie within support of prior and likelihood functions
     if (
       (i >= 0) &&
       all(K > 0) &&
@@ -182,67 +197,44 @@ log_prior <- function(x, i, prior_i, prior_r, prior_N, prior_K_given_N, prior_t_
       all(probs >= 0) &&
       (abs(sum(probs)-1) < 1e-8) &&
       all(!is.na(div.branch)) &&
-      all(div.times > pre$nodes.df$times[pre$edges.df$node.parent[div.branch]]) && ## technically last two inequalities part of likelihood
-      all(div.times < pre$nodes.df$times[pre$edges.df$node.child[div.branch]]))    ## but they assign 0 likelihood and easier to check here
-
+      all(div.times > nodes$times[edges$node.parent[div.branch]]) && 
+      all(div.times < nodes$times[edges$node.child[div.branch]])) 
     {
-        prior <- prior_i(i) + prior_probs(probs) + prior_N(N) + lgamma(i+1)
-        MRCAs <- sapply(pre$edges.df$node.child[div.branch], function(x) if (x > n_tips) pre$phy$node.label[x-n_tips] else NA)
-
-        if (all(!is.na(MRCAs))){
+        MRCAs <- sapply(edges$node.child[div.branch], function(x) if (x > n_tips) pre$phy$node.label[x-n_tips] else NA)
+        if (all(!is.na(MRCAs))) { ### Make sure no terminal branch is being proposed as that is a zero set. 
+            
+            prior <- prior_i(i) + prior_probs(probs) + prior_N(N) + 
+                 lgamma(i+1) ### Correction for exchangeable RVs
             if (i > 0) {
-                prior <- prior + 
-                         sum(prior_r(rates)) +
-                         sum(prior_K_given_N(K,N)) + 
-                         sum(prior_t_given_N(div.times,N)) -
-                         lgamma(length(div.times))
+                    prior <- prior + 
+                             sum(prior_r(rates)) +
+                             sum(prior_K_given_N(K,N)) + 
+                             sum(prior_t_given_N(div.times,N)) -
+                             lgamma(length(div.times)) ### prior on divergence events
             }
+
+            MRCAs_root <- c(MRCAs, root_MRCA) ### add root for parent population
+            div.times_root <- c(div.times, root_div) ### parent diverges at -Inf
+
+            structured.log_lh <- structured_coal.likelihood(pre,
+                                                            MRCAs_root, 
+                                                            div.times_root, 
+                                                            rates, 
+                                                            K, 
+                                                            N)
+
+            partition_counts <- structured.log_lh$partition_counts
+            partition_prior <- sum(sapply(c(1:length(probs)), function (i) log(probs[i])*partition_counts[[i]]))
+
+            prior <- prior + partition_prior
+            lh <- structured.log_lh$log_lh
         } else {
             prior <- -Inf
-        }
+            lh <- -Inf
+        }     
     } else {
-        prior <- -Inf 
+        prior <- -Inf
+        lh <- -Inf
     }
-    if (prior==Inf) print("Error-prior")
-    return(prior)
-}
-
-log_lh <- function(x, i, pre, exclude_lh=FALSE){
-
-    if (exclude_lh)
-    {
-        lh <- 0
-    } else {
-        n_tips <- pre$n_tips
-
-        root_MRCA <- pre$phy$node.label[pre$nodes.df$id[which.min(pre$nodes.df$times)]-n_tips]
-        root_div <- -Inf
-
-        N <- x[[1]]
-        probs <- x[[2]]
-
-        if (i > 0) {
-            div.times <- sapply(c(1:i), function(j) x[[j+offset]][[3]])
-
-            div_ord <- order(-div.times)
-            div.times <- div.times[div_ord]
-
-            rates <- sapply(div_ord, function(j) x[[j+offset]][[1]])
-            K <- sapply(div_ord, function(j) x[[j+offset]][[2]])
-            div.branch <- sapply(div_ord, function(j) x[[j+offset]][[4]])
-        } else {
-            rates <- c()
-            K <- c()
-            div.branch <- c()
-            div.times <- c()
-        }
-
-        MRCAs <- sapply(pre$edges.df$node.child[div.branch], function(x) if (x > n_tips) pre$phy$node.label[x-n_tips] else NA)
-        MRCAs <- c(MRCAs, root_MRCA)
-        div.times_root <- c(div.times, root_div)
-
-        lh <- outbreaks_likelihood(pre, MRCAs, div.times_root, rates, K, N, probs)
-    }
-
-    return(lh)
+    return(list(prior=prior, lh=lh))
 }

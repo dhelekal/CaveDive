@@ -1,4 +1,4 @@
-rjmcmc <- function(likelihood, prior, proposal.sampler, x0, i0, max_it, thinning=1) {
+rjmcmc <- function(posterior, proposal.sampler, x0, i0, max_it, thinning=1) {
 
     pb <- utils::txtProgressBar(min=0, max=max_it, style = 3)
     out.para <- vector('list',max_it/thinning)
@@ -8,8 +8,11 @@ rjmcmc <- function(likelihood, prior, proposal.sampler, x0, i0, max_it, thinning
 
     x_prev <- x0
     i_prev <- i0
-    prior_prev <- prior(x0, i0)
-    lh_prev <- likelihood(x0, i0)
+
+    posterior_prop <- posterior(x0, i0)
+
+    prior_prev <- posterior_prop$prior
+    lh_prev <- posterior_prop$lh
 
     for(it in c(1:max_it)) {
         if (it%%thinning == 0) {
@@ -26,13 +29,10 @@ rjmcmc <- function(likelihood, prior, proposal.sampler, x0, i0, max_it, thinning
         prop_Jacc <- prop$log_J 
         qr <- prop$qr
 
-        prior_prop <- prior(x_prop, i_prop)
+        posterior_prop <- posterior(x_prop, i_prop)
 
-        if (prior_prop > -Inf) {
-            lh_prop <- likelihood(x_prop, i_prop)
-        } else {
-            lh_prop <- -Inf
-        }
+        prior_prop <- posterior_prop$prior
+        lh_prop <- posterior_prop$lh
 
         if (lh_prop > -Inf){
             a <- lh_prop+prior_prop
