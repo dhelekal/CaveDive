@@ -26,8 +26,13 @@ prop.sampler <- function (x_prev, i_prev, pre, para.initialiser, initialiser.log
   return(list(x_next=x_next,i_next=i_next, qr=qr, log_J=log_J))
 }
 
-transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, initialiser.log_lh, fn_log_J, fn_log_J_inv) {
-  which_move <- sample.int(2, size=1)
+transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, initialiser.log_lh, fn_log_J, fn_log_J_inv, fixed_move=NA) {
+  if (is.na(fixed_move)){
+      which_move <- sample.int(2, size=1)
+  } else {
+    which_move <- fixed_move
+  }
+
   log_J <- 0
   qr <- 0
   if (which_move==1) { ### increase dim
@@ -86,24 +91,28 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
   return(list(x_next=x_next, i_next=i_next, log_J=log_J, qr=qr))
 }
 
-within_model.sampler <- function(x_prev, i_prev, pre, scale) {
+within_model.sampler <- function(x_prev, i_prev, pre, scale, fixed_move=NA, fixed_index=NA) {
 
-  if (i_prev > 0) {
-    which_move <- sample(c(1,2,3,4,5), size=1)
+  if (is.na(fixed_move)){
+    if (i_prev > 0) {
+      which_move <- sample(c(1,2,3,4,5), size=1)
+    } else {
+      which_move <- 4
+    }
   } else {
-    which_move <- 4
+    which_move <- fixed_move
   }
 
   if (which_move==1) {
-    x_prop <- make_move(x_prev, i_prev, pre, move_update_rates, scale)
+    x_prop <- make_move(x_prev, i_prev, pre, move_update_rates, scale, fixed_index)
     x_next <- x_prop$x_next
     qr <- x_prop$qr
   } else if(which_move==2) {
-    x_prop <- make_move(x_prev, i_prev, pre, move_update_time, scale)
+    x_prop <- make_move(x_prev, i_prev, pre, move_update_time, scale, fixed_index)
     x_next <- x_prop$x_next
     qr <- x_prop$qr
   } else if(which_move==3) {
-    x_prop <- make_move(x_prev, i_prev, pre, move_update_branch, scale)
+    x_prop <- make_move(x_prev, i_prev, pre, move_update_branch, scale, fixed_index)
     x_next <- x_prop$x_next
     qr <- x_prop$qr
   } else if(which_move==4) {
@@ -117,7 +126,7 @@ within_model.sampler <- function(x_prev, i_prev, pre, scale) {
   } else if(which_move==5) {
 
     probs_prev <- x_prev[[2]]
-    probs_prop <- move_update_probs(probs_prev, pre)
+    probs_prop <- move_update_probs(probs_prev, pre, fixed_index)
     probs_next <- probs_prop$probs_next
     qr <- probs_prop$qr
 
@@ -127,8 +136,13 @@ within_model.sampler <- function(x_prev, i_prev, pre, scale) {
   return(list(x_next=x_next,qr=qr))
 }
 
-make_move <- function(x_prev, i_prev, pre, move, scale) {
-    which_model <- offset+sample.int(i_prev, size=1)
+make_move <- function(x_prev, i_prev, pre, move, scale, fixed_index) {
+    
+    if(is.na(fixed_index)) {
+      which_model <- offset+sample.int(i_prev, size=1)
+    } else {
+      which_model <- offset+fixed_index
+    }
     mdl_prev <- x_prev[[which_model]] 
     mdl_prop <- move(mdl_prev, pre, scale)
     mdl_next <- mdl_prop$x_next
@@ -253,10 +267,14 @@ move_update_N <- function(N_prev, pre, scale) {
 }
 
 
-move_update_probs <- function(probs, pre) {
+move_update_probs <- function(probs, pre, fixed_index = NA) {
 
   k <- length(probs)
-  which <- sample.int(k, 2, replace=T)
+  if (!all(!is.na(fixed_index))){
+    which <- sample.int(k, 2, replace=T)
+  } else {
+    which <- fixed_index
+  }
 
   i1 <- which[1]
   i2 <- which[2]

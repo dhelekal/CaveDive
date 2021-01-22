@@ -522,3 +522,140 @@ test_that("Outbreak simulation likelihood matches computer outbreak likelihood",
   }
     expect_equal(comp_log_lh-lgamma(length(out$div_times)), sim_log_lh)
 })
+
+context("RJMCMC")
+test_that("Transdimensional moves are balanced", {
+    set.seed(1)
+    
+    sam <- runif(100, 0, 10)
+    tmax <- max(sam)
+    sam <- sam - tmax
+    sam.ord <- order(-sam)
+    sam <- sam[sam.ord]
+    colours <- trunc(runif(100, 1, 4))
+    
+    N <- 100
+    A <- c(5.1, 0.3)
+    K <- c(100,100)
+
+    div_times <- c(-25, -60, -Inf)
+    div_cols <- c(1, 2, 3)
+    rates <- list(function (s) sat.rate(s, K[1], A[1], div_times[1]), function (s) sat.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
+    rate.ints <- list(function(t,s) sat.rate.int(t, s, K[1], A[1], div_times[1]), function(t,s) sat.rate.int(t, s, K[2], A[2], div_times[2]), function(t,s) constant.rate.int(t,s,N))
+
+    co <- structured_coal.simulate(sam, colours, div_times, div_cols, rates, rate.ints)
+
+    tr.nodiv <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from, include_div_nodes = FALSE)
+    tree.nodiv <- read.tree(text = tr.nodiv$full)
+    pre <- structured_coal.preprocess_phylo(tree.nodiv)
+
+    r_mean <- 0 ## growth rate lognormal prior mean
+    N_mean <- 4 ## carrying capacity rate lognormal prior mean
+
+    r_sd <- 2 ## growth rate lognormal prior sd
+    K_sd <- 1 ## carrying capacity  rate lognormal prior sd
+    N_sd <- 3 ## parent population size lognormal prior sd
+
+    kappa <- 1/10
+    nu <- 1/2
+
+    prior_i <- function(x) dpois(x, 1, log = TRUE) ### poisson 1 prior
+
+    prior_N <- function(x) dlnorm(x, meanlog = N_mean, sdlog = N_sd, log = TRUE)
+    prior_N.sample <- function() rlnorm(1, meanlog = N_mean, sdlog = N_sd) 
+
+    prior_r <- function(x) dlnorm(x, meanlog = r_mean, sdlog = r_sd, log = TRUE) 
+    prior_r.sample <- function() rlnorm(1, meanlog = r_mean, sdlog = r_sd) 
+
+    prior_K_given_N <- function(x, N) dlnorm(x, meanlog = log(N), sdlog = K_sd, log = TRUE)
+    prior_K_given_N.sample <- function(N) rlnorm(1, meanlog = log(N), sdlog = K_sd) 
+
+    prior_t_given_N <- function(x, N) {
+           if (all(x < 0)) {
+                  out <- dgamma(-x, shape=(nu^2)/kappa, scale = kappa * N / nu, log = TRUE)
+           } else {
+                  out <- -Inf
+           }
+           return(out) 
+    } 
+
+    prior_t_given_N.sample <- function(N) (-rgamma(1, shape=(nu^2)/kappa, scale = kappa * N / nu))
+
+    para.initialiser <- function(N, prior_r, prior_K_given_N, prior_t_given_N, pre){
+      edges <- pre$edges.df
+      nodes <- pre$nodes.df
+      x_next <- vector(mode = "list", length = 4)
+
+      rates <- prior_r()
+      K <- prior_K_given_N(N)
+      div.times <- prior_t_given_N(N)
+
+      ### which branches exist at time of divergence
+      br_extant_before <- edges$id[which(nodes$times[edges$node.child] > div.times)]
+      br_extant_after <- br_extant_before[which(nodes$times[edges$node.parent[br_extant_before]] < div.times)]
+
+      ### filter out terminal branches as those have 0 prior mass
+      extant_inner <- br_extant_after[which(edges$node.child[br_extant_after]>pre$n_tips)] 
+      ### choose one at random
+
+      if(length(extant_inner) < 1) extant_inner <- c(NA)
+
+
+      div.branch <- extant_inner[sample.int(length(extant_inner),1)] 
+
+      x_next[[1]] <- rates
+      x_next[[2]] <- K
+      x_next[[3]] <- div.times
+      x_next[[4]] <- div.branch
+      return(x_next)
+    }
+
+    para.log_lh <- function(x, N, prior_r, prior_K_given_N, prior_t_given_N, pre) {
+      edges <- pre$edges.df
+      nodes <- pre$nodes.df
+
+      rates <- x[[1]]
+      K <- x[[2]]
+      div.times <- x[[3]]
+      div.branch <- x[[4]]
+
+      ### which branches exist at time of divergence
+      br_extant_before <- edges$id[which(nodes$times[edges$node.child] > div.times)]
+      br_extant_after <- br_extant_before[which(nodes$times[edges$node.parent[br_extant_before]] < div.times)]
+
+      ### filter out terminal branches as those have 0 prior mass
+      extant_inner <- br_extant_after[which(edges$node.child[br_extant_after]>pre$n_tips)] 
+      if (length(extant_inner) < 1) extant_inner <- c(NA)
+
+      out <- prior_r(rates) + prior_K_given_N(K,N) + prior_t_given_N(div.times,N) + log(1/length(extant_inner))
+      return(out)
+    }
+
+    fn_log_J <- function(i_prev, x_prev, x_next) {
+      return(0)
+    }
+
+    fn_log_J_inv <- function(i_prev, x_prev, x_next, which_mdl_rm) {
+      return(0)
+    }
+
+    p.init <- function(N) para.initialiser(N, prior_r.sample, prior_K_given_N.sample, prior_t_given_N.sample, pre)
+    p.log_lh <- function(x, N) para.log_lh(x, N, prior_r, prior_K_given_N, prior_t_given_N, pre)
+
+    i_0 <- 0 
+    x_0 <- list()
+    x_0[[1]] <- 100 
+    x_0[[2]] <- c(1)
+
+    ### Increase dim
+    for (i in c(1:10)){
+        prop_up <- transdimensional.sampler(x_1_dim, i_1_dim, pre, p.init, p.log_lh, fn_log_J, fn_log_J_inv, fixed_move=1)
+        x_1_dim <- prop_up$x
+        i_1_dim <- prop_up$i
+    
+        qr1 <- prop_up$qr
+        prop_down <- transdimensional.sampler(x_1_dim, i_1_dim, pre, p.init, p.log_lh, fn_log_J, fn_log_J_inv, fixed_move=2)
+        qr2 <- prop_down$qr
+        expect_equal(qr1, -qr2)
+    }
+})
