@@ -28,7 +28,10 @@ N_mean <- 4 ## carrying capacity rate lognormal prior mean
 
 r_sd <- 2 ## growth rate lognormal prior sd
 K_sd <- 1 ## carrying capacity  rate lognormal prior sd
-N_sd <- 3
+N_sd <- 3 ## parent population size lognormal prior sd
+
+kappa <- 1/10
+nu <- 1/2
 
 prior_i <- function(x) dpois(x, 1, log = TRUE) ### poisson 1 prior
 
@@ -42,15 +45,16 @@ prior_K_given_N <- function(x, N) dlnorm(x, meanlog = log(N), sdlog = K_sd, log 
 prior_K_given_N.sample <- function(N) rlnorm(1, meanlog = log(N), sdlog = K_sd) 
 
 prior_t_given_N <- function(x, N) {
-       if (all(x < -0) && all(x > -0.5*2*N)) {
-              out <- length(x)*log(1/(0 + 0.5*2*N))
+       if (all(x < 0)) {
+              out <- dgamma(-x, shape=(nu^2)/kappa, scale = kappa * N / nu, log = TRUE)
        } else {
-              out <- -Inf 
+              out <- -Inf
        }
        return(out) ### Uniform time prior
 } 
 
-prior_t_given_N.sample <- function(N) runif(1,-0.5*2*N, 0) ### Uniform time prior
+prior_t_given_N.sample <- function(N) (-rgamma(1, shape=(nu^2)/kappa, scale = kappa * N / nu))
+ ### Uniform time prior
 
 set.seed(5)
 
