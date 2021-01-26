@@ -213,7 +213,7 @@ N_{j} \sim \texttt{lognorm}(N_{M}, \sigma_{exp}) \quad\forall j \in \{1,...,M-1\
 \end{gather}
 as well as the corresponding divergence times
 \begin{gather}
-t_{div_j} \sim U\{(\beta N_{M}, N_{M})\} \quad\forall j \in \{1,...,M-1\}
+t_{div_j} \sim \texttt{gamma}\left(\frac{\nu^2}{\kappa}, \frac{\kappa N_M}{\nu}\right) \quad\forall j \in \{1,...,M-1\}
 \end{gather}
 where $\beta \in (0,1)$
 and growth rates
