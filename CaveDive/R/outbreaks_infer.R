@@ -5,8 +5,8 @@ outbreaks_infer <- function(phy,
                             prior_i, 
                             prior_N, 
                             prior_N.sample, 
-                            prior_r, 
-                            prior_r.sample, 
+                            prior_r_given_N, 
+                            prior_r_given_N.sample, 
                             prior_K_given_N, 
                             prior_K_given_N.sample, 
                             prior_t_given_N,
@@ -67,8 +67,8 @@ outbreaks_infer <- function(phy,
     o <- rjmcmc(function(x, i) log_posterior(x,
                                          i,
                                          prior_i, 
-                                         prior_r, 
                                          prior_N,
+                                         prior_r_given_N, 
                                          prior_K_given_N, 
                                          prior_t_given_N, 
                                          prior_probs,
@@ -77,13 +77,13 @@ outbreaks_infer <- function(phy,
                                                       i_prev, 
                                                       pre, 
                                                       function(N) para.initialiser(N, 
-                                                                                   prior_r.sample,
+                                                                                   prior_r_given_N.sample,
                                                                                    prior_K_given_N.sample, 
                                                                                    prior_t_given_N.sample,
                                                                                    pre),
                                                       function(x_init, N) para.log_lh(x_init,
                                                                                       N,
-                                                                                      prior_r, 
+                                                                                      prior_r_given_N, 
                                                                                       prior_K_given_N, 
                                                                                       prior_t_given_N,
                                                                                       pre),
@@ -103,12 +103,12 @@ fn_log_J_inv <- function(i_prev, x_prev, x_next, which_mdl_rm) {
     return(0)
 }
 
-para.initialiser <- function(N, prior_r, prior_K_given_N, prior_t_given_N, pre){
+para.initialiser <- function(N, prior_r_given_N, prior_K_given_N, prior_t_given_N, pre){
     edges <- pre$edges.df
     nodes <- pre$nodes.df
     x_next <- vector(mode = "list", length = 4)
 
-    rates <- prior_r()
+    rates <- prior_r_given_N()
     K <- prior_K_given_N(N)
     div.times <- prior_t_given_N(N)
 
@@ -133,7 +133,7 @@ para.initialiser <- function(N, prior_r, prior_K_given_N, prior_t_given_N, pre){
     return(x_next)
 }
 
-para.log_lh <- function(x, N, prior_r, prior_K_given_N, prior_t_given_N, pre) {
+para.log_lh <- function(x, N, prior_r_given_N, prior_K_given_N, prior_t_given_N, pre) {
     edges <- pre$edges.df
     nodes <- pre$nodes.df
 
@@ -150,15 +150,15 @@ para.log_lh <- function(x, N, prior_r, prior_K_given_N, prior_t_given_N, pre) {
     extant_inner <- br_extant_after[which(edges$node.child[br_extant_after]>pre$n_tips)] 
     if (length(extant_inner) < 1) extant_inner <- c(NA)
 
-    out <- prior_r(rates) + prior_K_given_N(K,N) + prior_t_given_N(div.times,N) + log(1/length(extant_inner))
+    out <- prior_r_given_N(rates,N) + prior_K_given_N(K,N) + prior_t_given_N(div.times,N) + log(1/length(extant_inner))
     return(out)
 }
 
 log_posterior <- function(x,
                             i, 
                             prior_i, 
-                            prior_r, 
                             prior_N, 
+                            prior_r_given_N, 
                             prior_K_given_N, 
                             prior_t_given_N, 
                             prior_probs, 
@@ -213,7 +213,7 @@ log_posterior <- function(x,
                  lgamma(i+1) ### Correction for exchangeable RVs
             if (i > 0) {
                     prior <- prior + 
-                             sum(prior_r(rates)) +
+                             sum(prior_r_given_N(rates, N)) +
                              sum(prior_K_given_N(K,N)) + 
                              sum(prior_t_given_N(div.times,N)) -
                              lgamma(length(div.times)) ### prior on divergence events
