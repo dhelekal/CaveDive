@@ -108,7 +108,7 @@ para.initialiser <- function(N, prior_r_given_N, prior_K_given_N, prior_t_given_
     nodes <- pre$nodes.df
     x_next <- vector(mode = "list", length = 4)
 
-    rates <- prior_r_given_N()
+    rates <- prior_r_given_N(N)
     K <- prior_K_given_N(N)
     div.times <- prior_t_given_N(N)
 
