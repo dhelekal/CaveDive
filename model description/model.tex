@@ -215,10 +215,10 @@ as well as the corresponding divergence times
 \begin{gather}
 t_{div_j} \sim \texttt{gamma}\left(\frac{\nu^2}{\kappa}, \frac{\kappa N_M}{\nu}\right) \quad\forall j \in \{1,...,M-1\}
 \end{gather}
-where $\beta \in (0,1)$
-and growth rates
+where $\beta \in (0,1)$.
+Rather than simulating the growth rates directly, we simulate the correspondng time to midpoint $t_{mid}(r_j) = 1/\sqrt{r_j}$
 \begin{gather}
-r_{j} \sim \texttt{lognorm}(\mu_r, \sigma_r) \quad\forall j \in \{1,...,M-1\}
+t_{mid}(r_j) \sim \texttt{exp}(\lambda_r/N_M) \quad\forall j \in \{1,...,M-1\}
 \end{gather} 
 \subsubsection{Summary}
 We now summarise the entire simulation procedure
@@ -231,13 +231,13 @@ We now summarise the entire simulation procedure
 &\pi(N_j\mid N_{M}) &=& \texttt{lognorm}(N_{M},\sigma_{exp})\quad\forall j \in \{1...M-1\} &\quad&\text{Carrying Capacities}\\
 &\pi(d_j\mid T_{div}, M) &=& U\{\{i\in \{1 ... M+1\} : t_{div_i} > t_{div_j}\}\} &\quad&\text{Parent Populations}\\
 &\pi(t_{div_j}\mid N_{M}) &=& \texttt{gamma}\left(\frac{\nu^2}{\kappa}, \frac{\kappa N_M}{\nu}\right) \quad\forall j \in \{1...M-1\} &\quad&\text{Expansion Times}\\
-&\pi(r_j) &=& \texttt{lognorm}(\mu_{r},\sigma_{r})\quad\forall j \in \{1...M-1\} &\quad&\text{Growth Rates}
+&\pi(t_{mid}(r_j)\mid N_M) &=& \texttt{exp}(\lambda_{r}/N_M)\quad\forall j \in \{1...M-1\} &\quad&\text{Growth Rates}
 \end{aligned}
 \end{gather}
 
 Note that the expansion parameters are exchangeable.
 
-For convenience, we will summarise $\pi(N_M)\prod\limits_{j=1}^{M-1}\pi(N_j\mid N_{M})\pi(t_{div_j}\mid N_{M})\pi(r_j)$ as $\pi(\pmb\alpha)$.
+For convenience, we will summarise $\pi(N_M)\prod\limits_{j=1}^{M-1}\pi(N_j\mid N_{M})\pi(t_{div_j}\mid N_{M})\pi(t_{mid}(r_j)\mid N_M)$ as $\pi(\pmb\alpha)$.
 
 The tip times $T_{sam}$ are simulated separately and considered given. Furthermore $T_{sam} \perp M, \mathbf{f}, \pmb{\theta}, \pmb\alpha, D, T_{div}$.
 
