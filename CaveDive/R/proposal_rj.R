@@ -290,3 +290,79 @@ move_update_probs <- function(probs, pre, fixed_index = NA) {
   
   return(list(probs_next=probs_upd, qr=qr))
 }  
+
+
+### Proposal likelihood functions used for testing
+prop_lh <- function(x_prev, i_prev, x_next, i_next, pre, initialiser.log_lh, scale=10) {
+  lh <- 0
+    if (i_next == i_prev) {
+        lh <- lh + dnorm(x_next[[1]], mean = x_prev[[1]], sd = 1*scale, log=TRUE)
+        p_next <- x_next[[2]]
+        p_prev <- x_prev[[2]]
+        lh <- lh + log(1/((length(p_next)**2)))
+
+        p_diff <- p_prev - p_next
+
+        p_idx <- which(p_diff > 1e-6)
+        if (length(p_idx) > 0) {
+            lh <- lh + (log(1/p_prev[p_idx[1]]))
+        }
+
+        if (i_next > 0){ 
+          mdl_lh <- sum(sapply(c(1:i_next), function (j) model_lh(x_prev[[offset+j]], x_next[[offset+j]], pre, scale)))
+        } else { 
+          mdl_lh <- 0
+        }
+        lh <- lh + mdl_lh
+    } else if (i_next > i_prev) {
+      # Need to find which event was added -- use that events are uniquely identified by branch + time
+      # No need for good performance or efficiency this is a test function
+      if (i_prev > 0 ) {
+        prev_branches <- sapply(c(1:i_prev), function (j) x_prev[[offset+j]][[4]])
+        prev_times <- sapply(c(1:i_prev), function (j) x_prev[[offset+j]][[3]])
+        unique_idx <- which(sapply(c(1:i_next), 
+                                      function (j) length(which(x_next[[offset+j]][[4]] == prev_branches & abs(x_next[[offset+j]][[3]] - prev_times) < 1e-6)))==0)
+      } else {
+        unique_idx <- 1
+      }
+      lh <- lh + initialiser.log_lh(x_next[[offset+unique_idx]], x_prev[[1]])
+      lh <- lh + log(1/i_next)
+
+      p_next <- x_next[[2]]
+      p_prev <- x_prev[[2]]
+
+      p_diff <- p_prev - p_next[-(unique_idx+1)]
+
+      p_idx <- which(p_diff > 1e-6)
+      lh <- lh + (log(1/p_prev[p_idx[1]]))
+    } else {
+      lh <- lh + log((1/i_prev**2))
+    }
+    return(lh)
+}
+
+model_lh <- function(mdl_prev, mdl_next, pre, scale) {
+  lh <- 0
+  lh <- lh + dnorm(mdl_next[[1]], mean=mdl_prev[[1]], sd=1, log=TRUE) +  ### Rates and Carrying capacity
+             dnorm(mdl_next[[2]], mean=mdl_prev[[2]], sd=1*scale, log=TRUE) 
+
+  br_next <- mdl_next[[4]]
+  br_prev <- mdl_prev[[4]]
+
+  if (br_prev != br_next) {
+    if (pre$edges.df$node.parent[br_prev] == pre$edges.df$node.child[br_next]) {
+      lh <- lh + log(1/2)
+      lh <- lh + log(1/pre$edges.df$length[br_next])
+    } else if (pre$edges.df$node.child[br_prev] == pre$edges.df$node.parent[br_next]){
+      lh <- lh + log(1/2)
+      lh <- lh + log(1/2)
+      lh <- lh + log(1/pre$edges.df$length[br_next])
+    } else {
+      lh <- -Inf
+    }
+  } else {
+    len_scale <- pre$edges.df$length[br_next]/10
+    lh <- lh + dnorm(mdl_next[[3]], mean=mdl_prev[[3]], sd=1*len_scale, log=TRUE) 
+  }
+  return(lh)
+}

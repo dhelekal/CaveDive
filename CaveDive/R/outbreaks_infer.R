@@ -12,7 +12,7 @@ outbreaks_infer <- function(phy,
                             prior_t_given_N,
                             prior_t_given_N.sample,
                             concentration,
-                            n_it=1e6, thinning=1, debug=FALSE) {
+                            n_it=1e6, thinning=1, init=NULL, debug=FALSE) {
 
     if (debug) warning("Running in debug mode with only priors in use.")
 
@@ -42,12 +42,18 @@ outbreaks_infer <- function(phy,
         return(lh)
     }
 
-    N_0 <- optim(1, const_log_lh, lower=1e-3, upper=1e5, method="Brent", control = list(maxit = 2000000))$par
-
-    i_0 <- 0 
-    x_0 <- list()
-    x_0[[1]] <- N_0 
-    x_0[[2]] <- c(1)
+    if (is.null(init)) {
+    
+        N_0 <- optim(1, const_log_lh, lower=(1e-2)*tree_height, upper=(1e2)*tree_height, method="Brent", control = list(maxit = 2000000))$par
+    
+        i_0 <- 0 
+        x_0 <- list()
+        x_0[[1]] <- N_0 
+        x_0[[2]] <- c(1)
+    } else {
+        x_0 <- init$x_0
+        i_0 <- init$i_0
+    }
 
     prior_probs <- function(probs) {
 

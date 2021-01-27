@@ -647,15 +647,43 @@ test_that("Transdimensional moves are balanced", {
     x_0[[1]] <- 100 
     x_0[[2]] <- c(1)
 
-    ### Increase dim
+    x_prev <- x_0
+    i_prev <- i_0
+
+    ### Increase dim up to 10 always check QR both when adding a dim and then remove an event and check QR
     for (i in c(1:10)){
-        prop_up <- transdimensional.sampler(x_1_dim, i_1_dim, pre, p.init, p.log_lh, fn_log_J, fn_log_J_inv, fixed_move=1)
-        x_1_dim <- prop_up$x
-        i_1_dim <- prop_up$i
+        prop_up <- transdimensional.sampler(x_prev, i_prev, pre, p.init, p.log_lh, fn_log_J, fn_log_J_inv, fixed_move=1)
+        x_next <- prop_up$x
+        i_next <- prop_up$i
     
-        qr1 <- prop_up$qr
-        prop_down <- transdimensional.sampler(x_1_dim, i_1_dim, pre, p.init, p.log_lh, fn_log_J, fn_log_J_inv, fixed_move=2)
-        qr2 <- prop_down$qr
-        expect_equal(qr1, -qr2)
+        qr_comp <- prop_up$qr
+        qr_test <- -prop_lh(x_prev, i_prev, x_next, i_next, pre, p.log_lh) + prop_lh(x_next, i_next, x_prev, i_prev, pre, p.log_lh)
+
+        expect_equal(qr_comp, qr_test)
+
+        x_prev <- x_next
+        i_prev <- i_next
+
+        prop_down <- transdimensional.sampler(x_prev, i_prev, pre, p.init, p.log_lh, fn_log_J, fn_log_J_inv, fixed_move=2)
+        qr_comp2 <- prop_down$qr
+        x_next2 <- prop_down$x
+        i_next2 <- prop_down$i
+
+        qr_test2 <- -prop_lh(x_prev, i_prev, x_next2, i_next2, pre, p.log_lh) + prop_lh(x_next2, i_next2, x_prev, i_prev, pre, p.log_lh)
+
+        expect_equal(qr_comp2, qr_test2)
+    }
+    ### x_prev now 10+1-dimensional, test each move 5 times and check QR
+    for (k in c(1:5)) {
+      ### 5 moves
+      for (l in c(1:10)) {
+          prop_within <- within_model.sampler(x_prev, i_prev, pre, 10, fixed_move=k) 
+          x_next <- prop_within$x
+          i_next <- i_prev
+          qr_comp <- prop_within$qr
+
+          qr_test <- -prop_lh(x_prev, i_prev, x_next, i_next, pre, p.log_lh) + prop_lh(x_next, i_next, x_prev, i_prev, pre, p.log_lh)
+          expect_equal(qr_comp, qr_test)
+      }
     }
 })
