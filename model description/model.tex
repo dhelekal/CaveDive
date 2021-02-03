@@ -229,7 +229,7 @@ We now summarise the entire simulation procedure
 &\pi(\mathbf{f\mid\pmb\theta}) &=& \prod\limits_{j=1}^M\theta_j^{|f_j|}&\quad&\text{Expansion Membership Assignment} \\
 &\pi(N_M) &=& \texttt{lognorm}(\mu_{anc},\sigma_{anc}) &\quad&\text{Parent Population Size}\\
 &\pi(N_j\mid N_{M}) &=& \texttt{lognorm}(N_{M},\sigma_{exp})\quad\forall j \in \{1...M-1\} &\quad&\text{Carrying Capacities}\\
-&\pi(d_j\mid T_{div}, M) &=& U\{\{i\in \{1 ... M+1\} : t_{div_i} > t_{div_j}\}\} &\quad&\text{Parent Populations}\\
+&\pi(d_j\mid T_{div}, M) &=& U(\{i\in \{1 ... M+1\} : t_{div_i} > t_{div_j}\}) &\quad&\text{Parent Populations}\\
 &\pi(t_{div_j}\mid N_{M}) &=& \texttt{gamma}\left(\frac{\nu^2}{\kappa}, \frac{\kappa N_M}{\nu}\right) \quad\forall j \in \{1...M-1\} &\quad&\text{Expansion Times}\\
 &\pi(t_{mid}(r_j)\mid N_M) &=& \texttt{exp}(\lambda_{r}/N_M)\quad\forall j \in \{1...M-1\} &\quad&\text{Growth Rates}
 \end{aligned}
@@ -289,6 +289,7 @@ This move updates simultaneously the growth rate and the carrying capacity of th
 \begin{gather}
 \left(r^{'},N^{'}\right)\sim\left(\mathcal{N}(r_j, \sigma_r), \mathcal{N}(N_j, \sigma_N)\right) 
 \end{gather}\\
+The proposal ratio of this move is $1$.
 
 The second move is:
 \begin{gather}
@@ -299,13 +300,14 @@ This move updates the divergence time of the $j$-th expansion. The new values ar
 t_{div}^{'}\sim\mathcal{N}(t_{div_j}, \sigma_t)
 \end{gather}
 $\sigma_t$ is chosen dynamically as a fixed fraction of the length of the branch that corresponds to this divergence event. This is the branch that leads into the MRCA of this clonal expansion.\\
+The proposal ratio of this move is $1$.
 
 The third move is:
 \begin{gather}
 x^{(M)}_{\left(\mathbf{f}, t_{div_j}, D\right)\to \left(\mathbf{f}^{'}, t_{div}^{'}, D^{'}\right)}
 \end{gather} 
 This moves updates the colouring of the leaves and thus the memberships of clonal expansions. This is perhaps the most complicated move and proceeds as follows: \\
-nLet $b_j$ denote the branch along which the divergence event for the $j$-th expansion lies, i.e. the branch leading into the MRCA of the expansion, and with $m+j$ the MRCA of the expansion. With probability $1/2$ decide which direction to update the MRCA in, i.e. to which branch we shall switch. If moving upwards, there is only one eligible branch as in a tree the parent of the MRCA node only has one branch incoming. If moving downwards, with probability $1/2$ select one of the branches that lead into the child nodes of the MRCA. Denote the new branch as $b^{'}$, and the new MRCA, that is the child node along branch $b^{'}$, as $m^{'}$.
+nLet $b_j$ denote the branch along which the divergence event for the $j$-th expansion lies, i.e. the branch leading into the MRCA of the expansion, and with $m+j$ the MRCA of the expansion. Let $\beta_1$ be a bernoulli variable with probability $1/2$. decide which direction to update the MRCA in. If $\beta_1=0$ move upwards in the tree. In this case there is only one eligible branch as in a tree the MRCA node only has one parent. If $\beta_1 = 1$ move downwards, with probability $1/2$ select one of the branches that lead into the child nodes of the MRCA. Denote the new branch as $b^{'}$, and the new MRCA, that is the child node along branch $b^{'}$, as $m^{'}$.
 We update time so that it is compatible with the new tip partition. The updated time by $t_{div}^{'}$ is distributed according to
 \begin{gather}
 t_{div}^{'}\sim U((t_{b^{'}_2}, t_{b^{'}_1}))
@@ -313,12 +315,21 @@ t_{div}^{'}\sim U((t_{b^{'}_2}, t_{b^{'}_1}))
 where $t_{b^{'}_1}$ and $t_{b^{'}_2}$ are the times of the child and parent nodes of the branch $b^{'}$ respectively. 
 Colour the tips corresponding to the clade defined by $m^{'}$, with the exception of tips corresponding to clades that diverge earlier as described previously in this section.
 Finally, set the parent populations $D^{'}$ so that they are compatible with the updated divergence times and tip partition. This is done for each expansion $i$, by setting $d_i$ to be equal to the lineage membership of the parent node of the MRCA of expansion $i$.\\
+The proposal ratio for this move is:
+\begin{gather}
+\frac{\left(t_{b^{'}_1}-t_{b^{'}_2}\right)\left(1-\frac{1}{2}\delta_0\left(\beta_1\right)\right)}{\left(t_{b_{j_1}} - t_{b_{j_2}}\right)\left(1-\frac{1}{2}\delta_1\left(\beta_1\right)\right)}
+\end{gather}
 
 The fourth move updates the probabilities vector $\pmb \theta$:
 \begin{gather}
   x^{(M)}_{\pmb\theta\to \pmb\theta^{'}}
 \end{gather}
 For this move first simulate indices $k, l\sim U(\{1...M\})$. Next simulate $u\sim U((0, \theta_k))$. Set $\theta^{'}_i = \theta_i \quad\forall i \in \{1...M\}\setminus\{k,l\}$ and $\theta^{'}_k = \theta_k-u$, $\theta^{'}_l = \theta_l+u$.\\
+The proposal ration for this move is:
+\begin{gather}
+\frac{\theta_k}{\theta^{'}_l}
+\end{gather}
+
 The fifth and final move updates the effective population size $N_M$ of the parent population:
 \begin{gather}
 x^{(M)}_{N_M\to N^{'}}
@@ -327,20 +338,25 @@ With distributed according to
 \begin{gather}
 N^{'}\sim \mathcal{N}(N_M, \sigma_N)
 \end{gather}
+The proposal ration for this move is $1$.
 \subsection{Transdimensional moves}
 The move that removes an expansion $x^{(M)\to(M-1)}$ proceeds by selecting an expansion index $k$ uniformly at random from $\{1...M-1\}$ ($M-1$ as parent population cannot be removed), removing the associated parameters from the parameter vector and setting $M^{'} = M-1$. The tip partition $\mathbf{f}$ is updated by colouring tips according to the scheme mentioned in the previous section using the new parameter vector with the $k$-th expansion parameters removed. The probability vector $\pmb\theta^{'}$ is updated by first selecting $l$ uniformly at random from $\{1...M^{'}\}$, and setting $\theta^{'}_i = \theta_i\quad \forall i:i<k,i\neq l$, $\theta^{'}_i = \theta_{i+1}\quad \forall i:i\geq k,i\neq l$ and finally $\theta^{'}_l = 
   \begin{cases} 
       \theta_l+\theta_k & l < k \\
       \theta_{l+1}+\theta_k & l \geq k
   \end{cases}$.\\
+The proposal ratio for this move is:
+\begin{gather}
+\frac{(M-1)\cross(M-1)\cross\pi(N^{'}\mid N_{M})\cross\pi(t^{'}_{div}\mid N_{M})\cross\pi(r^{'})}{\theta^{'}_l\cross(M-1)}
+\end{gather}
 
 The reverse move that adds an expansion $x^{(M)\to(M+1)}$ 
 proceeds by setting $M^{'} = M+1$ and simulating expansion parameters from the priors as:
 \begin{gather}
 \begin{aligned}
-N^{'} &\sim \pi(N^{'}\mid N_{M})\\
-t_{div^{'}} &\sim \pi(t_{div^{'}}\mid N_{M})\\
-r^{'} &\sim \pi(r^{'})
+N^{'} &\sim \pi(N\mid N_{M})\\
+t^{'}_{div} &\sim \pi(t_{div}\mid N_{M})\\
+r^{'} &\sim \pi(r)
 \end{aligned}
 \end{gather}
 The new expansion is added under the index $M^{'}-1$. The tip partition $\mathbf{f}$ is updated by adding a new colouring, such that it is not identical to an existing colouring, and so that the clade defined by this colouring coalesces with itself before $t_{div^{'}}$. Furthermore the parent clade $d^{'}$ must be selected so that the MRCA of the diverging clade coalesces with a node of the parent clade after $t_{div^{'}}$. This can be done by first selecting a branch $b'$ uniformly at random from all branches with child node before $t_{div^{'}}$ and parent node after $t_{div^{'}}$. Next, setting the new partition to be all leaves belonging to the clade with the MRCA given by the child node of $b'$ excluding those that belong to diverging clades with time of divergence before $t_{div^{'}}$. Finally, the parent population vector $D^{'}$ has to be updates by for expansion $i$ setting $d_i^{'}$ to be equal to the expansion membership of the parent node of the MRCA of expansion $i$.\\
@@ -360,7 +376,12 @@ Then set
       \theta_M & k \neq M \\
       \theta_M-u& k=M
   \end{cases}
+\end{gather}\\
+The proposal ration for this move is:
+\begin{gather}
+\frac{\theta_k\cross(M-1)}{(M-1)(M-1)\cross\pi(N^{'}\mid N_{M})\cross\pi(t^{'}_{div}\mid N_{M})\cross\pi(r^{'})}
 \end{gather}
+
 When selecting a move, we first select whether to do a within model move or a transdimensional move with probability $1/2$.
 Next if within model moves are selected, we undertake one of the within model moves with equal probability. If transdimensional moves are selected, we choose whether to increase or decrease the number of expansions with probability $1/2$.
 \chapter{References}
