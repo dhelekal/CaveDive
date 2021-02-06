@@ -5,8 +5,8 @@ outbreaks_infer <- function(phy,
                             prior_i, 
                             prior_N, 
                             prior_N.sample, 
-                            prior_r_given_N, 
-                            prior_r_given_N.sample, 
+                            prior_tmid_given_N, 
+                            prior_tmid_given_N.sample, 
                             prior_K_given_N, 
                             prior_K_given_N.sample, 
                             prior_t_given_N,
@@ -68,7 +68,7 @@ outbreaks_infer <- function(phy,
                                          i,
                                          prior_i, 
                                          prior_N,
-                                         prior_r_given_N, 
+                                         prior_tmid_given_N, 
                                          prior_K_given_N, 
                                          prior_t_given_N, 
                                          prior_probs,
@@ -77,13 +77,13 @@ outbreaks_infer <- function(phy,
                                                       i_prev, 
                                                       pre, 
                                                       function(N) para.initialiser(N, 
-                                                                                   prior_r_given_N.sample,
+                                                                                   prior_tmid_given_N.sample,
                                                                                    prior_K_given_N.sample, 
                                                                                    prior_t_given_N.sample,
                                                                                    pre),
                                                       function(x_init, N) para.log_lh(x_init,
                                                                                       N,
-                                                                                      prior_r_given_N, 
+                                                                                      prior_tmid_given_N, 
                                                                                       prior_K_given_N, 
                                                                                       prior_t_given_N,
                                                                                       pre),
@@ -103,12 +103,12 @@ fn_log_J_inv <- function(i_prev, x_prev, x_next, which_mdl_rm) {
     return(0)
 }
 
-para.initialiser <- function(N, prior_r_given_N, prior_K_given_N, prior_t_given_N, pre){
+para.initialiser <- function(N, prior_tmid_given_N, prior_K_given_N, prior_t_given_N, pre){
     edges <- pre$edges.df
     nodes <- pre$nodes.df
     x_next <- vector(mode = "list", length = 4)
 
-    rates <- prior_r_given_N(N)
+    mid.times <- prior_tmid_given_N(N)
     K <- prior_K_given_N(N)
     div.times <- prior_t_given_N(N)
 
@@ -125,7 +125,7 @@ para.initialiser <- function(N, prior_r_given_N, prior_K_given_N, prior_t_given_
 
     div.branch <- extant_inner[sample.int(length(extant_inner),1)] 
 
-    x_next[[1]] <- rates
+    x_next[[1]] <- mid.times
     x_next[[2]] <- K
     x_next[[3]] <- div.times
     x_next[[4]] <- div.branch
@@ -133,11 +133,11 @@ para.initialiser <- function(N, prior_r_given_N, prior_K_given_N, prior_t_given_
     return(x_next)
 }
 
-para.log_lh <- function(x, N, prior_r_given_N, prior_K_given_N, prior_t_given_N, pre) {
+para.log_lh <- function(x, N, prior_tmid_given_N, prior_K_given_N, prior_t_given_N, pre) {
     edges <- pre$edges.df
     nodes <- pre$nodes.df
 
-    rates <- x[[1]]
+    mid.times <- x[[1]]
     K <- x[[2]]
     div.times <- x[[3]]
     div.branch <- x[[4]]
@@ -150,7 +150,7 @@ para.log_lh <- function(x, N, prior_r_given_N, prior_K_given_N, prior_t_given_N,
     extant_inner <- br_extant_after[which(edges$node.child[br_extant_after]>pre$n_tips)] 
     if (length(extant_inner) < 1) extant_inner <- c(NA)
 
-    out <- prior_r_given_N(rates,N) + prior_K_given_N(K,N) + prior_t_given_N(div.times,N) + log(1/length(extant_inner))
+    out <- prior_tmid_given_N(mid.times,N) + prior_K_given_N(K,N) + prior_t_given_N(div.times,N) + log(1/length(extant_inner))
     return(out)
 }
 
@@ -158,7 +158,7 @@ log_posterior <- function(x,
                             i, 
                             prior_i, 
                             prior_N, 
-                            prior_r_given_N, 
+                            prior_tmid_given_N, 
                             prior_K_given_N, 
                             prior_t_given_N, 
                             prior_probs, 
@@ -184,11 +184,11 @@ log_posterior <- function(x,
         div_ord <- order(-div.times)
         div.times <- div.times[div_ord]
 
-        rates <- sapply(div_ord, function(j) x[[j+offset]][[1]])
+        mid.times <- sapply(div_ord, function(j) x[[j+offset]][[1]])
         K <- sapply(div_ord, function(j) x[[j+offset]][[2]])
         div.branch <- sapply(div_ord, function(j) x[[j+offset]][[4]])
     } else {
-        rates <- c()
+        mid.times <- c()
         K <- c()
         div.branch <- c()
         div.times <- c()
@@ -198,7 +198,7 @@ log_posterior <- function(x,
     if (
       (i >= 0) &&
       all(K > 0) &&
-      all(rates > 0) &&
+      all(mid.times > 0) &&
       all(N > 0) && 
       all(probs >= 0) &&
       (abs(sum(probs)-1) < 1e-8) &&
@@ -213,7 +213,7 @@ log_posterior <- function(x,
                  lgamma(i+1) ### Correction for exchangeable RVs
             if (i > 0) {
                     prior <- prior + 
-                             sum(prior_r_given_N(rates, N)) +
+                             sum(prior_tmid_given_N(mid.times, N)) +
                              sum(prior_K_given_N(K,N)) + 
                              sum(prior_t_given_N(div.times,N)) -
                              lgamma(length(div.times)) ### prior on divergence events
@@ -221,6 +221,9 @@ log_posterior <- function(x,
 
             MRCAs_root <- c(MRCAs, root_MRCA) ### add root for parent population
             div.times_root <- c(div.times, root_div) ### parent diverges at -Inf
+
+            ### structured coal likelihood accepts rates, need to transform mid point to a rate
+            rates <- sapply(mid.times, function (x) (1/x)**2)
 
             structured.log_lh <- structured_coal.likelihood(pre,
                                                             MRCAs_root, 
