@@ -53,3 +53,4 @@ vignettes/*.pdf
 *.so
 CaveDive/src/RcppExports.cpp
 CaveDive/R/RcppExports.R
+validation/R/debug/
