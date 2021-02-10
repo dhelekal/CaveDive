@@ -231,7 +231,7 @@ We now summarise the entire simulation procedure
 &\pi(N_j\mid N_{M}) &=& \texttt{lognorm}(N_{M},\sigma_{exp})\quad\forall j \in \{1...M-1\} &\quad&\text{Carrying Capacities}\\
 &\pi(d_j\mid T_{div}, M) &=& U(\{i\in \{1 ... M+1\} : t_{div_i} > t_{div_j}\}) &\quad&\text{Parent Populations}\\
 &\pi(t_{div_j}\mid N_{M}) &=& \texttt{gamma}\left(\frac{\nu^2}{\kappa}, \frac{\kappa N_M}{\nu}\right) \quad\forall j \in \{1...M-1\} &\quad&\text{Expansion Times}\\
-&\pi(t_{mid}(r_j)\mid N_M) &=& \texttt{exp}(\lambda_{r}/N_M)\quad\forall j \in \{1...M-1\} &\quad&\text{Growth Rates}
+&\pi(t_{mid}(r_j)\mid N_M) &=& \texttt{exp}(\lambda_{r}/N_M)\quad\forall j \in \{1...M-1\} &\quad&\text{Growth Rates/Time to Midpoint}
 \end{aligned}
 \end{gather}
 
@@ -246,7 +246,7 @@ The genealogy $\mathbf{g}$ is simulated under the Coalescent with Local Populati
 \pi(\mathbf{g}\mid M, \mathbf{f}, \pmb\alpha, T_{div}, D, T_{sam}) = \texttt{lpcoal}(M, \mathbf{f}, \pmb\alpha, T_{div}, D, T_{sam})
 \end{gather} 
 
-$\phi, \psi, \mu_{anc}, \sigma_{anc}, \mu_r, \sigma_r, \sigma_{exp}, \nu, \kappa$ are hyperamaters and considered given. The mean of divergence times $\mathop{\mathbb{E}}[T_{div}]$ is equal to $\nu N_m$ and the probability of $t_{div}$ being further than $N_M$-distance away from the mean of divergence times is less than $\kappa$.
+$\phi, \psi, \mu_{anc}, \sigma_{anc}, \mu_r, \sigma_r, \sigma_{exp}, \nu, \kappa$ are hyperamaters and considered given. The mean of divergence times $\mathop{\mathbb{E}}[T_{div}]$ is equal to $\nu N_m$ and the probability of $t_{div}$ being further than $N_M$-distance away from the mean of divergence times is less than $\kappa$ (proof trivial via Chebyshev).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -283,11 +283,11 @@ Denote the update of rate parameter $r_j$ corresponding to the $j$-th clonal exp
 The within model updates will now be described.\\
 The first move is:
 \begin{gather}
-x^{(M)}_{\left(r_j,N_j\right)\to \left(r^{'},N^{'}\right)}\quad\forall j < M
+x^{(M)}_{\left(t_{mid_j},N_j\right)\to \left(t_{mid}^{'},N^{'}\right)}\quad\forall j < M
 \end{gather}
 This move updates simultaneously the growth rate and the carrying capacity of the expansion. The new values are distributed according to
 \begin{gather}
-\left(r^{'},N^{'}\right)\sim\left(\mathcal{N}(r_j, \sigma_r), \mathcal{N}(N_j, \sigma_N)\right) 
+\left(t_{mid}^{'},N^{'}\right)\sim\left(\mathcal{N}(t_{mid_j}, \sigma_r), \texttt{lognorm}(log(N_j), \sigma_K)\right) 
 \end{gather}\\
 The proposal ratio of this move is $1$.
 
