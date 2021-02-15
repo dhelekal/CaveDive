@@ -162,10 +162,10 @@ move_update_mid.time <- function(x_prev, pre, scale) { ### update mid.time
   div.branch <- x_prev[[4]]
 
   mid.time_upd <- rnorm(1, mean=mid.time, sd=scale) 
-  K_upd  <- rlnorm(1, meanlog=log(K), sdlog=0.10)
+  K_upd  <- rlnorm(1, meanlog=log(K), sdlog=0.20)
 
-  qr <- -dnorm(mid.time_upd, mean=mid.time, sd=scale, log=TRUE) - dlnorm(K_upd, meanlog=log(K), sdlog=0.10, log=TRUE) ## proposal lh
-  qr <- qr + dnorm(mid.time, mean=mid.time_upd, sd=scale, log=TRUE) + dlnorm(K, meanlog=log(K_upd), sdlog=0.10, log=TRUE) ## reverse lh
+  qr <- -dnorm(mid.time_upd, mean=mid.time, sd=scale, log=TRUE) - dlnorm(K_upd, meanlog=log(K), sdlog=0.20, log=TRUE) ## proposal lh
+  qr <- qr + dnorm(mid.time, mean=mid.time_upd, sd=scale, log=TRUE) + dlnorm(K, meanlog=log(K_upd), sdlog=0.20, log=TRUE) ## reverse lh
   
   x_next[[1]] <- mid.time_upd 
   x_next[[2]] <- K_upd
