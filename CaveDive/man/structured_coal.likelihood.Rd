@@ -11,6 +11,7 @@ structured_coal.likelihood(
   diverging.rates,
   diverging.sizes,
   neutral.size,
+  times.extracted = NA,
   type = "Sat"
 )
 }
@@ -26,6 +27,8 @@ structured_coal.likelihood(
 \item{diverging.sizes}{asymptotic size for diverging lineages}
 
 \item{neutral.size}{size of neutral phylogeny}
+
+\item{times.extracted}{list returned by extract_lineage_times. Used instead of div.MRCA.nodes to avoid recomputing the tree partition.}
 }
 \value{
 Log-likelihood
