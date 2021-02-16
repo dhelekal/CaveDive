@@ -75,7 +75,7 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, prior_N=NULL,
 #' @param pre preprocessed phylogeny
 #' @return a plot object
 #' @export
-plot_tree_freq <- function(mcmc.df, event.df, pre) {
+plot_tree_freq <- function(mcmc.df, event.df, pre, prior_tmid_given_N=NULL) {
     tree <- pre$phy
 
     labs <- c(tree$node.label, tree$tip.label)
@@ -102,13 +102,17 @@ plot_tree_freq <- function(mcmc.df, event.df, pre) {
     legend <- temp$grobs[[leg_index]]
     p1 <- p1 + theme(legend.position="none")
 
+
     event.df_invtime <- event.df
     event.df_invtime$time <- x_max+event.df_invtime$time
 
     p2 <- ggplot(event.df_invtime, aes(time)) + 
-    geom_histogram(colour="blue", fill="blue", breaks=seq(0, x_max,length.out=100)) +
-    theme_bw() +
-    theme(axis.title.y = element_blank(), axis.text.y = element_blank())
+    geom_histogram(colour="blue", fill="blue", breaks=seq(0, x_max,length.out=100))
+    if (!is.null(prior_tmid_given_N)) {
+        prior_t <- function (t) 1/(length(mcmc.df$N))*sum(sapply(mcmc.df$N, function(n) prior_tmid_given_N(t-x_max, n)))
+        p2 <- p2 + geom_function(fun = prior_t, color="red")
+    }
+    p_2 <- p2 + theme_bw() + theme(axis.title.y = element_blank(), axis.text.y = element_blank())
 
     grid_layout <- rbind(c(1,3), c(2,NA))
     grid_width <- c(5,1)

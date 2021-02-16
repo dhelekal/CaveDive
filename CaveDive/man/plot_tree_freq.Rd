@@ -4,7 +4,7 @@
 \alias{plot_tree_freq}
 \title{Plots tree branch frequency histogram}
 \usage{
-plot_tree_freq(mcmc.df, event.df, pre)
+plot_tree_freq(mcmc.df, event.df, pre, prior_tmid_given_N = NULL)
 }
 \arguments{
 \item{mcmc.df}{mcmc.df returned by mcmc2data.frame}
