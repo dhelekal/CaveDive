@@ -111,7 +111,7 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_tmid_given_N=NULL) {
     p2 <- ggplot(event.df_invtime, aes(time)) + 
     geom_histogram(aes(y=..ncount..), colour="blue", fill="blue", breaks=seq(0, x_max,length.out=100))
     if (!is.null(prior_tmid_given_N)) {
-        prior_t <- function (t) 1/(length(mcmc.df$N))*sum(sapply(mcmc.df$N, function(n) prior_tmid_given_N(t-x_max, n)))
+        prior_t <- function (t) sum(sapply(mcmc.df$N, function(n) prior_tmid_given_N(t-x_max, n)))
         p2 <- p2 + geom_function(fun = prior_t, color="red")
     }
     p_2 <- p2 + theme_bw() + theme(axis.title.y = element_blank(), axis.text.y = element_blank())
