@@ -77,6 +77,8 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, prior_N=NULL,
 #' @export
 plot_tree_freq <- function(mcmc.df, event.df, pre, prior_tmid_given_N=NULL) {
     tree <- pre$phy
+    tt.br <- table(event.df$br)
+    freq <- sapply(c(1:length(tt.br)), function (i) tt.br[i])
 
     labs <- c(tree$node.label, tree$tip.label)
     tip <- c(rep("1",length(tree$node.label)), rep("2", length(tree$tip.label)))
