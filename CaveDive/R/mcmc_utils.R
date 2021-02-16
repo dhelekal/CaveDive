@@ -77,9 +77,7 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, prior_N=NULL,
 #' @export
 plot_tree_freq <- function(mcmc.df, event.df, pre) {
     tree <- pre$phy
-    tt <- table(event.df$br)
-    freq <- sapply(c(1:length(tt)), function (i) tt[i])
-    
+
     labs <- c(tree$node.label, tree$tip.label)
     tip <- c(rep("1",length(tree$node.label)), rep("2", length(tree$tip.label)))
     ids <- nodeid(tree, labs)
@@ -87,17 +85,39 @@ plot_tree_freq <- function(mcmc.df, event.df, pre) {
     
     ldf <- data.frame(node = ids, frequency = id_freq, tip=tip)
     tree.full <- full_join(tree, ldf, by = 'node')
+
+    x_max <- -min(pre$nodes.df$times)
     
-    plt <- ggtree(tree.full, aes(color=frequency, linetype=tip), ladderize=TRUE) +
-                geom_point() +
-                scale_linetype(c("solid","dashed"), na.value = "blank") +
-                scale_size_manual(values=c(1)) +
-                scale_color_viridis() +
-                theme_tree2()
-            
+    p1 <- ggtree(tree.full, aes(color=frequency, linetype=tip), ladderize=TRUE) +
+    geom_point() +
+    scale_linetype(c("solid","dashed","dotted"), na.value = "blank") +
+    scale_size_manual(values=c(1)) +
+    scale_x_continuous(limits=c(0, x_max)) +
+    scale_color_viridis() +
+    theme_tree2() + 
+    theme(axis.title.x = element_blank(), axis.text.x = element_blank())
 
-    plt <- ggplot(event.df, aes(time)) + geom_histogram(colour="darkgreen", fill="white", bins=100)
-    p <- ggMarginal(plt, data=event.df, x="time", margins="x", type="histogram", bins=100)
+    temp <- ggplotGrob(p1)
+    leg_index <- which(sapply(temp$grobs, function(x) x$name) == "guide-box")
+    legend <- temp$grobs[[leg_index]]
+    p1 <- p1 + theme(legend.position="none")
 
+    event.df_invtime <- event.df
+    event.df_invtime$time <- x_max+event.df_invtime$time
+
+    p2 <- ggplot(event.df_invtime, aes(time)) + 
+    geom_histogram(colour="blue", fill="blue", breaks=seq(0, x_max,length.out=100)) +
+    theme_bw() +
+    theme(axis.title.y = element_blank(), axis.text.y = element_blank())
+
+    grid_layout <- rbind(c(1,3), c(2,NA))
+    grid_width <- c(5,1)
+    grid_heigth <- c(5,1)
+
+    p <-grid.arrange(
+      grobs=list(p1, p2,legend),
+      layout_matrix = grid_layout,
+      widths = grid_width,
+      heights = grid_heigth)
     return(p)
 }
