@@ -34,8 +34,10 @@ mcmc2data.frame <- function(o) {
 
 #' Converts MCMC output into two data frames, one conaining global model parameters and one containing expansion data
 #' 
-#' @param o MCMC output
-#' @return a plot object
+#' @param mcmc.df mcmc.df returned by mcmc2data.frame
+#' @param event.df event.df returned by mcmc2data.frame
+#' @param pre preprocessed phylogeny
+#' @return a list of 3 plot panels
 #' @export
 plot_event_summary <- function(mcmc.df, event.df, which_br, prior_N=NULL, 
    prior_tmid_given_N=NULL, 
