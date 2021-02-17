@@ -61,7 +61,7 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, prior_N=NULL,
    geom_line(alpha = 0.3) +
    theme_bw()
    hist_N <- ggplot(mcmc.df, aes(N)) +  
-   geom_histogram(aes(y = stat(count / sum(count))), colour="blue", fill="blue", breaks=seq(0, x_max, length.out=100)) +
+   geom_histogram(aes(y = stat(count / sum(count))), colour="blue", fill="blue", bins=100) +
    scale_y_continuous(limits=c(0,1)) +
    theme_bw()
    hist_dim <- ggplot(mcmc.df, aes(dim)) +  
@@ -87,7 +87,7 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, prior_N=NULL,
    geom_line(alpha = 0.3)+
    theme_bw() + theme(aspect.ratio=1, legend.position = "bottom")
    hist_K <- ggplot(event_br_marginal, aes(K)) +  
-   geom_histogram(aes(y = stat(count / sum(count))), colour="blue", fill="blue", breaks=seq(0, x_max, length.out=100)) +
+   geom_histogram(aes(y = stat(count / sum(count))), colour="blue", fill="blue", bins=100) +
    scale_y_continuous(limits=c(0,1)) +
    theme_bw()
    hist_t_mid <- ggplot(event_br_marginal, aes(t_mid)) +  
