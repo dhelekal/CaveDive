@@ -105,13 +105,11 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, pre,
    theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())
 
    if (!is.null(prior_K_given_N)) {
-     f_mixture <- function (K) sapply(K, function(k) (1/length(mcmc.df$N))*sum(sapply(mcmc.df$N, function(n) prior_K_given_N(k, n))))
-     hist_K <- hist_K + stat_function(fun=f_mixture, colour="purple", size=2)
+     hist_K <- hist_K + prior_mixture(prior_K_given_N, mcmc.df$N)
    }
 
    if (!is.null(prior_t_mid_given_N)) {
-     f_mixture <- function (t_mid) sapply(t_mid, function (t) (1/length(mcmc.df$N))*sum(sapply(mcmc.df$N, function(n) prior_t_mid_given_N(t, n))))
-     hist_t_mid <- hist_t_mid + stat_function(fun=f_mixture, colour="purple", size=2)
+      hist_t_mid <- hist_t_mid + prior_mixture(prior_t_mid_given_N, mcmc.df$N)
    }
 
    event_panel <- arrangeGrob(
@@ -124,7 +122,7 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, pre,
    geom_point(alpha=0.1,size=0.1) + 
    theme_bw() + 
    theme(axis.title.x = element_blank(), axis.text.x = element_blank())
-   tree_freq <- plot_tree_freq(mcmc.df, event.df, pre)
+   tree_freq <- plot_tree_freq(mcmc.df, event.df, pre, prior_t_given_N=prior_t_given_N)
 
    hist_br <- ggplot(event.df, aes(br)) +  
    geom_bar(aes(y = stat(count / sum(count))), colour="orange", fill="orange") + 
@@ -150,7 +148,7 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, pre,
 #' @param pre preprocessed phylogeny
 #' @return a plot object
 #' @export
-plot_tree_freq <- function(mcmc.df, event.df, pre) {
+plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL) {
    tree <- pre$phy
    tt.br <- table(event.df$br)
    freq <- sapply(c(1:length(tt.br)), function (i) tt.br[i])
@@ -189,7 +187,11 @@ plot_tree_freq <- function(mcmc.df, event.df, pre) {
    event.df_invtime$time <- x_max+event.df_invtime$time
 
    p2 <- ggplot(event.df_invtime, aes(time)) +  
-   geom_histogram(aes(y = stat(density)), colour="orange", fill="orange", breaks=seq(0, x_max,length.out=100))
+   geom_histogram(aes(y = stat(density)), colour="orange", fill="orange", breaks=seq(0, x_max,length.out=100)) +
+   scale_x_continuous(limits=c(0, x_max))
+   if (!is.null(prior_t_given_N)) {
+     p2 <- p2 + prior_mixture(function(t,n) prior_t_given_N(t-x_max, n), mcmc.df$N)
+   }
    p2 <- p2 + theme_bw() + theme(axis.title.y = element_blank(),
                                   axis.text.y = element_blank(),
                                   axis.ticks.y = element_blank())
@@ -204,4 +206,9 @@ plot_tree_freq <- function(mcmc.df, event.df, pre) {
         widths = grid_width,
         heights = grid_heigth)
    return(p)
+}
+
+prior_mixture <- function(prior, cond_values) {
+     f_mixture <- function (X) sapply(X, function (x) (1/length(cond_values))*sum(sapply(cond_values, function(y) prior(x, y))))
+     return(stat_function(fun=f_mixture, colour="purple", size=2))
 }
