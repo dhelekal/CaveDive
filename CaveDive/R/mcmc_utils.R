@@ -1,4 +1,4 @@
-#' Converts MCMC output into two data frames, one conaining global model parameters and one containing expansion data
+ #' Converts MCMC output into two data frames, one conaining global model parameters and one containing expansion data
 #' 
 #' @param o MCMC output
 #' @return A list with names mcmc.df and event.df. MCMC dataframe contains iteration numbers, 
@@ -39,16 +39,16 @@ mcmc2data.frame <- function(o) {
 #' @param pre preprocessed phylogeny
 #' @return a list of 3 plot panels
 #' @export
-plot_event_summary <- function(mcmc.df, event.df, which_br, prior_N=NULL, 
-   prior_tmid_given_N=NULL, 
+plot_event_summary <- function(mcmc.df, event.df, which_br, pre, 
+   prior_N=NULL, 
+   prior_t_mid_given_N=NULL, 
    prior_K_given_N=NULL, 
-   prior_t_given_N=NULL,
-   pre=NULL) 
+   prior_t_given_N=NULL) 
 {
 
-   correct_dim <- mcmc_data[which(mcmc_data$dim > 0),]
+   correct_dim <- mcmc.df[which(mcmc.df$dim > 0),]
    correct_dim_it <- correct_dim$it
-   event_dim_marginal <- chain_data[unlist(sapply(correct_dim_it, function (x) which(chain_data$it==x))),]
+   event_dim_marginal <- event.df[unlist(sapply(correct_dim_it, function (x) which(event.df$it==x))),]
    br_subs <- which(event_dim_marginal$br == which_br)
    event_br_marginal <- event_dim_marginal[br_subs,]
    event_br_marginal$it <- correct_dim_it[br_subs]
@@ -56,21 +56,28 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, prior_N=NULL,
 
    trace_N <- ggplot(mcmc.df, aes(x=it, y=N)) +
    geom_line(alpha = 0.3) +
-   theme_bw()
+   theme_bw() + 
+   theme(axis.title.x = element_blank(), axis.text.x = element_blank())
+
+
    trace_dim <- ggplot(mcmc.df, aes(x=it, y=dim)) +
    geom_line(alpha = 0.3) +
-   theme_bw()
+   theme_bw() +
+   theme(axis.title.x = element_blank(), axis.text.x = element_blank())
    hist_N <- ggplot(mcmc.df, aes(N)) +  
-   geom_histogram(aes(y = stat(count / sum(count))), colour="blue", fill="blue", bins=100) +
-   scale_y_continuous(limits=c(0,1)) +
-   theme_bw()
+   geom_histogram(aes(y = stat(density)), colour="orange", fill="orange", bins=100) +
+   theme_bw() + 
+   theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())
    hist_dim <- ggplot(mcmc.df, aes(dim)) +  
-   geom_histogram(aes(y = stat(count / sum(count))), colour="blue", fill="blue", binwidth=1) + 
-   scale_y_continuous(limits=c(0,1)) +
-   theme(axis.title.y = element_blank(), axis.text.y = element_blank()) +
-   theme_bw()
+   geom_histogram(aes(y = stat(density)), colour="orange", fill="orange", binwidth=1) + 
+   theme_bw() +
+   theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())
+   
+   if (!is.null(prior_N)) {
+     hist_N <- hist_N + stat_function(fun=prior_N, colour="purple", size=2)
+   }
 
-   grid_layout <- rbind(c(1, 2), c(3,NA), c(4,NA))
+   grid_layout <- rbind(c(1, 2), c(3,3), c(4,4))
    grid_width <- c(2,2)
    grid_heigth <- c(2,1,1)
 
@@ -82,19 +89,30 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, prior_N=NULL,
 
    trace_K <- ggplot(event_br_marginal, aes(x=idx, y=K)) +
    geom_line(alpha = 0.3)+
-   theme_bw() + theme(aspect.ratio=1, legend.position = "bottom")
+   theme_bw() +
+   theme(axis.title.x = element_blank(), axis.text.x = element_blank())
    trace_t_mid <- ggplot(event_br_marginal, aes(x=idx, y=t_mid)) +
    geom_line(alpha = 0.3)+
-   theme_bw() + theme(aspect.ratio=1, legend.position = "bottom")
+   theme_bw() +
+   theme(axis.title.x = element_blank(), axis.text.x = element_blank())
    hist_K <- ggplot(event_br_marginal, aes(K)) +  
-   geom_histogram(aes(y = stat(count / sum(count))), colour="blue", fill="blue", bins=100) +
-   scale_y_continuous(limits=c(0,1)) +
-   theme_bw()
+   geom_histogram(aes(y = stat(density)), colour="orange", fill="orange", bins=100) +
+   theme_bw() +
+   theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())
    hist_t_mid <- ggplot(event_br_marginal, aes(t_mid)) +  
-   geom_histogram(aes(y = stat(count / sum(count))), colour="blue", fill="blue", binwidth=1) + 
-   scale_y_continuous(limits=c(0,1)) +
-   theme(axis.title.y = element_blank(), axis.text.y = element_blank()) +
-   theme_bw()
+   geom_histogram(aes(y = stat(density)), colour="orange", fill="orange", bins=100) + 
+   theme_bw() +
+   theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())
+
+   if (!is.null(prior_K_given_N)) {
+     f_mixture <- function (K) sapply(K, function(k) (1/length(mcmc.df$N))*sum(sapply(mcmc.df$N, function(n) prior_K_given_N(k, n))))
+     hist_K <- hist_K + stat_function(fun=f_mixture, colour="purple", size=2)
+   }
+
+   if (!is.null(prior_t_mid_given_N)) {
+     f_mixture <- function (t_mid) sapply(t_mid, function (t) (1/length(mcmc.df$N))*sum(sapply(mcmc.df$N, function(n) prior_t_mid_given_N(t, n))))
+     hist_t_mid <- hist_t_mid + stat_function(fun=f_mixture, colour="purple", size=2)
+   }
 
    event_panel <- arrangeGrob(
         grobs=list(hist_K, hist_t_mid, trace_K, trace_t_mid),
@@ -104,14 +122,14 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, prior_N=NULL,
 
    trace_br <- ggplot(event.df, aes(x=it, y=br)) + 
    geom_point(alpha=0.1,size=0.1) + 
-   theme_bw()
+   theme_bw() + 
+   theme(axis.title.x = element_blank(), axis.text.x = element_blank())
    tree_freq <- plot_tree_freq(mcmc.df, event.df, pre)
 
-   hist_br <- ggplot(event_br_marginal, aes(br)) +  
-   geom_bar(aes(y = stat(count / sum(count))), colour="blue", fill="blue") + 
-   scale_y_continuous(limits=c(0,1)) +
-   theme(axis.title.y = element_blank(), axis.text.y = element_blank()) +
-   theme_bw()
+   hist_br <- ggplot(event.df, aes(br)) +  
+   geom_bar(aes(y = stat(count / sum(count))), colour="orange", fill="orange") + 
+   theme_bw() + 
+   theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())
 
    grid_layout <- rbind(c(1,2), c(3,3))
    grid_width <- c(3,3)
@@ -154,7 +172,13 @@ plot_tree_freq <- function(mcmc.df, event.df, pre) {
    scale_x_continuous(limits=c(0, x_max)) +
    scale_color_viridis() +
    theme_tree2() + 
-   theme(axis.title.x = element_blank(), axis.text.x = element_blank())
+   theme_bw() +
+   theme(axis.title.x = element_blank(), 
+          axis.text.x = element_blank(), 
+          axis.title.y = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks.y = element_blank())
+
 
    temp <- ggplotGrob(p1)
    leg_index <- which(sapply(temp$grobs, function(x) x$name) == "guide-box")
@@ -165,8 +189,10 @@ plot_tree_freq <- function(mcmc.df, event.df, pre) {
    event.df_invtime$time <- x_max+event.df_invtime$time
 
    p2 <- ggplot(event.df_invtime, aes(time)) +  
-   geom_histogram(aes(y = stat(count / sum(count))), colour="blue", fill="blue", breaks=seq(0, x_max,length.out=100))
-   p_2 <- p2 + theme_bw() + theme(axis.title.y = element_blank(), axis.text.y = element_blank())
+   geom_histogram(aes(y = stat(density)), colour="orange", fill="orange", breaks=seq(0, x_max,length.out=100))
+   p2 <- p2 + theme_bw() + theme(axis.title.y = element_blank(),
+                                  axis.text.y = element_blank(),
+                                  axis.ticks.y = element_blank())
 
    grid_layout <- rbind(c(1,3), c(2,NA))
    grid_width <- c(5,1)
