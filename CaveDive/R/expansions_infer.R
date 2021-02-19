@@ -1,7 +1,7 @@
 offset <- 2
 
 #' @export
-outbreaks_infer <- function(phy,
+expansion_infer <- function(phy,
                             prior_i, 
                             prior_N, 
                             prior_N.sample, 
@@ -12,7 +12,7 @@ outbreaks_infer <- function(phy,
                             prior_t_given_N,
                             prior_t_given_N.sample,
                             concentration,
-                            n_it=1e6, thinning=1, init=NULL, debug=FALSE) {
+                            n_it=1e6, thinning=1, init=NULL,  debug=FALSE) {
 
     if (debug) warning("Running in debug mode with only priors in use.")
 

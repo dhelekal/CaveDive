@@ -8,18 +8,22 @@ plot_event_summary(
   mcmc.df,
   event.df,
   which_br,
+  pre,
   prior_N = NULL,
-  prior_tmid_given_N = NULL,
+  prior_t_mid_given_N = NULL,
   prior_K_given_N = NULL,
-  prior_t_given_N = NULL,
-  pre = NULL
+  prior_t_given_N = NULL
 )
 }
 \arguments{
-\item{o}{MCMC output}
+\item{mcmc.df}{mcmc.df returned by mcmc2data.frame}
+
+\item{event.df}{event.df returned by mcmc2data.frame}
+
+\item{pre}{preprocessed phylogeny}
 }
 \value{
-a plot object
+a list of 3 plot panels
 }
 \description{
 Converts MCMC output into two data frames, one conaining global model parameters and one containing expansion data
