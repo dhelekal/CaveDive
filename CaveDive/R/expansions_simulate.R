@@ -1,5 +1,5 @@
 #' @export
-expansion_simulate <- function(poi_rate, concentration, sampling_times, r_mean, r_sd, K_mean, K_sd, time_rate, time_shape) {
+expansions_simulate <- function(poi_rate, concentration, sampling_times, r_mean, r_sd, K_mean, K_sd, time_rate, time_shape) {
     
     n_tips <- length(sampling_times)
 

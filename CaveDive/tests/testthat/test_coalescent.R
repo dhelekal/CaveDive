@@ -463,7 +463,7 @@ test_that("Simulation Likelihood matches product of colour specific likelihoods"
     expect_equal(comp$log_lh-lgamma(length(div_times)), co$log_lh)
 })
 
-test_that("Outbreak simulation likelihood matches computer outbreak likelihood", {
+test_that("Outbreak simulation likelihood matches computer expansion likelihood", {
     set.seed(1123456)
     
     n_tips <- 100
@@ -483,7 +483,7 @@ test_that("Outbreak simulation likelihood matches computer outbreak likelihood",
     time_shape <- floor(n_tips/3)
     time_rate <- 5**(-1)
 
-    out <- outbreaks_simulate(poi_rate, concentration, sam, r_mean, r_sd, K_mean, K_sd, time_rate, time_shape)
+    out <- expansions_simulate(poi_rate, concentration, sam, r_mean, r_sd, K_mean, K_sd, time_rate, time_shape)
     co <- out$co
 
     tr.nodiv <- build_coal_tree.structured(sam, co$times, out$tip_colours, co$colours, out$div_times, out$div_cols, co$div_from, include_div_nodes = FALSE)
@@ -499,7 +499,7 @@ test_that("Outbreak simulation likelihood matches computer outbreak likelihood",
     MRCAs <- sapply(MRCAs.idx, function (x) tree.nodiv$node.label[times.ord[x]])
 
     pre <- structured_coal.preprocess_phylo(tree.nodiv)
-    comp_log_lh <- outbreaks_likelihood(pre, MRCAs, out$div_times, out$A, out$K, out$N, out$exp_probs)
+    comp_log_lh <- expansions_likelihood(pre, MRCAs, out$div_times, out$A, out$K, out$N, out$exp_probs)
     sim_log_lh <- out$full_lh
 
     comp <- structured_coal.likelihood(pre, MRCAs, out$div_times, out$A, out$K, out$N)

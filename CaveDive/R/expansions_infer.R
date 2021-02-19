@@ -1,7 +1,7 @@
 offset <- 2
 
 #' @export
-expansion_infer <- function(phy,
+expansions_infer <- function(phy,
                             prior_i, 
                             prior_N, 
                             prior_N.sample, 
