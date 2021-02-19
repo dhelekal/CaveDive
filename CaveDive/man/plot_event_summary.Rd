@@ -9,6 +9,7 @@ plot_event_summary(
   event.df,
   which_br,
   pre,
+  priors = NULL,
   prior_N = NULL,
   prior_t_mid_given_N = NULL,
   prior_K_given_N = NULL,
@@ -20,7 +21,17 @@ plot_event_summary(
 
 \item{event.df}{event.df returned by mcmc2data.frame}
 
-\item{pre}{preprocessed phylogeny}
+\item{which_br}{Which branch to generate marginals for}
+
+\item{pre}{Preprocessed phylogeny}
+
+\item{priors}{(Optional) A list of priors used for inference, mutually exclusive with specifying individual priors. If either is supplied priors will be overlayed in plotting.}
+
+\item{prior_N}{(Optional) Background population size prior, mutually exclusive with passing list of priors. If either is supplied priors will be overlayed in plotting.}
+
+\item{prior_t_mid_given_N}{(Optional) Time to midpoint  prior, mutually exclusive with passing list of priors. If either is supplied priors will be overlayed in plotting.}
+
+\item{prior_K_given_N}{(Optional) Expansion time prior, mutually exclusive with passing list of priors. If either is supplied priors will be overlayed in plotting.}
 }
 \value{
 a list of 3 plot panels

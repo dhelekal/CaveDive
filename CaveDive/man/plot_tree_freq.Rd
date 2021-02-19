@@ -11,7 +11,9 @@ plot_tree_freq(mcmc.df, event.df, pre, prior_t_given_N = NULL)
 
 \item{event.df}{event.df returned by mcmc2data.frame}
 
-\item{pre}{preprocessed phylogeny}
+\item{pre}{Preprocessed phylogeny}
+
+\item{prior_t_given_N}{(Optional) Expansion time prior. If supplied prior will be overlayed.}
 }
 \value{
 a plot object

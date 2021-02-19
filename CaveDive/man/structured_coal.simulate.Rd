@@ -2,7 +2,7 @@
 % Please edit documentation in R/structured_coal.R
 \name{structured_coal.simulate}
 \alias{structured_coal.simulate}
-\title{Simulate outbreak structured coalescent
+\title{Simulate expansion structured coalescent
 Population size must be locally smooth around divergence time and must reach 0 at divergence time !!
 Note: This simulation relies on inverse transform sampling and numerical inverses of Neg.rate.ints}
 \usage{
@@ -35,7 +35,7 @@ structured_coal.simulate(
 A list consisting of the simulate coalescent times \code{coalescent_times} and the log-likelihood of the simulation \code{log_likelihood}.
 }
 \description{
-Simulate outbreak structured coalescent
+Simulate expansion structured coalescent
 Population size must be locally smooth around divergence time and must reach 0 at divergence time !!
 Note: This simulation relies on inverse transform sampling and numerical inverses of Neg.rate.ints
 }
