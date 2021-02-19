@@ -36,10 +36,17 @@ mcmc2data.frame <- function(o) {
 #' 
 #' @param mcmc.df mcmc.df returned by mcmc2data.frame
 #' @param event.df event.df returned by mcmc2data.frame
-#' @param pre preprocessed phylogeny
+#' @param which_br Which branch to generate marginals for
+#' @param pre Preprocessed phylogeny
+#' @param priors (Optional) A list of priors used for inference, mutually exclusive with specifying individual priors. If either is supplied priors will be overlayed in plotting.
+#' @param prior_N (Optional) Background population size prior, mutually exclusive with passing list of priors. If either is supplied priors will be overlayed in plotting.
+#' @param prior_t_mid_given_N (Optional) Time to midpoint  prior, mutually exclusive with passing list of priors. If either is supplied priors will be overlayed in plotting.
+#' @param prior_K_given_N (Optional) Carrying capacity prior, mutually exclusive with passing list of priors. If either is supplied priors will be overlayed in plotting.
+#' @param prior_K_given_N (Optional) Expansion time prior, mutually exclusive with passing list of priors. If either is supplied priors will be overlayed in plotting.
 #' @return a list of 3 plot panels
 #' @export
 plot_event_summary <- function(mcmc.df, event.df, which_br, pre, 
+   priors=NULL,
    prior_N=NULL, 
    prior_t_mid_given_N=NULL, 
    prior_K_given_N=NULL, 
@@ -145,7 +152,8 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, pre,
 #' 
 #' @param mcmc.df mcmc.df returned by mcmc2data.frame
 #' @param event.df event.df returned by mcmc2data.frame
-#' @param pre preprocessed phylogeny
+#' @param pre Preprocessed phylogeny
+#' @param prior_t_given_N (Optional) Expansion time prior. If supplied prior will be overlayed.
 #' @return a plot object
 #' @export
 plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL) {
