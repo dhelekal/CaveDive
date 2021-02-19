@@ -1,6 +1,5 @@
 offset <- 2
 
-
 #' Generates a list of priors of the form described in the paper to use with MCMC inference. 
 #' @param expansion_rate corresponds to '\phi' in paper 
 #' @param N_mean_log corresponds to '\mu_{anc}' in paper 
@@ -9,7 +8,7 @@ offset <- 2
 #' @param K_sd_log corresponds to '\sigma_{exp}' in paper 
 #' @param exp_time_nu corresponds to '\nu' in paper 
 #' @param exp_time_kappa corresponds to '\kappa' in paper 
-#' @returns a list of prior likelihoods and sampling functions with names 'prior_i', 'prior_N', 'prior_t_mid_given_N', 'prior_t_mid_given_N.sample', 'prior_K_given_N', 'prior_K_given_N.sample', 'prior_t_given_N', 'prior_t_given_N.sample'. See `standard_priors` for details.
+#' @returns a list of prior likelihoods and sampling functions with names 'prior_i', 'prior_i.sample', 'prior_N', 'prior_N.sample' ,prior_t_mid_given_N', 'prior_t_mid_given_N.sample', 'prior_K_given_N', 'prior_K_given_N.sample', 'prior_t_given_N', 'prior_t_given_N.sample'. See `standard_priors` for details.
 #' @export
 #' 
 standard_priors <- function(expansion_rate=1, 
@@ -21,7 +20,9 @@ standard_priors <- function(expansion_rate=1,
                             exp_time_kappa=1/10) {
     return(list(
         prior_i=function(x) dpois(x, expansion_rate, log = TRUE),
+        prior_i.sample=function() rpois(1, expansion_rate),
         prior_N=function(x) dlnorm(x, meanlog = N_mean_log, sdlog = N_sd_log, log = TRUE),
+        prior_N.sample=function() rlnorm(1, meanlog = N_mean_log, sdlog = N_sd_log, log = TRUE),
         prior_t_mid_given_N=function(x, N) dexp(x, t_mid_rate/N, log = TRUE),
         prior_t_mid_given_N.sample=function(N) rexp(1, t_mid_rate/N),
         prior_K_given_N=function(x, N) dlnorm(x, meanlog = log(N), sdlog = K_sd_log, log = TRUE),
@@ -42,7 +43,7 @@ standard_priors <- function(expansion_rate=1,
 #' Run rjmcmc inference on the provided phylogeny and supplied priors
 #' This is the standard method for mcmc expansion inference.
 #' @param phy phylogeny to run inference on 
-#' @param priors a list of prior likelihoods and sampling functions with names 'prior_i', 'prior_N', 'prior_t_mid_given_N', 'prior_t_mid_given_N.sample', 'prior_K_given_N', 'prior_K_given_N.sample', 'prior_t_given_N', 'prior_t_given_N.sample'. See `standard_priors` for details.
+#' @param priors a list of prior likelihoods and sampling functions with names 'prior_i', 'prior_i.sample', 'prior_N', 'prior_N.sample', 'prior_t_mid_given_N', 'prior_t_mid_given_N.sample', 'prior_K_given_N', 'prior_K_given_N.sample', 'prior_t_given_N', 'prior_t_given_N.sample'. See `standard_priors` for details.
 #' @param concentration concentration parameter for the dirichlet prior on expansion membership probabilities
 #' @param n_it number of MCMC iterations 
 #' @param thinning mcmc output thinning 

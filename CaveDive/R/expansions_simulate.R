@@ -1,34 +1,58 @@
 #' @export
-expansions_simulate <- function(poi_rate, concentration, sampling_times, r_mean, r_sd, K_mean, K_sd, time_rate, time_shape) {
+expansions_simulate <- function(priors, sampling_times, concentration) {
     
     n_tips <- length(sampling_times)
 
-    n_exp <- rpois(1, poi_rate)+1
-    expansion_probs <- rdirichlet(1, rep(concentration, n_exp))
+    if(abs(max(sampling_times)) > 1e-6) {
+        stop("maximum value of sampling_times must be 0")
+    }
 
-    colouring <- rmultinom(n_tips, 1, expansion_probs)
-    colouring <- sapply(c(1:n_tips), function (i) which(colouring[,i]>0))
+    n_exp <- priors$prior_i.sample()
+    expansion_probs <- rdirichlet(1, rep(concentration, (n_exp+1)))
+    div_cols <- c(1:(n_exp+1))
+    colouring <- c()
+    max_it <- 50
+    it <- 0
+    while((length(unique(colouring)) < (n_exp+1)) || (!all(clade_sizes>1) && n_exp > 0)) {
+        if (it > max_it) {
+            stop("Maximum sampling iterations exceeded.")
+        }
+        exp_probs <- rdirichlet(1, concentration)
+        colouring <- rmultinom(n_tips, 1, exp_probs)
+        colouring <- sapply(c(1:n_tips), function (i) which(colouring[,i]>0))
+        it <- it + 1
+    }
 
-    N <- rlnorm(1, meanlog = K_mean, sdlog = K_sd)
-    K <- rlnorm(n_exp-1, meanlog = K_mean, sdlog = K_sd)
-    A <- rlnorm(n_exp-1, meanlog = r_mean, sdlog = r_sd)
+    exp_sizes <- sapply(div_cols, function(i) length(which(colouring==i)))
 
-    div_times <- min(sampling_times)-rgamma(n_exp-1, shape=time_shape, scale = 1/time_rate)
-    div_times <- div_times[order(-div_times)]
-    div_times <- c(div_times, -Inf)
+    N <- priors$prior_N.sample()
+    K <- sapply(rep(N, n_exp), priors$prior_K_given_N.sample)
+    t_mid <- sapply(rep(N, n_exp), priors$prior_t_mid_given_N.sample)
 
-    div_cols <- c(1:(n_exp))
+    most_recent_sam <- sapply(div_cols, function (i) min(sampling_times[which(colouring==i)]))
+    div_times <- rep(Inf, n_exp)
 
-    rates <- lapply(c(1:(n_exp-1)), function(i) return(function (s) sat.rate(s, K[i], A[i], div_times[i])))
-    rates[[n_exp]] <- function (s) constant.rate(s, N)
+    it <- 0
+    while (!all(div_times < most_recent_sam)) {
+        if (it > max_it) {
+            stop("Maximum sampling iterations exceeded.")
+        }
+        div_times <- sapply(rep(N, n_exp), priors$prior_t_given_N.sample)
+        div_times <- c(div_times, -Inf)
+        it <- it + 1
+    }
 
-    rate.ints <- lapply(c(1:(n_exp-1)), function(i) return(function (t, s) sat.rate.int(t, s, K[i], A[i], div_times[i])))
-    rate.ints[[n_exp]] <- function(t, s) constant.rate.int(t, s, N)
+    A <- sapply(t_mid, function(x) (1/x)**2)
 
-    co <- structured_coal.simulate(sampling_times, colouring, div_times, div_cols, rates, rate.ints)
+    co <- clonal_tree_process.simulate_tree(n_exp, N, K, A, sampling_times, colouring, div_times, div_cols) 
+    params <- list(n_exp=n_exp, N=N, K=K, t_mid=t_mid, tip_colours=colouring, div_times=div_times, div_cols=div_cols, exp_probs=expansion_probs)
+    param_log_lh <- priors$prior_i(n_exp) +  
+                    priors$prior_N(N) +
+                    sum(priors$prior_K_given_N(K,N)) +
+                    sum(priors$prior_t_mid_given_N(t_mid,N)) + 
+                    sum(priors$prior_t_given_N(div_times,N)) +
+                    ddirichlet(t(matrix(exp_probs)), alpha=rep(concentration, length(exp_probs)), log=TRUE) +
+                    sum(sapply(c(1:length(exp_probs)), function (i) log(exp_probs[i])*exp_sizes[[i]]))
 
-    full_lh <- co$log_lh + 
-               sum(sapply((div_cols), function(i) length(which(colouring==i)) * log(expansion_probs[i])))
-
-    return(list(co=co, n_exp=n_exp, N=N, K=K, A=A, tip_colours=colouring, div_times=div_times, div_cols=div_cols, exp_probs=expansion_probs, rates=rates, rate.ints=rate.ints, full_lh=full_lh))
+    return(list(co=co, params=params, coal_log_lh=co$log_lh, param_log_lh=param_log_lh))
 } 

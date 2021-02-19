@@ -1,11 +1,3 @@
-#'Run metropolis-hastings mcmc. 
-#' 
-#' @param model.lh a function for the conditional model log-likelihood.
-#' @param proposal.cond_lh a function for the conditional proposal log-likelihood \code{x_{t+1}} given \code{x_t}.
-#' @param x0 initial value for the chain
-#' @param n_it number of iterations
-#' @return A list of mcmc jumps
-#' @export
 run_mcmc <- function(model.log_lh, proposal.cond_log_lh, proposal.sampler, x0, n_it, verbose=FALSE){
 	
 	out <- vector(mode = "list", length = n_it)
