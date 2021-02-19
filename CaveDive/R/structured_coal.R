@@ -1,4 +1,4 @@
-#' Simulate outbreak structured coalescent
+#' Simulate expansion structured coalescent
 #' Population size must be locally smooth around divergence time and must reach 0 at divergence time !!
 #' Note: This simulation relies on inverse transform sampling and numerical inverses of Neg.rate.ints  
 #'
