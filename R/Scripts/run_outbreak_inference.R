@@ -2,8 +2,6 @@
 library(CaveDive)
 library(rjson)
 
-source("make_report.R")
-
 args = commandArgs(trailingOnly=TRUE)
 
 n_it <- as.integer(args[1])
@@ -82,4 +80,6 @@ o <- outbreaks_infer(tree, prior_i,  prior_N,  prior_N.sample,
                      prior_r, prior_r.sample,  prior_K,  prior_K.sample,  prior_t,
                      prior_t.sample, 2, n_it=n_it, thinning=thinning, debug=F)
 
-make_report(o, pre, sim)
+dfs <- mcmc2data.frame(o)
+write.csv(df$mcmc.df,"./mcmc_data.csv")
+write.csv(df$event.df,"./event_data.csv")
