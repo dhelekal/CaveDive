@@ -11,11 +11,11 @@ expansions_simulate <- function(priors, sampling_times, concentration) {
     expansion_probs <- rdirichlet(1, rep(concentration, (n_exp+1)))
     div_cols <- c(1:(n_exp+1))
     colouring <- c()
-    max_it <- 50
+    max_it <- 100
     it <- 0
     while((length(unique(colouring)) < (n_exp+1)) || (!all(clade_sizes>1) && n_exp > 0)) {
         if (it > max_it) {
-            stop("Maximum sampling iterations exceeded.")
+            stop("Maximum sampling iterations exceeded. Invalid concentration or number of expansions. Unable to sample valid colouring")
         }
         exp_probs <- rdirichlet(1, concentration)
         colouring <- rmultinom(n_tips, 1, exp_probs)
@@ -35,7 +35,7 @@ expansions_simulate <- function(priors, sampling_times, concentration) {
     it <- 0
     while (!all(div_times < most_recent_sam)) {
         if (it > max_it) {
-            stop("Maximum sampling iterations exceeded.")
+            stop("Maximum sampling iterations exceeded. Invalid Sampling Times. Cannot simulate divergence times compatible with sampling times.")
         }
         div_times <- sapply(rep(N, n_exp), priors$prior_t_given_N.sample)
         div_times <- c(div_times, -Inf)
