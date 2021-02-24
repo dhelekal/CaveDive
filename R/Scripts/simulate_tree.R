@@ -5,29 +5,29 @@ library(optparse)
 
 option_list <- list(
     make_option(c("-e", "--nexp"), type="integer", default=NULL, 
-              help="Number of expansions", metavar="integer"),
+      help="Number of expansions", metavar="integer"),
     make_option(c("-t", "--tips"), type="integer", default=NULL, 
-              help="Number of tips", metavar="integer"),
+      help="Number of tips", metavar="integer"),
     make_option(c("-s", "--seed"), type="integer", default=c(1), 
-              help="(Optional) RNG seed [default= %default]", metavar="integer"),
+      help="(Optional) RNG seed [default= %default]", metavar="integer"),
     make_option(c("-o", "--out"), type="character", default="simulation", 
-              help="(Optional) Output folder name [default= %default]", metavar="character"),
+      help="(Optional) Output folder name [default= %default]", metavar="character"),
     make_option(c("-N", "--popscale"), type="double", default=NULL, 
-              help="(Optional) Background population size [default=randomise]", metavar="double"),
+      help="(Optional) Background population size [default=randomise]", metavar="double"),
     make_option(c("-K", "--capacities"), type="character", default=NULL, 
-              help="(Optional) Comma separated list of carrying capacities [default=randomise]",  metavar="character"),
+      help="(Optional) Comma separated list of carrying capacities [default=randomise]",  metavar="character"),
     make_option(c("-T", "--t_mid"), type="character", default=NULL, 
-              help="(Optional) Comma separated list of non-dimensional times to midpoint, A = 1/sqrt(r) with r being the non-dimensional
-                    rate [default=randomise]",  metavar="character"),
+      help="(Optional) Comma separated list of non-dimensional times to midpoint, A = 1/sqrt(r) with r being the non-dimensional
+      rate [default=randomise]",  metavar="character"),
     make_option(c("-S", "--samscale"), type="double", default=-1, 
-              help="(Optional) Sampling scale lower bound (upper bound always 0) [default=%default]", metavar="double"),
+      help="(Optional) Sampling scale lower bound (upper bound always 0) [default=%default]", metavar="double"),
     make_option(c("-l", "--lambdar"), type="double", default=10, 
-              help="(Optional) Lambda_r value for non-dimensional time to midpoint distribution [default=%default]", metavar="double"),
+      help="(Optional) Lambda_r value for non-dimensional time to midpoint distribution [default=%default]", metavar="double"),
     make_option(c("--metadata"), type="double", default=NULL, 
-              help="(Optional) Metadata to be included in the simulation file in a comma separated list
-                with entries in the format of [name]:[value] pairs [default=%default]", metavar="double")
-) 
- 
+      help="(Optional) Metadata to be included in the simulation file in a comma separated list
+      with entries in the format of [name]:[value] pairs [default=%default]", metavar="double")
+    ) 
+
 opt_parser <- OptionParser(option_list=option_list)
 opt <- parse_args(opt_parser)
 given <- list()
@@ -95,12 +95,12 @@ if (n_exp > 0) {
 }
 
 priors <- standard_priors(expansion_rate=1, 
-                            N_mean_log=4, 
-                            N_sd_log=4, 
-                            t_mid_rate=lambda_r, 
-                            K_sd_log=1/2, 
-                            exp_time_nu=nu, 
-                            exp_time_kappa=kappa)
+    N_mean_log=4, 
+    N_sd_log=4, 
+    t_mid_rate=lambda_r, 
+    K_sd_log=1/2, 
+    exp_time_nu=nu,   
+    exp_time_kappa=kappa)
 out <- expansions_simulate(priors, sam, concentration, given=given)
 params <- out$params
 co <- out$co
@@ -108,11 +108,26 @@ co <- out$co
 phy <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from, include_div_nodes=FALSE)
 phy.div_nodes <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from, include_div_nodes=TRUE)
 
+tree  <- read.tree(text = phy$full)
+pre <- structured_coal.preprocess_phylo(tree)
+
+root_set <- rep(NA, given$n_exp)
+if(given$n_exp > 0) {
+    for (i in c(1:n_exp)) {
+        L <- LETTERS[i]
+        N_set <- nodeid(pre$phy, pre$phy$node.label[grep(paste0("N_",L), pre$phy$node.label)]) 
+        set_root <- N_set[which.min(pre$nodes.df$times[N_set])]
+        set_root.edge <- pre$incoming[[set_root]]
+        root_set[i] <- set_root.edge
+    }
+}
+
 sim_data <- params
 sim_data$seed <- seed
 sim_data$tip_times <- sam
+sim_data$root_set <- root_set
 sim_data_txt <- toJSON(sim_data)
 
 write(sim_data_txt, paste0("./","tree_params.json"))
-write(phy, "./tree.nwk")
-write(phy.div_nodes, "./tree_div.nwk")
+write(phy$full, "./tree.nwk")
+write(phy.div_nodes$full, "./tree_div.nwk")

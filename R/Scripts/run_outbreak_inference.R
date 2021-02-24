@@ -1,85 +1,102 @@
 #!/usr/bin/env Rscript
 library(CaveDive)
+library(rmutil)
+library(ape)
+library(ggplot2)
+library(ggtree)
+library(treeio)
+library(viridis)
 library(rjson)
+library(optparse)
 
-args = commandArgs(trailingOnly=TRUE)
+source("make_report.R")
 
-n_it <- as.integer(args[1])
-thinning <- as.integer(args[2])
-simulation_in <- as.character(args[3])
-dir_out <- as.character(args[4])
+option_list <- list(
+   make_option(c("-n", "--niterations"), type="integer", default=NULL, 
+       help="Number of iterations", metavar="integer"),
+   make_option(c("-t", "--thinning"), type="integer", default=NULL, 
+       help="Thinning", metavar="integer"),
+   make_option(c("-f", "--filein"), type="character", default=NULL, 
+       help="Path to .nwk file", metavar="character"),
+   make_option(c("-s", "--seed"), type="integer", default=1, 
+       help="(Optional) Random seed", metavar="integer"),
+   make_option(c("-o", "--out"), type="character", default="mcmc_out", 
+       help="(Optional) Output directory name [default= %default]", metavar="character"),
+   make_option(c("--meanscale"), type="double", default=4, 
+       help="(Optional) Background population size prior mean [default=%default]", metavar="double"),
+   make_option(c("--sdscale"), type="double", default=4, 
+       help="(Optional) Background population size prior sd [default=%default",  metavar="double"),
+   make_option(c("--lambdar"), type="double", default=10, 
+       help="(Optional) Growth rate / time to mid point prior lambda [default=%default",  metavar="double"),
+   make_option(c("--nu"), type="double", default=1/2, 
+       help="(Optional) Expansion time prior nu [default=%default",  metavar="double"),
+   make_option(c("--kappa"), type="double", default=1/10, 
+       help="(Optional) Expansion time prior kappa [default=%default",  metavar="double"),
+   make_option(c("--sdk"), type="double", default=1, 
+       help="(Optional) Expansion size prior sd [default=%default]", metavar="double")
+   ) 
 
-sim_data <- fromJSON(file=simulation_in)
-sim_data <- lapply(sim_data, unlist)
-sim_data <- lapply(sim_data, as.numeric)
+opt_parser <- OptionParser(option_list=option_list)
+opt <- parse_args(opt_parser)
 
-seed <- sim_data$seed
-n_exp <- sim_data$n_exp+1
-n_tips <- sim_data$n_tips
-tip_times <- sim_data$tip_times
-tip_colours <- sim_data$tip_colours
-div_times <- sim_data$div_times
-exp_probs <- sim_data$exp_probs
+if (!is.null(opt$niterations)){
+       n_it <- opt$niterations
+} else {
+       print_help(opt_parser)
+       stop("Number of iterations must be supplied.", call.=FALSE)
+}
 
-set.seed(seed)
+if (!is.null(opt$thinning)) {
+       thinning <- opt$thinning
+} else {
+       print_help(opt_parser)
+       stop("Thinning must be supplied.", call.=FALSE)
+}
+
+
+if (!is.null(opt$filein)) {
+       tree_in <- opt$filein
+} else {
+       print_help(opt_parser)
+       stop("Simulation file must be supplied.", call.=FALSE)
+}
+
+
+if (!is.null(opt$out)) {
+       dir_out <- opt$out
+} else {
+       print_help(opt_parser)
+       stop("Output directory must be supplied.", call.=FALSE)
+}
+
+set.seed(opt$seed)
 setwd(file.path(".", dir_out))
 
-N <- sim_data$N
-K <- sim_data$K
-A <- sim_data$A
+tree <- read.tree(file = tree_in)
 
-div_cols <- c(1:n_exp)
+N_mean <- opt$meanscale ## carrying capacity rate lognormal prior mean
 
-sim_tree <- clonal_tree_process.simulate_tree(n_exp, N, K, A, tip_times, tip_colours, div_times, div_cols, exp_probs)
-co <- sim_tree$co
+N_sd <- opt$sdscale ## carrying capacity  rate lognormal prior sd
+K_sd <- opt$sdk
 
-sim <- sim_data
-sim$co <- co
+kappa <- opt$kappa
+nu <- opt$nu
 
-tree.div.str <- build_coal_tree.structured(tip_times, co$times, tip_colours, co$colours, div_times, div_cols, co$div_from, include_div_nodes = TRUE)
-tree.div <- read.tree(text = tree.div.str$full)
+lambda_r <- opt$lambdar
 
-pdf(file="tree.pdf", width=5, height=5)
-tree.plt <- plot_structured_tree(tree.div, n_exp)
-plot(tree.plt)
-dev.off()
+priors <- standard_priors(expansion_rate=1, 
+    N_mean_log=N_mean, 
+    N_sd_log=N_sd, 
+    t_mid_rate=lambda_r, 
+    K_sd_log=K_sd, 
+    exp_time_nu=nu,   
+    exp_time_kappa=kappa)
 
-tree.str <- build_coal_tree.structured(tip_times, co$times, tip_colours, co$colours, div_times, div_cols, co$div_from, include_div_nodes = FALSE, aux_root = FALSE)
-tree <- read.tree(text = tree.str$full)
-pre <- structured_coal.preprocess_phylo(tree) 
+expansions <- run_expansion_inference(pre, priors, 1, n_it=n_it, thinning=thinning,)
 
-r_mean <- 0 ## growth rate lognormal prior mean
-K_mean <- 4 ## carrying capacity rate lognormal prior mean
-
-r_sd <- 1 ## growth rate lognormal prior sd
-K_sd <- 4 ## carrying capacity  rate lognormal prior sd
-
-prior_i <- function(x) dpois(x, 1, log = TRUE) ### poisson 1 prior
-
-prior_N <- function(x) dlnorm(x, meanlog = K_mean, sdlog = K_sd, log = TRUE)
-prior_N.sample <- function() rlnorm(1, meanlog = K_mean, sdlog = K_sd) 
-
-prior_r <- function(x) dlnorm(x, meanlog = r_mean, sdlog = r_sd, log = TRUE) 
-prior_r.sample <- function() rlnorm(1, meanlog = r_mean, sdlog = r_sd) 
-
-prior_K <- function(x) dlnorm(x, meanlog = K_mean, sdlog = K_sd, log = TRUE)
-prior_K.sample <- function() rlnorm(1, meanlog = K_mean, sdlog = K_sd) 
-
-prior_t <- function(x) {
-       if (all(x < max(pre$nodes.df$times)) && all(x > min(pre$nodes.df$times))) {
-              out <- length(x)*log(1/abs(max(pre$nodes.df$times)-min(pre$nodes.df$times)))
-       } else {
-              out <- -Inf 
-       }
-       return(out) ### Uniform time prior
-} 
-
-prior_t.sample <- function() runif(1, min(pre$nodes.df$times), max(pre$nodes.df$times)) ### Uniform time prior
-
-o <- outbreaks_infer(tree, prior_i,  prior_N,  prior_N.sample, 
-                     prior_r, prior_r.sample,  prior_K,  prior_K.sample,  prior_t,
-                     prior_t.sample, 2, n_it=n_it, thinning=thinning, debug=F)
+o <- expansions$o 
 
 dfs <- mcmc2data.frame(o)
-write.csv(df$mcmc.df,"./mcmc_data.csv")
-write.csv(df$event.df,"./event_data.csv")
+write.csv(dfs$mcmc.df, "./mcmc_data.csv")
+write.csv(dfs$mcmc.df, "./event_data.csv")
+warnings()

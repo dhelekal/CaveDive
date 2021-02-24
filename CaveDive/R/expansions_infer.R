@@ -51,7 +51,7 @@ standard_priors <- function(expansion_rate=1,
 #' @return list with names 'phylo_preprocessed', the preprocessed phylogeny, and 'mcmc_out' a list of MCMC states
 #' @export
 #' 
-run_expansion_inference <- function(phy, priors, concentration=1, thinning=1, n_it=1e6, init=NULL) {
+run_expansion_inference <- function(phy, priors, concentration=1, n_it=1e6, thinning=1, init=NULL) {
     pre <- structured_coal.preprocess_phylo(phy)
     o <- expansions_infer(pre, 
                             priors$prior_i, 
