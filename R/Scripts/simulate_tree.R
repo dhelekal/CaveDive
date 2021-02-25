@@ -113,7 +113,7 @@ pre <- structured_coal.preprocess_phylo(tree)
 
 root_set <- rep(NA, given$n_exp)
 if(given$n_exp > 0) {
-    for (i in c(1:n_exp)) {
+    for (i in c(1:given$n_exp)) {
         L <- LETTERS[i]
         N_set <- nodeid(pre$phy, pre$phy$node.label[grep(paste0("N_",L), pre$phy$node.label)]) 
         set_root <- N_set[which.min(pre$nodes.df$times[N_set])]

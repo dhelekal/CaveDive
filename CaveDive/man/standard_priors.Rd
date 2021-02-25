@@ -30,7 +30,7 @@ standard_priors(
 \item{exp_time_kappa}{corresponds to '\kappa' in paper}
 }
 \value{
-a list of prior likelihoods and sampling functions with names 'prior_i', 'prior_N', 'prior_t_mid_given_N', 'prior_t_mid_given_N.sample', 'prior_K_given_N', 'prior_K_given_N.sample', 'prior_t_given_N', 'prior_t_given_N.sample'. See `standard_priors` for details.
+a list of prior likelihoods and sampling functions with names 'prior_i', 'prior_i.sample', 'prior_N', 'prior_N.sample' ,prior_t_mid_given_N', 'prior_t_mid_given_N.sample', 'prior_K_given_N', 'prior_K_given_N.sample', 'prior_t_given_N', 'prior_t_given_N.sample'. See `standard_priors` for details.
 }
 \description{
 Generates a list of priors of the form described in the paper to use with MCMC inference.

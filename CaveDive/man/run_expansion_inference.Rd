@@ -9,21 +9,21 @@ run_expansion_inference(
   phy,
   priors,
   concentration = 1,
-  thinning = 1,
   n_it = 1e+06,
+  thinning = 1,
   init = NULL
 )
 }
 \arguments{
 \item{phy}{phylogeny to run inference on}
 
-\item{priors}{a list of prior likelihoods and sampling functions with names 'prior_i', 'prior_N', 'prior_t_mid_given_N', 'prior_t_mid_given_N.sample', 'prior_K_given_N', 'prior_K_given_N.sample', 'prior_t_given_N', 'prior_t_given_N.sample'. See `standard_priors` for details.}
+\item{priors}{a list of prior likelihoods and sampling functions with names 'prior_i', 'prior_i.sample', 'prior_N', 'prior_N.sample', 'prior_t_mid_given_N', 'prior_t_mid_given_N.sample', 'prior_K_given_N', 'prior_K_given_N.sample', 'prior_t_given_N', 'prior_t_given_N.sample'. See `standard_priors` for details.}
 
 \item{concentration}{concentration parameter for the dirichlet prior on expansion membership probabilities}
 
-\item{thinning}{mcmc output thinning}
-
 \item{n_it}{number of MCMC iterations}
+
+\item{thinning}{mcmc output thinning}
 
 \item{init}{initial state for the mcmc chain}
 }

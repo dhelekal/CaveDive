@@ -18,7 +18,7 @@ expansions_simulate <- function(priors, sampling_times, concentration, given=lis
         n_exp <- given$n_exp
     }
 
-    expansion_probs <- rdirichlet(1, rep(concentration, (n_exp+1)))
+    exp_probs <- rdirichlet(1, rep(concentration, (n_exp+1)))
 
     div_cols <- c(1:(n_exp+1))
     colouring <- c()
@@ -28,9 +28,9 @@ expansions_simulate <- function(priors, sampling_times, concentration, given=lis
         if (it > max_it) {
             stop("Maximum sampling iterations exceeded. Invalid concentration or number of expansions. Unable to sample valid colouring")
         }
-        exp_probs <- rdirichlet(1, concentration)
         colouring <- rmultinom(n_tips, 1, exp_probs)
         colouring <- sapply(c(1:n_tips), function (i) which(colouring[,i]>0))
+        clade_sizes <- sapply(c(1:(n_exp+1)), function (i) length(which(colouring==i)))
         it <- it + 1
     }
 
@@ -54,16 +54,24 @@ expansions_simulate <- function(priors, sampling_times, concentration, given=lis
     }
 
     if(is.null(given$div_times)) {
-        most_recent_sam <- sapply(div_cols, function (i) min(sampling_times[which(colouring==i)]))
-        div_times <- rep(Inf, n_exp)
         it <- 0
-        while (!all(div_times < most_recent_sam)) {
+        div_times <- rep(Inf, (n_exp+1))
+        while(!all(sapply(c(1:(n_exp+1)), function(i) all(div_times[i] < sampling_times[which(colouring==i)])))){
             if (it > max_it) {
-                stop("Maximum sampling iterations exceeded. Invalid Sampling Times. Cannot simulate divergence times compatible with sampling times.")
+                stop("Maximum sampling iterations exceeded.")
             }
+            ## div time now
             div_times <- sapply(rep(N, n_exp), priors$prior_t_given_N.sample)
-            div_times <- c(div_times, -Inf)
-            it <- it + 1
+            div_times <- c(div_times,-Inf)
+
+            ## Re-order everything so that divergence event numbering corresponds to their order of occurence
+            div_times.ord <- order(-div_times) 
+            div_times <- div_times[div_times.ord]
+
+            colouring <- sapply(colouring, function(i) which(div_times.ord==i))
+            it <- it+1
+            exp_probs <- exp_probs[div_times.ord]
+            exp_sizes <- exp_sizes[div_times.ord]
         }
     } else {
         div_times <- given$div_times
@@ -71,15 +79,49 @@ expansions_simulate <- function(priors, sampling_times, concentration, given=lis
 
     A <- sapply(t_mid, function(x) (1/x)**2)
 
-    co <- clonal_tree_process.simulate_tree(n_exp, N, K, A, sampling_times, colouring, div_times, div_cols) 
-    params <- list(n_exp=n_exp, N=N, K=K, t_mid=t_mid, tip_colours=colouring, div_times=div_times, div_cols=div_cols, exp_probs=expansion_probs)
+    if (n_exp > 0) {
+        div_from <- sapply(c(1:n_exp), function(i) c((i+1):(n_exp+1))[runif(1,1,n_exp+2-i)])
+    } else {
+        div_from <- c()
+    }
+
+    clonal_co <- simulate_clonal_tree(n_exp, N, K, A, sampling_times, colouring, div_times, div_cols, div_from=div_from) 
+    params <- list(n_exp=n_exp,
+                    N=N, 
+                    K=K, 
+                    t_mid=t_mid, 
+                    tip_colours=colouring, 
+                    div_times=div_times, 
+                    div_cols=div_cols, 
+                    exp_probs=exp_probs)
+
     param_log_lh <- priors$prior_i(n_exp) +  
     priors$prior_N(N) +
-    sum(priors$prior_K_given_N(K,N)) +
-    sum(priors$prior_t_mid_given_N(t_mid,N)) + 
-    sum(priors$prior_t_given_N(div_times,N)) +
     ddirichlet(t(matrix(exp_probs)), alpha=rep(concentration, length(exp_probs)), log=TRUE) +
-    sum(sapply(c(1:length(exp_probs)), function (i) log(exp_probs[i])*exp_sizes[[i]]))
+    sum(sapply(c(1:length(exp_probs)), function (i) log(exp_probs[i])*exp_sizes[[i]])) -
+    lgamma(n_exp+1) + ### Prior on parent populations
+    lgamma(n_exp+1) ### Expansions are exchangeable
 
-    return(list(co=co, params=params, coal_log_lh=co$log_lh, param_log_lh=param_log_lh))
-} 
+    if(n_exp > 0){
+        param_log_lh <- param_log_lh +
+        sum(priors$prior_K_given_N(K,N)) +
+        sum(priors$prior_t_mid_given_N(t_mid,N)) +
+        sum(priors$prior_t_given_N(div_times[-length(div_times)],N))  ## Do not compute likelihood for neutral population divergence time!!! 
+    }
+
+    return(list(co=clonal_co$co, params=params, coal_log_lh=clonal_co$log_lh, param_log_lh=param_log_lh))
+}
+
+#' @export
+simulate_clonal_tree <- function(n_exp, N, K, A, sampling_times, tip_colours, div_times, div_cols, div_from=NA) {
+
+    rates <- if(n_exp > 0) lapply(c(1:n_exp), function(i) return(function (s) sat.rate(s, K[i], A[i], div_times[i]))) else list()
+    rates[[n_exp+1]] <- function (s) constant.rate(s, N)
+
+    rate.ints <- if(n_exp > 0) lapply(c(1:n_exp), function(i) return(function (t, s) sat.rate.int(t, s, K[i], A[i], div_times[i]))) else list()
+    rate.ints[[n_exp+1]] <- function(t, s) constant.rate.int(t, s, N)
+
+    co <- structured_coal.simulate(sampling_times, tip_colours, div_times, div_cols, rates, rate.ints, div.from=div_from)
+
+    return(list(co=co, log_lh=co$log_lh))
+}

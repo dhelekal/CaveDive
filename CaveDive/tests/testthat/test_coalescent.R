@@ -463,30 +463,23 @@ test_that("Simulation Likelihood matches product of colour specific likelihoods"
     expect_equal(comp$log_lh-lgamma(length(div_times)), co$log_lh)
 })
 
-test_that("Outbreak simulation likelihood matches computer expansion likelihood", {
+test_that("Expansion simulation likelihood matches computed expansion likelihood", {
     set.seed(1123456)
     
     n_tips <- 100
-    poi_rate <- 2
     concentration <- 2
 
     sam <- runif(n_tips, 0, 0.1)
     sam <- sam - max(sam)
     sam <- sam[order(-sam)]
 
-    r_mean <- 0
-    r_sd <- 1
+    priors <- standard_priors()
 
-    K_mean <- 6
-    K_sd <- 0.2
-
-    time_shape <- floor(n_tips/3)
-    time_rate <- 5**(-1)
-
-    out <- expansions_simulate(poi_rate, concentration, sam, r_mean, r_sd, K_mean, K_sd, time_rate, time_shape)
+    out <- expansions_simulate(priors, sam, concentration=concentration, given=list(N=100))
     co <- out$co
+    params <- out$params
 
-    tr.nodiv <- build_coal_tree.structured(sam, co$times, out$tip_colours, co$colours, out$div_times, out$div_cols, co$div_from, include_div_nodes = FALSE)
+    tr.nodiv <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from, include_div_nodes = FALSE)
     tree.nodiv <- read.tree(text = tr.nodiv$full)
     
     times.nodiv <- node.depth.edgelength(tree.nodiv)
@@ -495,22 +488,23 @@ test_that("Outbreak simulation likelihood matches computer expansion likelihood"
     times.ord <- order(-times.nodiv)
     times.nodiv <- times.nodiv[times.ord]
 
-    MRCAs.idx <- sapply(c(1:out$n_exp), function (x) (which(co$colours==x)[which.min(times.nodiv[which(co$colours==x)])])) 
+    MRCAs.idx <- sapply(c(1:(params$n_exp+1)), function (x) (which(co$colours==x)[which.min(times.nodiv[which(co$colours==x)])])) 
     MRCAs <- sapply(MRCAs.idx, function (x) tree.nodiv$node.label[times.ord[x]])
 
     pre <- structured_coal.preprocess_phylo(tree.nodiv)
-    comp_log_lh <- expansions_likelihood(pre, MRCAs, out$div_times, out$A, out$K, out$N, out$exp_probs)
-    sim_log_lh <- out$full_lh
+    sim_log_lh <- out$coal_log_lh
 
-    comp <- structured_coal.likelihood(pre, MRCAs, out$div_times, out$A, out$K, out$N)
+    A <- sapply(params$t_mid, function(x) (1/x)**2)
 
-    for (i in out$div_cols){
-      sam.gt <- sam[which(out$tip_colours==i)]
+    comp <- structured_coal.likelihood(pre, MRCAs, params$div_times, A, params$K, params$N)
+
+    for (i in params$div_cols){
+      sam.gt <- sam[which(params$tip_colours==i)]
       coal.gt  <- co$times[which(co$colours==i)]
 
       for (j in c(1:length(co$div_from))) {
         if (co$div_from[j]==i) {
-          sam.gt <- c(sam.gt, out$div_times[j])
+          sam.gt <- c(sam.gt, params$div_times[j])
         }
       }
 
@@ -520,7 +514,6 @@ test_that("Outbreak simulation likelihood matches computer expansion likelihood"
     expect_equal(sam.gt, comp$sam.times[[i]])
     expect_equal(coal.gt, comp$coal.times[[i]])
   }
-    expect_equal(comp_log_lh-lgamma(length(out$div_times)), sim_log_lh)
 })
 
 context("RJMCMC")
@@ -686,4 +679,72 @@ test_that("Transdimensional moves are balanced", {
           expect_equal(qr_comp, qr_test)
       }
     }
+})
+
+test_that("Log-posterior returns correct values", {
+    set.seed(1)
+
+    n_tips <- 100
+ 
+    sam <- runif(n_tips, 0, 0.1)
+    sam <- sam - max(sam)
+    sam <- sam[order(-sam)]
+
+    priors <- standard_priors() 
+    
+    out <- expansions_simulate(priors, sam, concentration=2, given=list(N=100, n_exp=2))
+    params <- out$params
+    co <- out$co 
+
+    prior_probs <- function(probs) {
+
+        out <- -Inf
+        if (abs(sum(probs)-1) < 1e-8 && all(probs > 0)) {
+            out <- ddirichlet(t(matrix(probs)), alpha=rep(2, length(probs)), log=TRUE)
+        }
+        return(out) 
+    }
+    
+    tr.nodiv <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from, include_div_nodes = FALSE)
+    tree.nodiv <- read.tree(text = tr.nodiv$full)
+    pre <- structured_coal.preprocess_phylo(tree.nodiv)
+
+    root_set <- rep(NA, params$n_exp)
+    if(params$n_exp > 0) {
+        for (i in c(1:params$n_exp)) {
+            L <- LETTERS[i]
+            N_set <- nodeid(pre$phy, pre$phy$node.label[grep(paste0("N_",L), pre$phy$node.label)]) 
+            set_root <- N_set[which.min(pre$nodes.df$times[N_set])]
+            set_root.edge <- pre$incoming[[set_root]]
+            root_set[i] <- set_root.edge
+        }
+    }
+
+    x <- list()
+
+    i <- params$n_exp
+    x[[1]] <- params$N
+    x[[2]] <- params$exp_probs
+
+    for(j in c(1:n_exp)) {
+      expansion_para <- list()
+      expansion_para[[1]] <- params$t_mid[j]
+      expansion_para[[2]] <- params$K[j]
+      expansion_para[[3]] <- params$div_times[j]
+      expansion_para[[4]] <- root_set[j]
+      x[[2+j]] <- expansion_para
+    }
+
+    log_p <- log_posterior(x,
+      i, 
+      priors$prior_i, 
+      priors$prior_N, 
+      priors$prior_t_mid_given_N, 
+      priors$prior_K_given_N, 
+      priors$prior_t_given_N, 
+      prior_probs, 
+      pre) 
+
+    expect_equal(log_p$prior, out$param_log_lh)
+    expect_equal(log_p$lh, out$coal_log_lh)
 })
