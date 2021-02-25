@@ -4,14 +4,14 @@
 \alias{extract_lineage_times}
 \title{Extracts Lineage times from a parent phylogeny based on provided divergence MRCA nodes and times.}
 \usage{
-extract_lineage_times(phylo.preprocessed, div.MRCA.nodes, div.times)
+extract_lineage_times(phylo.preprocessed, div.MRCA.nodes, div_times)
 }
 \arguments{
 \item{phylo.preprocessed}{preprocessed phylogeny}
 
 \item{div.MRCA.nodes}{labels of MRCA nodes of diverging lineages}
 
-\item{div.times}{absolute divergence times}
+\item{div_times}{absolute divergence times}
 }
 \value{
 A list containing lists of sampling time vectors sam.times and coalescent time vectors coal.times for each lineage.

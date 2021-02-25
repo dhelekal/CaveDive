@@ -281,14 +281,14 @@ structured_coal.preprocess_phylo <- function(phy){
 #'
 #' @param phylo.preprocessed preprocessed phylogeny
 #' @param div.MRCA.nodes labels of MRCA nodes of diverging lineages
-#' @param div.times absolute divergence times
+#' @param div_times absolute divergence times
 #' @param diverging.rates growth rates for diverging lineages
 #' @param diverging.sizes asymptotic size for diverging lineages
 #' @param neutral.size size of neutral phylogeny
 #' @param times.extracted list returned by extract_lineage_times. Used instead of div.MRCA.nodes to avoid recomputing the tree partition.
 #' @return Log-likelihood
 #' @export
-structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.times, diverging.rates, diverging.sizes, neutral.size, times.extracted=NA, type="Sat"){
+structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div_times, diverging.rates, diverging.sizes, neutral.size, times.extracted=NA, type="Sat"){
     n_tips <- phylo.preprocessed$n_tips
 
     MRCA.idx <- nodeid(phylo.preprocessed$phy, div.MRCA.nodes)-n_tips
@@ -296,7 +296,7 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.t
     log_lh <- 0
 
     if(is.na(times.extracted)) {
-        times.extracted <- extract_lineage_times(phylo.preprocessed, div.MRCA.nodes, div.times)
+        times.extracted <- extract_lineage_times(phylo.preprocessed, div.MRCA.nodes, div_times)
     }
     partition_counts <- times.extracted$partition_counts
 
@@ -311,9 +311,9 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.t
 
         for (i in range){
             if (type == "Log-Exp") {
-                    log_lh <- log_lh + logexp_coalescent_loglh(times.extracted$sam.times[[i]], times.extracted$coal.times[[i]], div.times[i], diverging.rates[i], diverging.sizes[i], t_max)
+                    log_lh <- log_lh + logexp_coalescent_loglh(times.extracted$sam.times[[i]], times.extracted$coal.times[[i]], div_times[i], diverging.rates[i], diverging.sizes[i], t_max)
                 } else if (type=="Sat") {
-                    log_lh <- log_lh + sat_coalescent_loglh(times.extracted$sam.times[[i]], times.extracted$coal.times[[i]], div.times[i], diverging.rates[i], diverging.sizes[i], t_max)
+                    log_lh <- log_lh + sat_coalescent_loglh(times.extracted$sam.times[[i]], times.extracted$coal.times[[i]], div_times[i], diverging.rates[i], diverging.sizes[i], t_max)
                 } else {
                     warning(paste0("Unrecognised likelihood option: ", type))
                     return(NA)
@@ -321,7 +321,7 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.t
             
         }
         log_lh <- log_lh + coalescent_loglh(times.extracted$sam.times[[k_div]], times.extracted$coal.times[[k_div]], neutral.size, t_max)
-        #log_lh <- log_lh -lgamma(length(div.times))#+ log(1/factorial(length(div.times)-1))
+        #log_lh <- log_lh -lgamma(length(div_times))#+ log(1/factorial(length(div_times)-1))
     }
 
     return(list(log_lh = log_lh, sam.times = times.extracted$sam.times, coal.times = times.extracted$coal.times, partition_counts=partition_counts))
@@ -331,12 +331,12 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div.t
 #'
 #' @param phylo.preprocessed preprocessed phylogeny
 #' @param div.MRCA.nodes labels of MRCA nodes of diverging lineages
-#' @param div.times absolute divergence times
+#' @param div_times absolute divergence times
 #' @return A list containing lists of sampling time vectors sam.times and coalescent time vectors coal.times for each lineage.
 #' @export
-extract_lineage_times <- function(phylo.preprocessed, div.MRCA.nodes, div.times) {
-    times.ord <- order(-div.times)
-    k_div <- length(div.times)
+extract_lineage_times <- function(phylo.preprocessed, div.MRCA.nodes, div_times) {
+    times.ord <- order(-div_times)
+    k_div <- length(div_times)
 
     div_from <- rep(NA, k_div)
 
@@ -364,7 +364,7 @@ extract_lineage_times <- function(phylo.preprocessed, div.MRCA.nodes, div.times)
                 jj <- times.ord[j]
                 node.labs <- node.labs[which(is.na(nodeid(subtrees[[jj]], node.labs)))]
                 leaf.labs <- leaf.labs[which(is.na(nodeid(subtrees[[jj]], leaf.labs)))]
-                leaf.times <- c(leaf.times, div.times[jj])
+                leaf.times <- c(leaf.times, div_times[jj])
                 partition_counts[ii] <- partition_counts[ii] - 1
             }
         }

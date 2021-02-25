@@ -7,7 +7,7 @@
 structured_coal.likelihood(
   phylo.preprocessed,
   div.MRCA.nodes,
-  div.times,
+  div_times,
   diverging.rates,
   diverging.sizes,
   neutral.size,
@@ -20,7 +20,7 @@ structured_coal.likelihood(
 
 \item{div.MRCA.nodes}{labels of MRCA nodes of diverging lineages}
 
-\item{div.times}{absolute divergence times}
+\item{div_times}{absolute divergence times}
 
 \item{diverging.rates}{growth rates for diverging lineages}
 
