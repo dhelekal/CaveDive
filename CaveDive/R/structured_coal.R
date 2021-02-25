@@ -209,7 +209,7 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
                     extant_lineages[which_div] <- extant_lineages[which_div] - 1 
                     
                     i <- NA
-                    if (is.na(div.from)) {
+                    if (all(is.na(div.from))) {
                         non_zero_l <- which(extant_lineages > 0)
                         i <- non_zero_l[runif(1,1,length(non_zero_l)+1)]
                         log_lh <- log_lh + log(1/length(non_zero_l))
