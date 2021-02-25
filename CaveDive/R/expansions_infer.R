@@ -301,7 +301,7 @@ log_posterior <- function(x,
                              sum(prior_t_mid_given_N(mid.times, N)) +
                              sum(prior_K_given_N(K,N)) + 
                              sum(prior_t_given_N(div.times,N)) -
-                             lgamma(length(div.times)) ### prior on divergence events
+                             lgamma(i+1) ### prior on divergence events
             }
 
             MRCAs_root <- c(MRCAs, root_MRCA) ### add root for parent population
