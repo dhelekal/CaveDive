@@ -112,6 +112,16 @@ expansions_simulate <- function(priors, sampling_times, concentration, given=lis
     return(list(co=clonal_co$co, params=params, coal_log_lh=clonal_co$log_lh, param_log_lh=param_log_lh))
 }
 
+#' Simulate an instance of coalescent process with local population structure 
+#' @param n_exp number of expansions
+#' @param N background population size
+#' @param K carrying capacities
+#' @param A growth rates
+#' @param sampling_times sampling times
+#' @param tip_colours tip clade assignment 
+#' @param div_times clade divergence times
+#' @param div_cols vector of colours ordered in sequence
+#' @param div_from (optional) parent populations for individual clades. If NA will be randomised equiprobably.
 #' @export
 simulate_clonal_tree <- function(n_exp, N, K, A, sampling_times, tip_colours, div_times, div_cols, div_from=NA) {
 
