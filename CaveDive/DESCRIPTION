@@ -1,9 +1,10 @@
 Package: CaveDive
+Encoding: UTF-8
 Title: What the Package Does (one line, title case)
 Version: 0.0.0.9000
 Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
 Description: What the package does (one paragraph).
-Depends: R (>= 3.6.0)
+Depends: R (>= 4.0.0)
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
@@ -12,5 +13,11 @@ Suggests:
 LinkingTo: Rcpp
 Imports: 
     Rcpp,
+    DirichletReg,
+    treeio,
+    ggtree,
+    ggplot2,
+    gridExtra,
+    pracma, 
     ape
 RoxygenNote: 7.1.1
