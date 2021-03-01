@@ -9,8 +9,6 @@ library(viridis)
 library(rjson)
 library(optparse)
 
-source("make_report.R")
-
 option_list <- list(
    make_option(c("-n", "--niterations"), type="integer", default=NULL, 
        help="Number of iterations", metavar="integer"),
@@ -30,7 +28,7 @@ option_list <- list(
        help="(Optional) Growth rate / time to mid point prior lambda [default=%default",  metavar="double"),
    make_option(c("--nu"), type="double", default=1/2, 
        help="(Optional) Expansion time prior nu [default=%default",  metavar="double"),
-   make_option(c("--kappa"), type="double", default=1/10, 
+   make_option(c("--kappa"), type="double", default=1/8, 
        help="(Optional) Expansion time prior kappa [default=%default",  metavar="double"),
    make_option(c("--sdk"), type="double", default=1, 
        help="(Optional) Expansion size prior sd [default=%default]", metavar="double")
@@ -69,10 +67,9 @@ if (!is.null(opt$out)) {
        stop("Output directory must be supplied.", call.=FALSE)
 }
 
+tree <- read.tree(file = tree_in)
 set.seed(opt$seed)
 setwd(file.path(".", dir_out))
-
-tree <- read.tree(file = tree_in)
 
 N_mean <- opt$meanscale ## carrying capacity rate lognormal prior mean
 
@@ -92,11 +89,10 @@ priors <- standard_priors(expansion_rate=1,
     exp_time_nu=nu,   
     exp_time_kappa=kappa)
 
-expansions <- run_expansion_inference(pre, priors, 1, n_it=n_it, thinning=thinning,)
+expansions <- run_expansion_inference(tree, priors, 1, n_it=n_it, thinning=thinning)
+mcmc_out <- expansions$mcmc_out
 
-o <- expansions$o 
-
-dfs <- mcmc2data.frame(o)
+dfs <- mcmc2data.frame(mcmc_out)
 write.csv(dfs$mcmc.df, "./mcmc_data.csv")
-write.csv(dfs$mcmc.df, "./event_data.csv")
+write.csv(dfs$event.df, "./event_data.csv")
 warnings()
