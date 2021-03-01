@@ -38,7 +38,6 @@ mcmc2data.frame <- function(o) {
 #' @param event.df event.df returned by mcmc2data.frame
 #' @param which_br Which branch to generate marginals for
 #' @param pre Preprocessed phylogeny
-#' @param priors (Optional) A list of priors used for inference, mutually exclusive with specifying individual priors. If either is supplied priors will be overlayed in plotting.
 #' @param prior_N (Optional) Background population size prior, mutually exclusive with passing list of priors. If either is supplied priors will be overlayed in plotting.
 #' @param prior_t_mid_given_N (Optional) Time to midpoint  prior, mutually exclusive with passing list of priors. If either is supplied priors will be overlayed in plotting.
 #' @param prior_K_given_N (Optional) Carrying capacity prior, mutually exclusive with passing list of priors. If either is supplied priors will be overlayed in plotting.
@@ -46,7 +45,6 @@ mcmc2data.frame <- function(o) {
 #' @return a list of 3 plot panels
 #' @export
 plot_event_summary <- function(mcmc.df, event.df, which_br, pre, 
-   priors=NULL,
    prior_N=NULL, 
    prior_t_mid_given_N=NULL, 
    prior_K_given_N=NULL, 
@@ -59,13 +57,12 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, pre,
    br_subs <- which(event_dim_marginal$br == which_br)
    event_br_marginal <- event_dim_marginal[br_subs,]
    event_br_marginal$it <- correct_dim_it[br_subs]
-   event_br_marginal$idx <- c(1:length(event_br_marginal$it))
+   event_br_marginal$idx <- if(length(event_br_marginal$it) > 0) c(1:length(event_br_marginal$it)) else c()
 
    trace_N <- ggplot(mcmc.df, aes(x=it, y=N)) +
    geom_line(alpha = 0.3) +
    theme_bw() + 
    theme(axis.title.x = element_blank(), axis.text.x = element_blank())
-
 
    trace_dim <- ggplot(mcmc.df, aes(x=it, y=dim)) +
    geom_line(alpha = 0.3) +
