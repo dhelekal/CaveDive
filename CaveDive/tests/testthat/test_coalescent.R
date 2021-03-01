@@ -726,7 +726,7 @@ test_that("Log-posterior returns correct values", {
     x[[1]] <- params$N
     x[[2]] <- params$exp_probs
 
-    for(j in c(1:n_exp)) {
+    for(j in c(1:params$n_exp)) {
       expansion_para <- list()
       expansion_para[[1]] <- params$t_mid[j]
       expansion_para[[2]] <- params$K[j]
