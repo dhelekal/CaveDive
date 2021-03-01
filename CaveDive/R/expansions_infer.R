@@ -17,7 +17,7 @@ standard_priors <- function(expansion_rate=1,
                             t_mid_rate=10, 
                             K_sd_log=1/2, 
                             exp_time_nu=1/2, 
-                            exp_time_kappa=1/10) {
+                            exp_time_kappa=1/8) {
     return(list(
         prior_i=function(x) dpois(x, expansion_rate, log = TRUE),
         prior_i.sample=function() rpois(1, expansion_rate),
@@ -29,13 +29,13 @@ standard_priors <- function(expansion_rate=1,
         prior_K_given_N.sample=function(N) rlnorm(1, meanlog = log(N), sdlog = K_sd_log),
         prior_t_given_N=function(x, N) {
                if (all(x < 0)) {
-                      out <- dgamma(-x, shape=(N*exp_time_nu^2)/sqrt(exp_time_kappa), scale = sqrt(exp_time_kappa) / exp_time_nu, log = TRUE)
+                      out <- dgamma(-x, shape=(exp_time_nu^2)/(exp_time_kappa^2), scale = exp_time_kappa^2 * N / exp_time_nu, log = TRUE)
                } else {
                       out <- -Inf
                }
                return(out) 
         },
-        prior_t_given_N.sample=function(N) (-rgamma(1, shape=(N*exp_time_nu^2)/sqrt(exp_time_kappa), scale = sqrt(exp_time_kappa) / exp_time_nu))
+        prior_t_given_N.sample=function(N) (-rgamma(1, shape=(exp_time_nu^2)/(exp_time_kappa^2), scale = exp_time_kappa^2 * N / exp_time_nu))
         ))
 }
 
