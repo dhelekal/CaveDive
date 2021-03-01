@@ -213,7 +213,7 @@ N_{j} \sim \texttt{lognorm}(N_{M}, \sigma_{exp}) \quad\forall j \in \{1,...,M-1\
 \end{gather}
 as well as the corresponding divergence times
 \begin{gather}
-t_{div_j} \sim \texttt{gamma}\left(\frac{\nu^2N_M}{\sqrt{\kappa}}, \frac{\sqrt{\kappa}}{\nu}\right) \quad\forall j \in \{1,...,M-1\}
+t_{div_j} \sim \texttt{gamma}\left(\frac{\nu^2}{\kappa^2}, \frac{\kappa^2 N_M}{\nu}\right) \quad\forall j \in \{1,...,M-1\}
 \end{gather}
 where $\beta \in (0,1)$.
 Rather than simulating the growth rates directly, we simulate the correspondng time to midpoint $t_{mid}(r_j) = 1/\sqrt{r_j}$
@@ -230,7 +230,7 @@ We now summarise the entire simulation procedure
 &\pi(N_M) &=& \texttt{lognorm}(\mu_{anc},\sigma_{anc}) &\quad&\text{Parent Population Size}\\
 &\pi(N_j\mid N_{M}) &=& \texttt{lognorm}(N_{M},\sigma_{exp})\quad\forall j \in \{1...M-1\} &\quad&\text{Carrying Capacities}\\
 &\pi(d_j\mid T_{div}, M) &=& U(\{i\in \{1 ... M+1\} : t_{div_i} > t_{div_j}\}) &\quad&\text{Parent Populations}\\
-&\pi(t_{div_j}\mid N_{M}) &=& \texttt{gamma}\left(\frac{\nu^2N_M}{\sqrt{\kappa}}, \frac{\sqrt{\kappa}}{\nu}\right) \quad\forall j \in \{1...M-1\} &\quad&\text{Expansion Times}\\
+&\pi(t_{div_j}\mid N_{M}) &=& \texttt{gamma}\left(\frac{\nu^2}{\kappa^2}, \frac{\kappa^2 N_M}{\nu}\right) \quad\forall j \in \{1...M-1\} &\quad&\text{Expansion Times}\\
 &\pi(t_{mid}(r_j)\mid N_M) &=& \texttt{exp}(\lambda_{r}/N_M)\quad\forall j \in \{1...M-1\} &\quad&\text{Growth Rates/Time to Midpoint}
 \end{aligned}
 \end{gather}
@@ -246,7 +246,7 @@ The genealogy $\mathbf{g}$ is simulated under the Coalescent with Local Populati
 \pi(\mathbf{g}\mid M, \mathbf{f}, \pmb\alpha, T_{div}, D, T_{sam}) = \texttt{lpcoal}(M, \mathbf{f}, \pmb\alpha, T_{div}, D, T_{sam})
 \end{gather} 
 
-$\phi, \psi, \mu_{anc}, \sigma_{anc}, \mu_r, \sigma_r, \sigma_{exp}, \nu, \kappa$ are hyperamaters and considered given. The mean of divergence times $\mathop{\mathbb{E}}[T_{div}]$ is equal to $\nu N_m$ and the probability of $t_{div}$ being further than $N_M$-distance away from the mean of divergence times is less than $\kappa$ (proof trivial via Chebyshev).
+$\phi, \psi, \mu_{anc}, \sigma_{anc}, \mu_r, \sigma_r, \sigma_{exp}, \nu, \kappa$ are hyperamaters and considered given. The mean of divergence times $\mathop{\mathbb{E}}[T_{div}]$ is equal to $\nu N_m$ and the standard deviation of $t_{div}$ is $\kappa N_M$.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
