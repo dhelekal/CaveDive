@@ -11,7 +11,7 @@ expansions_simulate(priors, sampling_times, concentration, given = list())
 
 \item{sampling_times}{Vector sampling times, entries must be negative or 0}
 
-\item{concentration}{Concentration hyperparameter for dirichlet expansion model}
+\item{concentration}{Scalar concentration hyperparameter for dirichlet expansion model}
 
 \item{given}{A list of variables with values given. Supported names: 'n_exp' - number of expansions,'N' - Background population size, 'K' - Expansion carrying capacities, 't_mid' - Expansion times to midpoints, 'div_times' - Expansion divergence times}
 }

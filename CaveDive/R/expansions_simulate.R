@@ -1,7 +1,7 @@
 #' Simulate a genealogy with clonal expansionss
 #' @param priors List of priors to simulate parameters from. See `standard priors` for details 
 #' @param sampling_times Vector sampling times, entries must be negative or 0 
-#' @param concentration Concentration hyperparameter for dirichlet expansion model
+#' @param concentration Scalar concentration hyperparameter for dirichlet expansion model
 #' @param given A list of variables with values given. Supported names: 'n_exp' - number of expansions,'N' - Background population size, 'K' - Expansion carrying capacities, 't_mid' - Expansion times to midpoints, 'div_times' - Expansion divergence times  
 #' @export
 expansions_simulate <- function(priors, sampling_times, concentration, given=list()) {

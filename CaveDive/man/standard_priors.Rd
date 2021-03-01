@@ -11,7 +11,7 @@ standard_priors(
   t_mid_rate = 10,
   K_sd_log = 1/2,
   exp_time_nu = 1/2,
-  exp_time_kappa = 1/10
+  exp_time_kappa = 1/8
 )
 }
 \arguments{
