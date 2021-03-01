@@ -155,13 +155,12 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, pre,
 #' @export
 plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL) {
    tree <- pre$phy
-   tt.br <- table(event.df$br)
-   freq <- sapply(c(1:length(tt.br)), function (i) tt.br[i])
+   freq <- table(event.df$br)
 
    labs <- c(tree$node.label, tree$tip.label)
    tip <- c(rep("1",length(tree$node.label)), rep("2", length(tree$tip.label)))
    ids <- nodeid(tree, labs)
-   id_freq <- sapply(ids, function (i) if(pre$nodes.df$is_tip[i]) NA else if (is.na(freq[paste0(pre$incoming[[i]])])) 0 else freq[paste0(pre$incoming[[i]])])
+   id_freq <- sapply(ids, function (i) if(pre$nodes.df$is_tip[i]) NA else if (is.na(freq[paste0(pre$incoming[[i]])])) 0.0 else freq[paste0(pre$incoming[[i]])])
 
    ldf <- data.frame(node = ids, frequency = id_freq, tip=tip)
    tree.full <- full_join(tree, ldf, by = 'node')
