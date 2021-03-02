@@ -113,7 +113,13 @@ expansions_infer <- function(pre,
 
     all_times <- extract_lineage_times(pre, pre$phy$node.label[pre$root_idx-pre$n_tips], -Inf)
 
-    tree_height <- max(nodes$times) - min(nodes$times)
+    max_t <- max(nodes$times)
+    min_t <- min(nodes$times)
+
+    tree_height <- max_t - min_t
+
+    div_time_prop.sample <- function(N) runif(1, min_t, max_t)
+    div_time_prop.lh <- function(x, N) log(1/(max_t-min_t))
 
     const_log_lh <- function(n){
         if (n > 0){
@@ -164,13 +170,13 @@ expansions_infer <- function(pre,
                                                       function(N) para.initialiser(N, 
                                                                                    prior_t_mid_given_N.sample,
                                                                                    prior_K_given_N.sample, 
-                                                                                   prior_t_given_N.sample,
+                                                                                   div_time_prop.sample,
                                                                                    pre),
                                                       function(x_init, N) para.log_lh(x_init,
                                                                                       N,
                                                                                       prior_t_mid_given_N, 
                                                                                       prior_K_given_N, 
-                                                                                      prior_t_given_N,
+                                                                                      div_time_prop.lh,
                                                                                       pre),
                                                       fn_log_J,
                                                       fn_log_J_inv,
@@ -188,14 +194,14 @@ fn_log_J_inv <- function(i_prev, x_prev, x_next, which_mdl_rm) {
     return(0)
 }
 
-para.initialiser <- function(N, prior_t_mid_given_N, prior_K_given_N, prior_t_given_N, pre){
+para.initialiser <- function(N, prop_t_mid_given_N, prop_K_given_N, prop_t_given_N, pre){
     edges <- pre$edges.df
     nodes <- pre$nodes.df
     x_next <- vector(mode = "list", length = 4)
 
-    mid.times <- prior_t_mid_given_N(N)
-    K <- prior_K_given_N(N)
-    div.times <- prior_t_given_N(N)
+    mid.times <- prop_t_mid_given_N(N)
+    K <- prop_K_given_N(N)
+    div.times <- prop_t_given_N(N)
 
     ### which branches exist at time of divergence
     br_extant_before <- edges$id[which(nodes$times[edges$node.child] > div.times)]
@@ -218,7 +224,7 @@ para.initialiser <- function(N, prior_t_mid_given_N, prior_K_given_N, prior_t_gi
     return(x_next)
 }
 
-para.log_lh <- function(x, N, prior_t_mid_given_N, prior_K_given_N, prior_t_given_N, pre) {
+para.log_lh <- function(x, N, prop_t_mid_given_N, prop_K_given_N, prop_t_given_N, pre) {
     edges <- pre$edges.df
     nodes <- pre$nodes.df
 
@@ -235,7 +241,7 @@ para.log_lh <- function(x, N, prior_t_mid_given_N, prior_K_given_N, prior_t_give
     extant_inner <- br_extant_after[which(edges$node.child[br_extant_after]>pre$n_tips)] 
     if (length(extant_inner) < 1) extant_inner <- c(NA)
 
-    out <- prior_t_mid_given_N(mid.times,N) + prior_K_given_N(K,N) + prior_t_given_N(div.times,N) + log(1/length(extant_inner))
+    out <- prop_t_mid_given_N(mid.times,N) + prop_K_given_N(K,N) + prop_t_given_N(div.times,N) + log(1/length(extant_inner))
     return(out)
 }
 
