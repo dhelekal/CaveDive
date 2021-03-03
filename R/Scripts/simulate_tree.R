@@ -26,6 +26,16 @@ option_list <- list(
       help="(Optional) Sampling scale lower bound (upper bound always 0) [default=%default]", metavar="double"),
     make_option(c("-l", "--lambdar"), type="double", default=10, 
       help="(Optional) Lambda_r value for non-dimensional time to midpoint distribution [default=%default]", metavar="double"),
+    make_option(c("--nu"), type="double", default=1/2, 
+       help="(Optional) Expansion time prior nu [default=%default",  metavar="double"),
+    make_option(c("--kappa"), type="double", default=1/8, 
+       help="(Optional) Expansion time prior kappa [default=%default",  metavar="double"),
+    make_option(c("--sdk"), type="double", default=1, 
+       help="(Optional) Expansion size prior sd [default=%default]", metavar="double"),
+    make_option(c("--meanscale"), type="double", default=4, 
+       help="(Optional) Background population size prior mean [default=%default]", metavar="double"),
+    make_option(c("--sdscale"), type="double", default=4, 
+       help="(Optional) Background population size prior sd [default=%default",  metavar="double"),
     make_option(c("--metadata"), type="double", default=NULL, 
       help="(Optional) Metadata to be included in the simulation file in a comma separated list
       with entries in the format of [name]:[value] pairs [default=%default]", metavar="double")
@@ -77,8 +87,6 @@ sam <- sam - max(sam)
 concentration <- 2
 
 lambda_r <- opt$lambdar
-kappa <- 1/8
-nu <- 1/2
 sigma_k <- 1
 
 if (given$n_exp > 0) {
@@ -97,12 +105,12 @@ if (given$n_exp > 0) {
 }
 
 priors <- standard_priors(expansion_rate=1, 
-    N_mean_log=4, 
-    N_sd_log=4, 
+    N_mean_log=opt$meanscale, 
+    N_sd_log=opt$sdscale, 
     t_mid_rate=lambda_r, 
-    K_sd_log=1/2, 
-    exp_time_nu=nu,   
-    exp_time_kappa=kappa)
+    K_sd_log=opt$sdk, 
+    exp_time_nu=opt$nu,   
+    exp_time_kappa=opt$kappa)
 out <- expansions_simulate(priors, sam, concentration, given=given)
 params <- out$params
 co <- out$co
