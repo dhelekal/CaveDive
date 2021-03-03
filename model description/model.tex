@@ -278,7 +278,7 @@ We will use the following notation to describe updates.\\ Let
 \begin{gather}
 x^{(M)}_{r_j\to r^{'}}
 \end{gather}
-Denote the update of rate parameter $r_j$ corresponding to the $j$-th clonal expansions to the value $r^{'}$ in the $i$-expansion model. Analogously, all within model updates will be denoted this way.\\
+Denote the update of rate parameter $r_j$ corresponding to the $j$-th clonal expansions to the value $r^{'}$ in the $M$-expansion model. Analogously, all within model updates will be denoted this way.\\
 
 The within model updates will now be described.\\
 The first move is:
@@ -289,7 +289,11 @@ This move updates simultaneously the growth rate and the carrying capacity of th
 \begin{gather}
 \left(t_{mid}^{'},N^{'}\right)\sim\left(\mathcal{N}(t_{mid_j}, \sigma_r), \texttt{lognorm}(log(N_j), \sigma_K)\right) 
 \end{gather}\\
-The proposal ratio of this move is $1$.
+The proposal ratio of this move is:
+\begin{gather}
+\frac{f_{ln}(N_j;log(N^{'}), \sigma_K)}{f_{ln}(N^{'};log(N_j), \sigma_K)}
+\end{gather}
+Where $f_{ln}(x; a, b)$ stands for the value of the lognormal distribution pdf with log-mean $a$ and log-standard deviation $b$ evaluated at $x$.
 
 The second move is:
 \begin{gather}
@@ -307,7 +311,7 @@ The third move is:
 x^{(M)}_{\left(\mathbf{f}, t_{div_j}, D\right)\to \left(\mathbf{f}^{'}, t_{div}^{'}, D^{'}\right)}
 \end{gather} 
 This moves updates the colouring of the leaves and thus the memberships of clonal expansions. This is perhaps the most complicated move and proceeds as follows: \\
-nLet $b_j$ denote the branch along which the divergence event for the $j$-th expansion lies, i.e. the branch leading into the MRCA of the expansion, and with $m+j$ the MRCA of the expansion. Let $\beta_1$ be a bernoulli variable with probability $1/2$. decide which direction to update the MRCA in. If $\beta_1=0$ move upwards in the tree. In this case there is only one eligible branch as in a tree the MRCA node only has one parent. If $\beta_1 = 1$ move downwards, with probability $1/2$ select one of the branches that lead into the child nodes of the MRCA. Denote the new branch as $b^{'}$, and the new MRCA, that is the child node along branch $b^{'}$, as $m^{'}$.
+Let $b_j$ denote the branch along which the divergence event for the $j$-th expansion lies, i.e. the branch leading into the MRCA of the expansion, and with $m_j$ the MRCA of the expansion. Let $\beta_1$ be a bernoulli variable with probability $1/2$. decide which direction to update the MRCA in. If $\beta_1=0$ move upwards in the tree. In this case there is only one eligible branch as in a tree the MRCA node only has one parent. If $\beta_1 = 1$ move downwards, with probability $1/2$ select one of the branches that lead into the child nodes of the MRCA. Denote the new branch as $b^{'}$, and the new MRCA, that is the child node along branch $b^{'}$, as $m^{'}$.
 We update time so that it is compatible with the new tip partition. The updated time by $t_{div}^{'}$ is distributed according to
 \begin{gather}
 t_{div}^{'}\sim U((t_{b^{'}_2}, t_{b^{'}_1}))
@@ -379,7 +383,7 @@ Then set
 \end{gather}\\
 The proposal ration for this move is:
 \begin{gather}
-\frac{\theta_k\cross(M-1)}{(M-1)(M-1)\cross\pi(N^{'}\mid N_{M})\cross\pi(t^{'}_{div}\mid N_{M})\cross\pi(r^{'})}
+\frac{\theta_k\cross(M)}{(M)\cross(M)\cross\pi(N^{'}\mid N_{M})\cross\pi(t^{'}_{div}\mid N_{M})\cross\pi(r^{'})}
 \end{gather}
 
 When selecting a move, we first select whether to do a within model move or a transdimensional move with probability $1/2$.
