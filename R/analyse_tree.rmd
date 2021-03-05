@@ -1,0 +1,140 @@
+---
+title: "Analyse tree"
+author: "David Helekal"
+date: "12/2/2020"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r run mcmc, include=FALSE}
+run_mcmc=T
+```
+
+```{bash, clean directory, include=FALSE, eval=T}
+rm -rf ./mcmc_out
+mkdir mcmc_out
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(CaveDive)
+library(rmutil)
+library(ape)
+library(ggplot2)
+library(ggtree)
+library(treeio)
+library(viridis)
+library(rjson)
+
+base_dir <- "./mcmc_out"
+```
+## Real-life phylogeny analysis
+
+In this notebook a single tree read from a newick string is analysed.
+We proceed by inferring the posterior via RjMCMC, followed by it's analyses. 
+
+### MCMC Controls
+First we set up the MCMC parameters
+```{r, set parameters}
+set.seed(1)
+
+burn_in <- 100
+n_it <- 1e6#1e8
+thinning <- n_it/1e4
+```
+
+### Priors
+Next, we parametrise and ready the priors for inference.
+We use the following parameters:
+- $poisson(1)$ as the prior on the number of expansions
+- $lognormal(3,3)$ as a relatively uninformative prior on parent population size
+- $exp(10)$ as the prior on how long it takes for an expansion to reach half its carrying capacity in non-dimensional time units
+- $lognormal(\log(N), 1/2)$ where $N$ is the parent population size, as the prior on carrying capacities of individual expansions
+- $gamma$ with mean $\frac{N}{2}$ and variance $\frac{N}{2}$ where $N$ is the parent population size as the prior on when expansions happen
+N.B.: One should note that the model is conditional on the size of the parent population which effectively determines the tree scale. As such it is imperative that there is sufficient signal to infer this parameter with high enough confidence.
+
+```{r, set priors}
+priors <- standard_priors(expansion_rate=1, 
+                    N_mean_log=3, 
+                    N_sd_log=3, 
+                    t_mid_rate=10, 
+                    K_sd_log=1, 
+                    exp_time_nu=1/2, 
+                    exp_time_kappa=1/2)
+```
+
+### Run MCMC
+We now read the tree and run the MCMC.
+```{r, run MCMC, eval=run_mcmc}
+tree_in <- list.files(pattern=".*\\.nwk")
+tree <- read.tree(file = tree_in)
+tree <- makeNodeLabel(tree)
+
+start <- proc.time()
+expansions <- run_expansion_inference(tree, priors, 1, n_it=n_it, thinning=thinning)
+elapsed <-proc.time() - start
+
+print(paste0(n_it," RjMCMC iterations completed. Time elapsed:"))
+print(elapsed)
+```
+
+### Process MCMC data
+```{r, process MCMC data, eval=run_mcmc}
+pre <- expansions$phylo_preprocessed ### keep a hold of this, it's useful for plotting
+dfs <- mcmc2data.frame(expansions$mcmc_out)
+mcmc.df <- dfs$mcmc.df
+event.df <- dfs$event.df
+write.csv(mcmc.df, paste0(base_dir,"/mcmc_df.csv"))
+write.csv(event.df, paste0(base_dir,"/event_df.csv"))
+```
+
+```{r, read cached dataframes, eval=!run_mcmc, include=F}
+mcmc.df <- read.csv(paste0(base_dir,"/mcmc_df.csv"))
+event.df <- read.csv(paste0(base_dir,"/event_df.csv"))
+
+tree_in <- list.files(pattern=".*\\.nwk")
+tree <- read.tree(file = tree_in)
+tree <- makeNodeLabel(tree)
+
+pre <- structured_coal.preprocess_phylo(tree)
+```
+
+```{r, discard burn-in}
+  mcmc.df <- mcmc.df[burn_in:nrow(mcmc.df),]
+  event.df <- event.df[which(event.df$it >= burn_in), ]
+```
+
+### Inspect the base model parameters
+We're mostly interested in the model indicator trace and histogram, as this indicates the number of expansions.
+The population size trace acts as a good sanity check as well.
+```{r, select model}
+dim_panel <- plot_dim_panel(mcmc.df, prior_N=function(x) exp(priors$prior_N(x)))
+unique_dims <- unique(mcmc.df$dim)
+dim_counts <- sapply(unique_dims, function(i) length(which(mcmc.df$dim==i)))
+mode_dim <- unique_dims[which.max(dim_counts)]
+plot(dim_panel)
+print(paste0("The mode for the number of expansions is: ", mode_dim))
+```
+
+### Analyse the marginal corresponding to the number of expansion mode
+We will look in detail at the marginal corresponding to the mode model, and inspect the top $K$ most likely expansions
+```{r, extract marginal}
+  mode_dim_marginal <- mcmc.df[which(mcmc.df$dim==dim.gt),]
+  mode_dim_marginal_it <- mode_dim_marginal$it
+  event_mode_dim_marginal <- event.df[unlist(sapply(mode_dim_marginal_it, function (x) which(event.df$it==x))),]
+
+  unique.br <- unique(event_mode_dim_marginal$br)
+  branch_counts <- sapply(unique.br, function(x) length(which(event_mode_dim_marginal$br == x)))
+  br_count_ord <- order(branch_counts)
+
+  k_mode_br <- unique.br[br_count_ord[c(1:mode_dim)]]
+```
+
+First inspect how the tree branch frequency looks like for the mode dimension, and contrast it with the tree branch frequency of the entire posterior. 
+```{r, fig.cap="Tree Branch Frequency. Left: Marginal. Right: Full posterior", out.width="50%", fig.hold=T, echo=F}
+marginal_freq <- plot_tree_freq(mcmc.df, event.df, pre, prior_t_given_N=function(t,N) exp(priors$prior_t_given_N(t,N)))
+full_freq <- plot_tree_freq(mode_dim_marginal.df, event_mode_dim_marginal.df, pre, prior_t_given_N=function(t,N) exp(priors$prior_t_given_N(t,N)))
+plot(marginal_freq)
+plot(full_freq)
+```
