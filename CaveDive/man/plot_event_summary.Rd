@@ -2,7 +2,7 @@
 % Please edit documentation in R/mcmc_utils.R
 \name{plot_event_summary}
 \alias{plot_event_summary}
-\title{Converts MCMC output into two data frames, one conaining global model parameters and one containing expansion data}
+\title{Plots mcmc output as several panels}
 \usage{
 plot_event_summary(
   mcmc.df,
@@ -34,5 +34,5 @@ plot_event_summary(
 a list of 3 plot panels
 }
 \description{
-Converts MCMC output into two data frames, one conaining global model parameters and one containing expansion data
+Plots mcmc output as several panels
 }
