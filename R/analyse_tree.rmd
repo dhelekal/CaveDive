@@ -8,10 +8,10 @@ output:
 ---
 
 ```{r run mcmc, include=FALSE}
-run_mcmc=T
+run_mcmc=F
 ```
 
-```{bash, clean directory, include=FALSE, eval=T}
+```{bash, clean directory, include=FALSE, eval=run_mcmc}
 rm -rf ./mcmc_out
 mkdir mcmc_out
 ```
@@ -120,7 +120,7 @@ print(paste0("The mode for the number of expansions is: ", mode_dim))
 ### Analyse the marginal corresponding to the number of expansion mode
 We will look in detail at the marginal corresponding to the mode model, and inspect the top $K$ most likely expansions
 ```{r, extract marginal}
-  mode_dim_marginal <- mcmc.df[which(mcmc.df$dim==dim.gt),]
+  mode_dim_marginal <- mcmc.df[which(mcmc.df$dim==mode_dim),]
   mode_dim_marginal_it <- mode_dim_marginal$it
   event_mode_dim_marginal <- event.df[unlist(sapply(mode_dim_marginal_it, function (x) which(event.df$it==x))),]
 
@@ -132,9 +132,16 @@ We will look in detail at the marginal corresponding to the mode model, and insp
 ```
 
 First inspect how the tree branch frequency looks like for the mode dimension, and contrast it with the tree branch frequency of the entire posterior. 
-```{r, fig.cap="Tree Branch Frequency. Left: Marginal. Right: Full posterior", out.width="50%", fig.hold=T, echo=F}
+```{r, fig.cap="Tree Branch Frequency. Left: Marginal. Right: Full posterior", out.width="50%", fig.show="hold", echo=F}
 marginal_freq <- plot_tree_freq(mcmc.df, event.df, pre, prior_t_given_N=function(t,N) exp(priors$prior_t_given_N(t,N)))
-full_freq <- plot_tree_freq(mode_dim_marginal.df, event_mode_dim_marginal.df, pre, prior_t_given_N=function(t,N) exp(priors$prior_t_given_N(t,N)))
+full_freq <- plot_tree_freq(mode_dim_marginal, event_mode_dim_marginal, pre, prior_t_given_N=function(t,N) exp(priors$prior_t_given_N(t,N)))
+plot(marginal_freq)
+plot(full_freq)
+```
+
+```{r, fig.cap="Model and Branch Marginals", out.width="50%", fig.show="hold", echo=F}
+marginal_freq <- plot_tree_freq(mcmc.df, event.df, pre, prior_t_given_N=function(t,N) exp(priors$prior_t_given_N(t,N)))
+full_freq <- plot_tree_freq(mode_dim_marginal, event_mode_dim_marginal, pre, prior_t_given_N=function(t,N) exp(priors$prior_t_given_N(t,N)))
 plot(marginal_freq)
 plot(full_freq)
 ```
