@@ -1,4 +1,4 @@
- #' Converts MCMC output into two data frames, one conaining global model parameters and one containing expansion data
+#' Converts MCMC output into two data frames, one conaining global model parameters and one containing expansion data
 #' 
 #' @param o MCMC output
 #' @return A list with names mcmc.df and event.df. MCMC dataframe contains iteration numbers, 
@@ -32,7 +32,7 @@ mcmc2data.frame <- function(o) {
    return(list(mcmc.df=mcmc.df, event.df=event.df))
 }
 
-#' Converts MCMC output into two data frames, one conaining global model parameters and one containing expansion data
+#' Plots mcmc output as several panels
 #' 
 #' @param mcmc.df mcmc.df returned by mcmc2data.frame
 #' @param event.df event.df returned by mcmc2data.frame
@@ -59,37 +59,7 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, pre,
    event_br_marginal$it <- correct_dim_it[br_subs]
    event_br_marginal$idx <- if(length(event_br_marginal$it) > 0) c(1:length(event_br_marginal$it)) else c()
 
-   trace_N <- ggplot(mcmc.df, aes(x=it, y=N)) +
-   geom_line(alpha = 0.3) +
-   theme_bw() + 
-   theme(axis.title.x = element_blank(), axis.text.x = element_blank())
-
-   trace_dim <- ggplot(mcmc.df, aes(x=it, y=dim)) +
-   geom_line(alpha = 0.3) +
-   theme_bw() +
-   theme(axis.title.x = element_blank(), axis.text.x = element_blank())
-   hist_N <- ggplot(mcmc.df, aes(N)) +  
-   geom_histogram(aes(y = stat(density)), colour="orange", fill="orange", bins=100) +
-   theme_bw() + 
-   theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())
-   hist_dim <- ggplot(mcmc.df, aes(dim)) +  
-   geom_histogram(aes(y = stat(density)), colour="orange", fill="orange", binwidth=1) + 
-   theme_bw() +
-   theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())
-   
-   if (!is.null(prior_N)) {
-     hist_N <- hist_N + stat_function(fun=prior_N, colour="purple", size=2)
-   }
-
-   grid_layout <- rbind(c(1, 2), c(3,3), c(4,4))
-   grid_width <- c(2,2)
-   grid_heigth <- c(2,1,1)
-
-   dim_panel <- arrangeGrob(
-        grobs=list(hist_N, hist_dim, trace_N, trace_dim),
-        layout_matrix = grid_layout,
-        widths = grid_width,
-        heights = grid_heigth)
+   dim_panel <- plot_dim_panel(mcmc.df, prior_N)
 
    trace_K <- ggplot(event_br_marginal, aes(x=idx, y=K)) +
    geom_line(alpha = 0.3)+
@@ -144,6 +114,48 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, pre,
         heights = grid_heigth)
    return(list(dim_panel=dim_panel, event_panel=event_panel, tree_panel=tree_panel))
 }
+
+
+#' Plots a panel summarising the inferred number of expansions and base population size
+#' 
+#' @param mcmc.df mcmc.df returned by mcmc2data.frame
+#' @param prior_N (Optional) Background population size prior, mutually exclusive with passing list of priors. If either is supplied priors will be overlayed in plotting.
+#' @return a panel containing histograms and traces for the inferred number of expansions and the base population size
+#' @export
+plot_dim_panel <- function(mcmc.df, prior_N=NULL) {
+   trace_N <- ggplot(mcmc.df, aes(x=it, y=N)) +
+   geom_line(alpha = 0.3) +
+   theme_bw() + 
+   theme(axis.title.x = element_blank(), axis.text.x = element_blank())
+   trace_dim <- ggplot(mcmc.df, aes(x=it, y=dim)) +
+   geom_line(alpha = 0.3) +
+   theme_bw() +
+   theme(axis.title.x = element_blank(), axis.text.x = element_blank())
+   hist_N <- ggplot(mcmc.df, aes(N)) +  
+   geom_histogram(aes(y = stat(density)), colour="orange", fill="orange", bins=100) +
+   theme_bw() + 
+   theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())
+   hist_dim <- ggplot(mcmc.df, aes(dim)) +  
+   geom_histogram(aes(y = stat(density)), colour="orange", fill="orange", binwidth=1) + 
+   theme_bw() +
+   theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())
+   
+   if (!is.null(prior_N)) {
+     hist_N <- hist_N + stat_function(fun=prior_N, colour="purple", size=2)
+   }
+
+   grid_layout <- rbind(c(1, 2), c(3,3), c(4,4))
+   grid_width <- c(2,2)
+   grid_heigth <- c(2,1,1)
+
+   dim_panel <- arrangeGrob(
+        grobs=list(hist_N, hist_dim, trace_N, trace_dim),
+        layout_matrix = grid_layout,
+        widths = grid_width,
+        heights = grid_heigth)
+   return(dim_panel)
+}
+
 
 #' Plots tree branch frequency histogram 
 #' 
