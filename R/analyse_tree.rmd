@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r run mcmc, include=FALSE}
-run_mcmc=F
+run_mcmc=T
 ```
 
 ```{bash, clean directory, include=FALSE, eval=run_mcmc}
@@ -26,6 +26,7 @@ library(ggtree)
 library(treeio)
 library(viridis)
 library(rjson)
+library(gridExtra)
 
 base_dir <- "./mcmc_out"
 ```
@@ -40,7 +41,7 @@ First we set up the MCMC parameters
 set.seed(1)
 
 burn_in <- 100
-n_it <- 1e6#1e8
+n_it <- 1e8
 thinning <- n_it/1e4
 ```
 
@@ -126,12 +127,12 @@ We will look in detail at the marginal corresponding to the mode model, and insp
 
   unique.br <- unique(event_mode_dim_marginal$br)
   branch_counts <- sapply(unique.br, function(x) length(which(event_mode_dim_marginal$br == x)))
-  br_count_ord <- order(branch_counts)
+  br_count_ord <- order(-branch_counts)
 
   k_mode_br <- unique.br[br_count_ord[c(1:mode_dim)]]
 ```
 
-First inspect how the tree branch frequency looks like for the mode dimension, and contrast it with the tree branch frequency of the entire posterior. 
+### First inspect how the tree branch frequency looks like for the mode dimension, and contrast it with the tree branch frequency of the entire posterior. 
 ```{r, fig.cap="Tree Branch Frequency. Left: Marginal. Right: Full posterior", out.width="50%", fig.show="hold", echo=F}
 marginal_freq <- plot_tree_freq(mcmc.df, event.df, pre, prior_t_given_N=function(t,N) exp(priors$prior_t_given_N(t,N)))
 full_freq <- plot_tree_freq(mode_dim_marginal, event_mode_dim_marginal, pre, prior_t_given_N=function(t,N) exp(priors$prior_t_given_N(t,N)))
@@ -139,9 +140,20 @@ plot(marginal_freq)
 plot(full_freq)
 ```
 
-```{r, fig.cap="Model and Branch Marginals", out.width="50%", fig.show="hold", echo=F}
-marginal_freq <- plot_tree_freq(mcmc.df, event.df, pre, prior_t_given_N=function(t,N) exp(priors$prior_t_given_N(t,N)))
-full_freq <- plot_tree_freq(mode_dim_marginal, event_mode_dim_marginal, pre, prior_t_given_N=function(t,N) exp(priors$prior_t_given_N(t,N)))
-plot(marginal_freq)
-plot(full_freq)
+### Now plot branch expansion marginals
+```{r, fig.cap="Branch Marginals", out.width="50%", fig.show="hold", echo=F}
+for(mbr in k_mode_br) {
+
+  br_event_it <- event_mode_dim_marginal[which(event_mode_dim_marginal$br==mbr),]$it
+  br_event_mar <- event_mode_dim_marginal[unlist(sapply(br_event_it, function (x) which(event_mode_dim_marginal$it==x))),]
+  br_mcmc_mar <- mode_dim_marginal[unlist(sapply(br_event_it, function (x) which(mode_dim_marginal$it==x))),]
+  plts <- plot_event_summary(br_mcmc_mar, br_event_mar, mbr, pre, 
+   prior_N=function (x) exp(priors$prior_N(x)), 
+   prior_t_mid_given_N=function (x,n) exp(priors$prior_t_mid_given_N(x,n)), 
+   prior_K_given_N=function (x,n) exp(priors$prior_K_given_N(x,n)), 
+   prior_t_given_N=function (x,n) exp(priors$prior_t_given_N(x,n)))
+   plot(plts$tree_highlight_panel)
+   plot(plts$event_panel)
+}
 ```
+
