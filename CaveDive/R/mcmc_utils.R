@@ -51,6 +51,10 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, pre,
    prior_t_given_N=NULL) 
 {
 
+   grid_layout <- rbind(c(1, 2), c(3,3), c(4,4))
+   grid_width <- c(2,2)
+   grid_heigth <- c(2,1,1)
+
    correct_dim <- mcmc.df[which(mcmc.df$dim > 0),]
    correct_dim_it <- correct_dim$it
    event_dim_marginal <- event.df[unlist(sapply(correct_dim_it, function (x) which(event.df$it==x))),]
@@ -58,8 +62,6 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, pre,
    event_br_marginal <- event_dim_marginal[br_subs,]
    event_br_marginal$it <- correct_dim_it[br_subs]
    event_br_marginal$idx <- if(length(event_br_marginal$it) > 0) c(1:length(event_br_marginal$it)) else c()
-
-   dim_panel <- plot_dim_panel(mcmc.df, prior_N)
 
    trace_K <- ggplot(event_br_marginal, aes(x=idx, y=K)) +
    geom_line(alpha = 0.3)+
@@ -96,7 +98,9 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, pre,
    geom_point(alpha=0.1,size=0.1) + 
    theme_bw() + 
    theme(axis.title.x = element_blank(), axis.text.x = element_blank())
-   tree_freq <- plot_tree_freq(mcmc.df, event.df, pre, prior_t_given_N=prior_t_given_N)
+
+   mrca <- pre$edges.df$node.child[which_br]
+   tree_freq <- plot_tree_freq(mcmc.df, event.df, pre, prior_t_given_N=prior_t_given_N, highlight_node=mrca)
 
    hist_br <- ggplot(event.df, aes(br)) +  
    geom_bar(aes(y = stat(count / sum(count))), colour="orange", fill="orange") + 
@@ -112,7 +116,7 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, pre,
         layout_matrix = grid_layout,
         widths = grid_width,
         heights = grid_heigth)
-   return(list(dim_panel=dim_panel, event_panel=event_panel, tree_panel=tree_panel))
+   return(list(event_panel=event_panel, tree_highlight_panel=tree_panel))
 }
 
 
@@ -163,9 +167,10 @@ plot_dim_panel <- function(mcmc.df, prior_N=NULL) {
 #' @param event.df event.df returned by mcmc2data.frame
 #' @param pre Preprocessed phylogeny
 #' @param prior_t_given_N (Optional) Expansion time prior. If supplied prior will be overlayed.
+#' @param highlight_node (Optional) Node to highlight
 #' @return a plot object
 #' @export
-plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL) {
+plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlight_node=NULL) {
    tree <- pre$phy
    freq <- table(event.df$br)
 
@@ -179,9 +184,8 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL) {
 
    x_max <- -min(pre$nodes.df$times)
 
-   p1 <- ggtree(tree.full, aes(color=frequency, linetype=tip), ladderize=TRUE) +
+   p1 <- ggtree(tree.full, aes(color=frequency), ladderize=TRUE) +
    geom_point() +
-   scale_linetype(c("solid","dashed","dotted"), na.value = "blank") +
    scale_size_manual(values=c(1)) +
    scale_x_continuous(limits=c(0, x_max)) +
    scale_color_viridis() +
@@ -192,6 +196,10 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL) {
           axis.title.y = element_blank(),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank())
+
+   if (!is.null(highlight_node)) {
+     p1 <- p1+geom_point2(aes(subset=node==highlight_node), color='red', size=3)
+   }
 
 
    temp <- ggplotGrob(p1)
