@@ -59,7 +59,7 @@ N.B.: One should note that the model is conditional on the size of the parent po
 priors <- standard_priors(expansion_rate=1, 
                     N_mean_log=3, 
                     N_sd_log=3, 
-                    t_mid_rate=10, 
+                    t_mid_rate=5, 
                     K_sd_log=1, 
                     exp_time_nu=1/2, 
                     exp_time_kappa=1/2)
@@ -120,11 +120,22 @@ print(paste0("The mode for the number of expansions is: ", mode_dim))
 
 ### Analyse the marginal corresponding to the number of expansion mode
 We will look in detail at the marginal corresponding to the mode model, and inspect the top $K$ most likely expansions
-```{r, extract marginal}
+```{r, extract dim marginal}
   mode_dim_marginal <- mcmc.df[which(mcmc.df$dim==mode_dim),]
   mode_dim_marginal_it <- mode_dim_marginal$it
-  event_mode_dim_marginal <- event.df[unlist(sapply(mode_dim_marginal_it, function (x) which(event.df$it==x))),]
+```
 
+```{r, check mode dim greater zero}
+if(mode_dim == 0) {
+  eval_events<-FALSE
+  print(paste0("No events detected"))
+} else {
+  eval_events<-TRUE
+}
+``` 
+
+```{r, extract branch modes, eval=eval_events}
+  event_mode_dim_marginal <- event.df[unlist(sapply(mode_dim_marginal_it, function (x) which(event.df$it==x))),]
   unique.br <- unique(event_mode_dim_marginal$br)
   branch_counts <- sapply(unique.br, function(x) length(which(event_mode_dim_marginal$br == x)))
   br_count_ord <- order(-branch_counts)
@@ -133,7 +144,7 @@ We will look in detail at the marginal corresponding to the mode model, and insp
 ```
 
 ### First inspect how the tree branch frequency looks like for the mode dimension, and contrast it with the tree branch frequency of the entire posterior. 
-```{r, fig.cap="Tree Branch Frequency. Left: Marginal. Right: Full posterior", out.width="50%", fig.show="hold", echo=F}
+```{r, fig.cap="Tree Branch Frequency. Left: Marginal. Right: Full posterior", out.width="50%", fig.show="hold", echo=F, eval=eval_events}
 marginal_freq <- plot_tree_freq(mcmc.df, event.df, pre, prior_t_given_N=function(t,N) exp(priors$prior_t_given_N(t,N)))
 full_freq <- plot_tree_freq(mode_dim_marginal, event_mode_dim_marginal, pre, prior_t_given_N=function(t,N) exp(priors$prior_t_given_N(t,N)))
 plot(marginal_freq)
@@ -141,7 +152,7 @@ plot(full_freq)
 ```
 
 ### Now plot branch expansion marginals
-```{r, fig.cap="Branch Marginals", out.width="50%", fig.show="hold", echo=F}
+```{r, fig.cap="Branch Marginals", out.width="50%", fig.show="hold", echo=F, eval=eval_events}
 for(mbr in k_mode_br) {
 
   br_event_it <- event_mode_dim_marginal[which(event_mode_dim_marginal$br==mbr),]$it
