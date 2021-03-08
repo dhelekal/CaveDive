@@ -36,7 +36,7 @@ option_list <- list(
        help="(Optional) Background population size prior mean [default=%default]", metavar="double"),
     make_option(c("--sdscale"), type="double", default=3, 
        help="(Optional) Background population size prior sd [default=%default",  metavar="double"),
-    make_option(c("--metadata"), type="double", default=NULL, 
+    make_option(c("--metadata"), type="character", default=NULL, 
       help="(Optional) Metadata to be included in the simulation file in a comma separated list
       with entries in the format of [name]:[value] pairs [default=%default]", metavar="double")
     ) 
@@ -138,6 +138,7 @@ sim_data <- params
 sim_data$seed <- seed
 sim_data$tip_times <- sam
 sim_data$root_set <- root_set
+sim_data$meta <- meta
 sim_data_txt <- toJSON(sim_data)
 
 tree.div  <- read.tree(text = phy.div_nodes$full)
