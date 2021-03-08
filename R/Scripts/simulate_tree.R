@@ -32,9 +32,9 @@ option_list <- list(
        help="(Optional) Expansion time prior kappa [default=%default",  metavar="double"),
     make_option(c("--sdk"), type="double", default=1, 
        help="(Optional) Expansion size prior sd [default=%default]", metavar="double"),
-    make_option(c("--meanscale"), type="double", default=4, 
+    make_option(c("--meanscale"), type="double", default=3, 
        help="(Optional) Background population size prior mean [default=%default]", metavar="double"),
-    make_option(c("--sdscale"), type="double", default=4, 
+    make_option(c("--sdscale"), type="double", default=3, 
        help="(Optional) Background population size prior sd [default=%default",  metavar="double"),
     make_option(c("--metadata"), type="double", default=NULL, 
       help="(Optional) Metadata to be included in the simulation file in a comma separated list
