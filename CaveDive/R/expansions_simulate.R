@@ -2,7 +2,7 @@
 #' @param priors List of priors to simulate parameters from. See `standard priors` for details 
 #' @param sampling_times Vector sampling times, entries must be negative or 0 
 #' @param concentration Scalar concentration hyperparameter for dirichlet expansion model
-#' @param given A list of variables with values given. Supported names: 'n_exp' - number of expansions,'N' - Background population size, 'K' - Expansion carrying capacities, 't_mid' - Expansion times to midpoints, 'div_times' - Expansion divergence times  
+#' @param given A list of variables with values given. Supported names: 'n_exp' - number of expansions, 'tip_colours' - tip expansion assignment, N' - Background population size, 'K' - Expansion carrying capacities, 't_mid' - Expansion times to midpoints, 'div_times' - Expansion divergence times, 'div_from' - parent lineages  
 #' @export
 expansions_simulate <- function(priors, sampling_times, concentration, given=list()) {
 
@@ -21,17 +21,22 @@ expansions_simulate <- function(priors, sampling_times, concentration, given=lis
     exp_probs <- rdirichlet(1, rep(concentration, (n_exp+1)))
 
     div_cols <- c(1:(n_exp+1))
-    colouring <- c()
-    max_it <- 100
-    it <- 0
-    while((length(unique(colouring)) < (n_exp+1)) || (!all(clade_sizes>1) && n_exp > 0)) {
-        if (it > max_it) {
-            stop("Maximum sampling iterations exceeded. Invalid concentration or number of expansions. Unable to sample valid colouring")
+
+    if(is.null(given$tip_colours)){
+        colouring <- c()
+        max_it <- 100
+        it <- 0
+        while((length(unique(colouring)) < (n_exp+1)) || (!all(clade_sizes>1) && n_exp > 0)) {
+            if (it > max_it) {
+                stop("Maximum sampling iterations exceeded. Invalid concentration or number of expansions. Unable to sample valid colouring")
+            }
+            colouring <- rmultinom(n_tips, 1, exp_probs)
+            colouring <- sapply(c(1:n_tips), function (i) which(colouring[,i]>0))
+            clade_sizes <- sapply(c(1:(n_exp+1)), function (i) length(which(colouring==i)))
+            it <- it + 1
         }
-        colouring <- rmultinom(n_tips, 1, exp_probs)
-        colouring <- sapply(c(1:n_tips), function (i) which(colouring[,i]>0))
-        clade_sizes <- sapply(c(1:(n_exp+1)), function (i) length(which(colouring==i)))
-        it <- it + 1
+    } else {
+        colouring <- given$tip_colours 
     }
 
     exp_sizes <- sapply(div_cols, function(i) length(which(colouring==i)))
@@ -79,10 +84,14 @@ expansions_simulate <- function(priors, sampling_times, concentration, given=lis
 
     A <- sapply(t_mid, function(x) (1/x)**2)
 
-    if (n_exp > 0) {
-        div_from <- sapply(c(1:n_exp), function(i) c((i+1):(n_exp+1))[runif(1,1,n_exp+2-i)])
+    if (is.null(given$div_from)){
+        if (n_exp > 0) {
+            div_from <- sapply(c(1:n_exp), function(i) c((i+1):(n_exp+1))[runif(1,1,n_exp+2-i)])
+        } else {
+            div_from <- c()
+        }
     } else {
-        div_from <- c()
+        div_from <- given$div_from
     }
 
     clonal_co <- simulate_clonal_tree(n_exp, N, K, A, sampling_times, colouring, div_times, div_cols, div_from=div_from) 
