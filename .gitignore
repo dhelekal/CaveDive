@@ -54,3 +54,7 @@ vignettes/*.pdf
 CaveDive/src/RcppExports.cpp
 CaveDive/R/RcppExports.R
 validation/R/debug/
+
+
+R/trees/*/analyse_tree.rmd
+R/trees/*/mcmc_out/*.csv
