@@ -114,8 +114,6 @@ priors <- standard_priors(expansion_rate=1,
 out <- expansions_simulate(priors, sam, concentration, given=given)
 params <- out$params
 co <- out$co
-print(co)
-print(params)
 
 phy <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from, include_div_nodes=FALSE)
 phy.div_nodes <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from, include_div_nodes=TRUE)
@@ -140,12 +138,6 @@ sim_data$tip_times <- sam
 sim_data$root_set <- root_set
 sim_data$meta <- meta
 sim_data_txt <- toJSON(sim_data)
-
-tree.div  <- read.tree(text = phy.div_nodes$full)
-pdf(file="tree.pdf", width=5, height=5)
-tree.plt <- plot_structured_tree(tree.div, given$n_exp+1)
-plot(tree.plt)
-dev.off()
 
 write(sim_data_txt, paste0("./","tree_params.json"))
 write(phy$full, "./tree.nwk")
