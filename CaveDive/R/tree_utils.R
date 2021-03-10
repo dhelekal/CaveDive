@@ -6,7 +6,6 @@
 #' @export
 
 build_coal_tree <- function(sampling_times, coalescent_times, leaf_names=NULL,node_name_prefix="N", terminate_string = TRUE) {
-  set.seed(1)
   sam_ord <- order(-sampling_times)
   times_desc <- sampling_times[sam_ord]
 
@@ -183,7 +182,7 @@ build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_co
 #' @export
 plot_structured_tree <- function(tree, n_lineages){
 
-     if (n_lineages > 1) exp_lins <- c(1:(n_lineages-1)) else exp_lins <- c()
+    if (n_lineages > 1) exp_lins <- c(1:(n_lineages-1)) else exp_lins <- c()
 
     labs <- c(tree$node.label, tree$tip.label)
 
