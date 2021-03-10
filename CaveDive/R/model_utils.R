@@ -1,20 +1,36 @@
 tol<-1e-6
 
 #' @export
-constant.rate <- function (s, N) return (1 / N)
+constant.rate <- function (s, N) {
+    if (!(length(s)==1)) stop("This function takes arguments of length 1")
+    return (1 / N)
+}
 #' @export
 constant.rate.int <- function (t, s, N) {
+    if (!(length(s)==1) || !(length(t)==1)) stop("This function takes arguments of length 1")
     return(s / N)
 }
 #' @export
-constant.rate.int_inv <- function(t, s, N) return(s * N)
+constant.rate.int_inv <- function(t, s, N) {
+    if (!(length(s)==1) || !(length(t)==1)) stop("This function takes arguments of length 1")
+    return(s * N)
+}
 
 #' @export
-sat.rate <- function(s, K, rate, t0) return((1/K)*((1+rate*(t0+s)^2)/(rate*(t0+s)^2)))
+sat.rate <- function(s, K, rate, t0) {
+    if (!(length(s)==1)) stop("This function takes arguments of length 1")
+
+    if (s+t0 < -tol && s+t0 < -tol) {
+        out <- (1/K)*((1+rate*(t0+s)^2)/(rate*(t0+s)^2))
+    } else {
+        out <- Inf
+    }
+    return(out)
+}
 
 #' @export
 sat.rate.int <- function(t, s, K, rate, t0) {
-
+    if (!(length(s)==1) || !(length(t)==1)) stop("This function takes arguments of length 1")
     func1 <- function(x) ((1/K)*(x-(1/rate)*(1/x)))
 
     if (t+t0 < -tol && t+s+t0 < -tol) {
@@ -27,9 +43,8 @@ sat.rate.int <- function(t, s, K, rate, t0) {
 
 #' @export
 sat.rate.int_inv <- function(t, F, K, rate, t0) {
-
+    if (!(length(F)==1) || !(length(t)==1)) stop("This function takes arguments of length 1")
     return( (-1/rate)*log(exp(-rate*K*F)*(exp(-rate*(t+t0))-1) + 1) - (t+t0)) 
-
 }
 
 #' Numerically invert rates
