@@ -8,14 +8,17 @@ License: What license is it under?
 Encoding: UTF-8
 LazyData: true
 Suggests: 
-    testthat
+    testthat,
+    optparse
 LinkingTo: Rcpp
 Imports: 
     Rcpp,
+    rmutil,
     DirichletReg,
     treeio,
     ggtree,
     ggplot2,
+    viridis,
     gridExtra,
     pracma, 
     ape
