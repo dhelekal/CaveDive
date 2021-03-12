@@ -1,5 +1,5 @@
-#'Generate a Newick string representation of a tree corresponding to a realisation of a coalescent process.
-#' 
+#' Generate a Newick string representation of a tree corresponding to a realisation of a coalescent process.
+#' Note: the topology is RANDOM, If you wish for the topology to be consistent, use set.seed before calling this function.
 #' @param sampling_times times of leaves.
 #' @param coalescent_times times of coalescent events / internal nodes.
 #' @return a Newick string corresponding to the tree.
@@ -78,7 +78,8 @@ build_coal_tree <- function(sampling_times, coalescent_times, leaf_names=NULL,no
   return(tree_str)
 }
 
-#'Generate a Newick string representation of a tree corresponding to a realisation of a structured,linage-based coalescent process.
+#' Generate a Newick string representation of a tree corresponding to a realisation of a structured,linage-based coalescent process.
+#' Note: the topology is RANDOM, If you wish for the topology to be consistent, use set.seed before calling this function.
 #'
 #' @param sampling_times times of leaves.
 #' @param coalescent_times times of coalescent events / internal nodes.
@@ -90,7 +91,7 @@ build_coal_tree <- function(sampling_times, coalescent_times, leaf_names=NULL,no
 #' @return a list with the Newick string corresponding to the tree, and a list of leaf colouring assignments
 #' @export
 
-build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_colours, coalescent_colours, div_times, div_events, div_from, include_div_nodes = TRUE, aux_root = FALSE) {
+build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_colours, coalescent_colours, div_times, div_events, div_from, include_div_nodes = TRUE) {
 
   sam_ord <- order(-sampling_times)
   coal_ord <- order(-coalescent_times)
@@ -146,7 +147,7 @@ build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_co
           if (length(sam_subs) > 1) warning("Illegal state encountered")
           branch_len <- sam_subs[1]
         }
-        tree <- paste0("(",tree,":",branch_len,")","X_",LETTERS[i])
+        tree <- paste0("(",tree,":",branch_len,")","X_",LETTERS[div_from[i]],LETTERS[i])
     }
 
     subtrees[i] <- tree
@@ -166,11 +167,8 @@ build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_co
     subtrees[parent] <- gsub(paste0("#D_", i), diverging_tree, parent_tree)
   }
 
-  if (aux_root) {
-    tree_str <- paste0("(",subtrees[length(subtrees)],":", 1, ")", "R", ";")
-  } else {
-    tree_str <- paste0(subtrees[length(subtrees)], ";")
-  }
+
+  tree_str <- paste0(subtrees[length(subtrees)], ";")
   return(list(full=tree_str, subtrees=subtrees.ret))
 }
 
@@ -202,9 +200,9 @@ plot_structured_tree <- function(tree, n_lineages){
 
     tree.full <- full_join(tree, ldf, by = 'node')
 
-    plt<-ggtree(tree.full, aes(color=clade), ladderize=TRUE) +
+    plt<-ggtree(tree.full, aes(color=clade), ladderize=TRUE, size=1.5) +
                     geom_point(aes(shape=type, size=type)) +
-                    scale_size_manual(values=c(1,4,1)) +
+                    scale_size_manual(values=c(2.5,5,2.5)) +
                     scale_shape_manual(values=c(1,8,2)) +
                     theme_tree2()
     return(plt)

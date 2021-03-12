@@ -184,11 +184,11 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlig
 
    x_max <- -min(pre$nodes.df$times)
 
-   p1 <- ggtree(tree.full, aes(color=frequency), ladderize=TRUE) +
+   p1 <- ggtree(tree.full, aes(color=frequency), size=1.5, ladderize=TRUE) +
    geom_point() +
    scale_size_manual(values=c(1)) +
    scale_x_continuous(limits=c(0, x_max)) +
-   scale_color_viridis() +
+   scale_color_viridis(option="plasma") +
    theme_tree2() + 
    theme_bw() +
    theme(axis.title.x = element_blank(), 
