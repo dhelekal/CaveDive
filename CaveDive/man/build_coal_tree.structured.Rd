@@ -2,7 +2,8 @@
 % Please edit documentation in R/tree_utils.R
 \name{build_coal_tree.structured}
 \alias{build_coal_tree.structured}
-\title{Generate a Newick string representation of a tree corresponding to a realisation of a structured,linage-based coalescent process.}
+\title{Generate a Newick string representation of a tree corresponding to a realisation of a structured,linage-based coalescent process.
+Note: the topology is RANDOM, If you wish for the topology to be consistent, use set.seed before calling this function.}
 \usage{
 build_coal_tree.structured(
   sampling_times,
@@ -11,9 +12,7 @@ build_coal_tree.structured(
   coalescent_colours,
   div_times,
   div_events,
-  div_from,
-  include_div_nodes = TRUE,
-  aux_root = FALSE
+  div_from
 )
 }
 \arguments{
@@ -36,4 +35,5 @@ a list with the Newick string corresponding to the tree, and a list of leaf colo
 }
 \description{
 Generate a Newick string representation of a tree corresponding to a realisation of a structured,linage-based coalescent process.
+Note: the topology is RANDOM, If you wish for the topology to be consistent, use set.seed before calling this function.
 }

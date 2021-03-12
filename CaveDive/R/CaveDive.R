@@ -1,4 +1,4 @@
-#' @importFrom ape read.tree axisPhylo ladderize extract.clade node.depth.edgelength
+#' @importFrom ape read.tree axisPhylo ladderize extract.clade node.depth.edgelength collapse.singles
 #' @importFrom DirichletReg rdirichlet ddirichlet
 #' @import treeio ggtree ggplot2 gridExtra 
 #' @importFrom pracma bisect newtonRaphson

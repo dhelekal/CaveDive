@@ -2,7 +2,8 @@
 % Please edit documentation in R/tree_utils.R
 \name{build_coal_tree}
 \alias{build_coal_tree}
-\title{Generate a Newick string representation of a tree corresponding to a realisation of a coalescent process.}
+\title{Generate a Newick string representation of a tree corresponding to a realisation of a coalescent process.
+Note: the topology is RANDOM, If you wish for the topology to be consistent, use set.seed before calling this function.}
 \usage{
 build_coal_tree(
   sampling_times,
@@ -22,4 +23,5 @@ a Newick string corresponding to the tree.
 }
 \description{
 Generate a Newick string representation of a tree corresponding to a realisation of a coalescent process.
+Note: the topology is RANDOM, If you wish for the topology to be consistent, use set.seed before calling this function.
 }

@@ -297,8 +297,9 @@ test_that("structured_coal.preprocess_phylo works", {
 
     co <- structured_coal.simulate(sam, colours, div_times, div_cols, rates, rate.ints)
 
-    tr.nodiv <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from, include_div_nodes = FALSE)
-    tree.nodiv <- read.tree(text = tr.nodiv$full)
+    tr <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from)
+    tree <- read.tree(text = tr$full)
+    tree.nodiv <- collapse.singles(tree)
 
     pre <- structured_coal.preprocess_phylo(tree.nodiv)
 
@@ -327,8 +328,9 @@ test_that("extract_lineage_times works", {
 
     co <- structured_coal.simulate(sam, colours, div_times, div_cols, rates, rate.ints)
 
-    tr.nodiv <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from, include_div_nodes = FALSE)
-    tree.nodiv <- read.tree(text = tr.nodiv$full)
+    tr <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from)
+    tree <- read.tree(text = tr$full)
+    tree.nodiv <- collapse.singles(tree)
     
     times.nodiv <- node.depth.edgelength(tree.nodiv)
     times.nodiv <- times.nodiv-max(times.nodiv)
@@ -380,8 +382,9 @@ test_that("Structured Coalescent likelihood with only one clade matches neutral 
 
     co <- structured_coal.simulate(sam, colours, div_times, div_cols, rates, rate.ints)
 
-    tr.nodiv <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from, include_div_nodes = FALSE)
-    tree.nodiv <- read.tree(text = tr.nodiv$full)
+    tr <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from)
+    tree <- read.tree(text = tr$full)
+    tree.nodiv <- collapse.singles(tree)
 
     pre <- structured_coal.preprocess_phylo(tree.nodiv)
 
@@ -415,8 +418,9 @@ test_that("Simulation Likelihood matches product of colour specific likelihoods"
 
     co <- structured_coal.simulate(sam, colours, div_times, div_cols, rates, rate.ints)
 
-    tr.nodiv <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from, include_div_nodes = FALSE)
-    tree.nodiv <- read.tree(text = tr.nodiv$full)
+    tr <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from)
+    tree <- read.tree(text = tr$full)
+    tree.nodiv <- collapse.singles(tree)
     
     times.nodiv <- node.depth.edgelength(tree.nodiv)
     times.nodiv <- times.nodiv-max(times.nodiv)
@@ -479,8 +483,9 @@ test_that("Expansion simulation likelihood matches computed expansion likelihood
     co <- out$co
     params <- out$params
 
-    tr.nodiv <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from, include_div_nodes = FALSE)
-    tree.nodiv <- read.tree(text = tr.nodiv$full)
+    tr <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from)
+    tree <- read.tree(text = tr$full)
+    tree.nodiv <- collapse.singles(tree)
     
     times.nodiv <- node.depth.edgelength(tree.nodiv)
     times.nodiv <- times.nodiv-max(times.nodiv)
@@ -533,8 +538,9 @@ test_that("Transdimensional moves are balanced", {
     co <- sim$co
     params <- sim$params
 
-    tr.nodiv <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from, include_div_nodes = FALSE)
-    tree.nodiv <- read.tree(text = tr.nodiv$full)
+    tr <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from)
+    tree <- read.tree(text = tr$full)
+    tree.nodiv <- collapse.singles(tree)
     pre <- structured_coal.preprocess_phylo(tree.nodiv)
 
     fn_log_J <- function(i_prev, x_prev, x_next) {
@@ -625,8 +631,9 @@ test_that("Log-posterior returns correct values", {
         return(out) 
     }
     
-    tr.nodiv <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from, include_div_nodes = FALSE)
-    tree.nodiv <- read.tree(text = tr.nodiv$full)
+    tr <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from)
+    tree <- read.tree(text = tr$full)
+    tree.nodiv <- collapse.singles(tree)
     pre <- structured_coal.preprocess_phylo(tree.nodiv)
 
     root_set <- rep(NA, params$n_exp)

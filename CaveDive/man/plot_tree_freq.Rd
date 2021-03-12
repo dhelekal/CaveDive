@@ -4,7 +4,13 @@
 \alias{plot_tree_freq}
 \title{Plots tree branch frequency histogram}
 \usage{
-plot_tree_freq(mcmc.df, event.df, pre, prior_t_given_N = NULL)
+plot_tree_freq(
+  mcmc.df,
+  event.df,
+  pre,
+  prior_t_given_N = NULL,
+  highlight_node = NULL
+)
 }
 \arguments{
 \item{mcmc.df}{mcmc.df returned by mcmc2data.frame}
@@ -14,6 +20,8 @@ plot_tree_freq(mcmc.df, event.df, pre, prior_t_given_N = NULL)
 \item{pre}{Preprocessed phylogeny}
 
 \item{prior_t_given_N}{(Optional) Expansion time prior. If supplied prior will be overlayed.}
+
+\item{highlight_node}{(Optional) Node to highlight}
 }
 \value{
 a plot object

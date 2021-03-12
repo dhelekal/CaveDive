@@ -15,9 +15,7 @@ build_coal_tree <- function(sampling_times, coalescent_times, leaf_names=NULL,no
 
   if (is.null(leaf_names)) {
     tree_nodes <- seq(1, length(sampling_times))
-    tree_nodes <-
-    sapply(tree_nodes, function (x)
-      return (paste0("S", x)))
+    tree_nodes <- sapply(tree_nodes, function (x) return (paste0("S", x)))
   } else {
     tree_nodes <- leaf_names
   }
@@ -91,7 +89,7 @@ build_coal_tree <- function(sampling_times, coalescent_times, leaf_names=NULL,no
 #' @return a list with the Newick string corresponding to the tree, and a list of leaf colouring assignments
 #' @export
 
-build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_colours, coalescent_colours, div_times, div_events, div_from, include_div_nodes = TRUE) {
+build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_colours, coalescent_colours, div_times, div_events, div_from) {
 
   sam_ord <- order(-sampling_times)
   coal_ord <- order(-coalescent_times)
@@ -107,10 +105,6 @@ build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_co
   leaf_subs <- lapply(c(1:length(div_times)), function(x) which(leaf_colours==x))
   node_subs <- lapply(c(1:length(div_times)), function(x) which(coalescent_colours==x))
 
-  if (!include_div_nodes) {
-    subtree_MRCA <- sapply(c(1:length(div_times)), 
-      function(x) if (length(node_subs[[x]]) > 0) min(coalescent_times[node_subs[[x]]]) else coalescent_times[leaf_subs[[x]]][1])
-  }
 
   ### First generate appropriate subtrees.
   for (i in c(1:length(div_times))) {
@@ -128,19 +122,14 @@ build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_co
     for (j in idx_set) {
       if (div_from[j] == i) {
 
-        if (include_div_nodes) {
-          sam_subs <- c(sam_subs, div_times[j])
-        } else {
-          sam_subs <- c(sam_subs, subtree_MRCA[j])
-        }
-
+        sam_subs <- c(sam_subs, div_times[j])
         leaf_names <- c(leaf_names, paste0("#D_", j))
       } 
     }
 
     tree <- build_coal_tree(sam_subs, coal_subs, leaf_names=leaf_names, node_name_prefix=node_name_prefix, terminate_string = FALSE)
 
-    if (include_div_nodes && div_times[i] > -Inf) {
+    if (div_times[i] > -Inf) {
         if(length(coal_subs) > 0) {
           branch_len <- min(coal_subs)-div_times[i]
         } else {
@@ -149,7 +138,6 @@ build_coal_tree.structured <- function(sampling_times, coalescent_times, leaf_co
         }
         tree <- paste0("(",tree,":",branch_len,")","X_",LETTERS[div_from[i]],LETTERS[i])
     }
-
     subtrees[i] <- tree
   }
   

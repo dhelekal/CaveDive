@@ -13,7 +13,7 @@ expansions_simulate(priors, sampling_times, concentration, given = list())
 
 \item{concentration}{Scalar concentration hyperparameter for dirichlet expansion model}
 
-\item{given}{A list of variables with values given. Supported names: 'n_exp' - number of expansions,'N' - Background population size, 'K' - Expansion carrying capacities, 't_mid' - Expansion times to midpoints, 'div_times' - Expansion divergence times}
+\item{given}{A list of variables with values given. Supported names: 'n_exp' - number of expansions, 'tip_colours' - tip expansion assignment, N' - Background population size, 'K' - Expansion carrying capacities, 't_mid' - Expansion times to midpoints, 'div_times' - Expansion divergence times, 'div_from' - parent lineages}
 }
 \description{
 Simulate a genealogy with clonal expansionss

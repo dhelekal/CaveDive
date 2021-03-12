@@ -115,10 +115,10 @@ out <- expansions_simulate(priors, sam, concentration, given=given)
 params <- out$params
 co <- out$co
 
-phy <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from, include_div_nodes=FALSE)
-phy.div_nodes <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from, include_div_nodes=TRUE)
+phy.div_nodes <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from)
 
-tree  <- read.tree(text = phy$full)
+tree.div  <- read.tree(text = phy$full)
+tree <- collapse.singles(tree.div)
 pre <- structured_coal.preprocess_phylo(tree)
 
 root_set <- rep(NA, given$n_exp)
@@ -140,5 +140,5 @@ sim_data$meta <- meta
 sim_data_txt <- toJSON(sim_data)
 
 write(sim_data_txt, paste0("./","tree_params.json"))
-write(phy$full, "./tree.nwk")
+write.tree(tree, file="./tree.nwk")
 write(phy.div_nodes$full, "./tree_div.nwk")
