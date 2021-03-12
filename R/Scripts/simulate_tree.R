@@ -117,7 +117,7 @@ co <- out$co
 
 phy.div_nodes <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from)
 
-tree.div  <- read.tree(text = phy$full)
+tree.div  <- read.tree(text = phy.div_nodes$full)
 tree <- collapse.singles(tree.div)
 pre <- structured_coal.preprocess_phylo(tree)
 
