@@ -66,7 +66,7 @@ expansions_simulate <- function(priors, sampling_times, concentration, given=lis
                 stop("Maximum sampling iterations exceeded.")
             }
             ## div time now
-            div_times <- sapply(rep(N, n_exp), priors$prior_t_given_N.sample)
+            div_times <- as.double(sapply(rep(N, n_exp), priors$prior_t_given_N.sample))
             div_times <- c(div_times,-Inf)
 
             ## Re-order everything so that divergence event numbering corresponds to their order of occurence
