@@ -58,3 +58,6 @@ validation/R/debug/
 
 R/trees/*/analyse_tree.rmd
 R/trees/*/mcmc_out/*.csv
+*mcmc_df.csv
+*event_df.csv
+

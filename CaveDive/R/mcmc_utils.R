@@ -170,7 +170,7 @@ plot_dim_panel <- function(mcmc.df, prior_N=NULL) {
 #' @param highlight_node (Optional) Node to highlight
 #' @return a plot object
 #' @export
-plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlight_node=NULL) {
+plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlight_node=NULL, MRCA_lab=c()) {
    tree <- pre$phy
    freq <- table(event.df$br)
 
@@ -180,12 +180,20 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlig
    id_freq <- sapply(ids, function (i) if(pre$nodes.df$is_tip[i]) NA else if (is.na(freq[paste0(pre$incoming[[i]])])) 0.0 else freq[paste0(pre$incoming[[i]])])
 
    ldf <- data.frame(node = ids, frequency = id_freq, tip=tip)
+   ldf$edge_id <- sapply(ldf$node, function(i) pre$incoming[[i]])
+   ldf$lab <- sapply(ldf$node, function (x) {
+                    a <- MRCA_lab[which(MRCA_lab==x)]
+                    if(length(a) > 0) return(a[1]) else return(NA)
+               })
    tree.full <- full_join(tree, ldf, by = 'node')
 
    x_max <- -min(pre$nodes.df$times)
 
    p1 <- ggtree(tree.full, aes(color=frequency), size=1.5, ladderize=TRUE) +
    geom_point() +
+   geom_text2(aes(label=edge_id, 
+                 subset=!is.na(lab), 
+                 x=branch), color="red", size=12, vjust=-1) +
    scale_size_manual(values=c(1)) +
    scale_x_continuous(limits=c(0, x_max)) +
    scale_color_viridis(option="plasma") +
@@ -196,11 +204,6 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlig
           axis.title.y = element_blank(),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank())
-
-   if (!is.null(highlight_node)) {
-     p1 <- p1+geom_point2(aes(subset=node==highlight_node), color='red', size=3)
-   }
-
 
    temp <- ggplotGrob(p1)
    leg_index <- which(sapply(temp$grobs, function(x) x$name) == "guide-box")
