@@ -12,6 +12,12 @@ set.seed(3)
 
 run_mcmc <- FALSE
 
+data_dir <- "./tree_sim"
+if(run_mcmc) {
+    dir.create(file.path(data_dir))
+}
+
+
 tips <- 200
 priors <- standard_priors(expansion_rate=1, 
                     N_mean_log=4, 
@@ -35,16 +41,6 @@ set.seed(3)
 phy.txt.div <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from)
 phy.div <- read.tree(text=phy.txt.div$full)
 phy <- collapse.singles(phy.div)
-
-tree_plt <- plot_structured_tree(phy.div, 4) + scale_color_brewer(palette="Dark2") +
-            theme(legend.position="right",
-                  axis.title.x = element_blank(),
-                  axis.text.x = element_blank(),
-                  axis.ticks.x = element_blank(),
-                  axis.line.x = element_blank())
-png("tree_sim.png",1600,1600)
-plot(tree_plt)
-dev.off()
 
 ###Lets use less informative priors for inference
 inference_priors <- standard_priors(expansion_rate=1, 
@@ -71,11 +67,11 @@ if(run_mcmc){
     dfs <- mcmc2data.frame(expansions$mcmc_out)
     mcmc.df <- dfs$mcmc.df
     event.df <- dfs$event.df
-    write.csv(mcmc.df, paste0("./mcmc_df.csv"))
-    write.csv(event.df, paste0("./event_df.csv"))
+    write.csv(mcmc.df, paste0(data_dir,"/mcmc_df.csv"))
+    write.csv(event.df, paste0(data_dir,"/event_df.csv"))
 } else {
-    mcmc.df <- read.csv("./mcmc_df.csv")
-    event.df <- read.csv("./event_df.csv")
+    mcmc.df <- read.csv(paste0(data_dir,"/mcmc_df.csv"))
+    event.df <- read.csv(paste0(data_dir,"/event_df.csv"))
     pre <- structured_coal.preprocess_phylo(phy)
 }
 
