@@ -308,6 +308,37 @@ test_that("structured_coal.preprocess_phylo works", {
                 TRUE)
   })
 
+  test_that("structured_coal.preprocess_phylo edge indexing is invariant of node indexing if order_edges_by_node_label is true.", {
+    set.seed(1)
+    
+    sam <- runif(100, 0, 10)
+    tmax <- max(sam)
+    sam <- sam - tmax
+    sam <- sam[order(-sam)]
+    colours <- trunc(runif(100, 1, 4))
+    
+    N <- 100
+    A <- c(5.1, 0.3)
+    K <- c(100,100)
+
+    div_times <- c(-25, -60, -Inf)
+    div_cols <- c(1, 2, 3)
+    rates <- list(function (s) sat.rate(s, K[1], A[1], div_times[1]), function (s) sat.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
+    rate.ints <- list(function(t,s) sat.rate.int(t, s, K[1], A[1], div_times[1]), function(t,s) sat.rate.int(t, s, K[2], A[2], div_times[2]), function(t,s) constant.rate.int(t,s,N))
+
+    co <- structured_coal.simulate(sam, colours, div_times, div_cols, rates, rate.ints)
+
+    tr <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from)
+    tree <- read.tree(text = tr$full)
+    tree.nodiv <- collapse.singles(tree)
+
+    pre <- structured_coal.preprocess_phylo(ladderize(tree.nodiv, right=T))
+    pre_l <- structured_coal.preprocess_phylo(ladderize(tree.nodiv, right=F))
+
+    expect_equal(pre$phy$node.label[pre$edges.df$node.child], pre_l$phy$node.label[pre_l$edges.df$node.child])
+    expect_equal(pre$phy$tip.label[pre$edges.df$node.child], pre_l$phy$tip.label[pre_l$edges.df$node.child])
+  })
+
 test_that("extract_lineage_times works", {
     set.seed(1)
     
