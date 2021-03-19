@@ -232,9 +232,10 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
 #' Preprocess phylogeny to speed up likelihood computation
 #'
 #' @param phy phylogeny
+#' @param order_edges_by_node_label should edge indexing be ordered by child node label. Default: TRUE
 #' @return preprocessed phylogeny
 #' @export
-structured_coal.preprocess_phylo <- function(phy){
+structured_coal.preprocess_phylo <- function(phy, order_edges_by_node_label=TRUE){
     labs <- c(phy$node.label, phy$tip.label)
     nodes <- nodeid(phy, labs)
     is_tip <- c(rep(FALSE, length(phy$node.label)), rep(TRUE, length(phy$tip.label)))
@@ -250,11 +251,17 @@ structured_coal.preprocess_phylo <- function(phy){
     edges.child <- phy$edge[,2]
     edges.len <- phy$edge.length
 
-    nodes.df <- data.frame(id=nodes, times=times, is_tip=is_tip)
-    edges.df <- data.frame(node.parent=edges.parent, node.child=edges.child, length=edges.len, id=c(1:length(edges.parent)))
-
+    nodes.df <- data.frame(id=nodes, times=times, is_tip=is_tip, lab=labs)
     nodes.df <- nodes.df[order(nodes.df$id), ]
-    edges.df <- edges.df[order(edges.df$id), ]
+
+    if (!order_edges_by_node_label) {
+        edges.df <- data.frame(node.parent=edges.parent, node.child=edges.child, length=edges.len, id=c(1:length(edges.parent)))
+        edges.df <- edges.df[order(edges.df$id), ]
+    } else {
+        edges.df <- data.frame(node.parent=edges.parent, node.child=edges.child, length=edges.len)
+        edges.df <- edges.df[order(nodes.df$lab[edges.df$node.child]), ]
+        edges.df$id <- c(1:length(edges.parent))
+    }
 
     edges.outgoing <- lapply(nodes.df$id, function (x) edges.df$id[which(edges.df$node.parent==x)])
     edges.outgoing <- lapply(edges.outgoing, function (x) if (length(x) > 0) x else NA)
@@ -332,9 +339,10 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div_t
 #' @param phylo.preprocessed preprocessed phylogeny
 #' @param div.MRCA.nodes labels of MRCA nodes of diverging lineages
 #' @param div_times absolute divergence times
+#' @param return_partitions if true, return a list named 'partitions' containing tip labels for each partition
 #' @return A list containing lists of sampling time vectors sam.times and coalescent time vectors coal.times for each lineage.
 #' @export
-extract_lineage_times <- function(phylo.preprocessed, div.MRCA.nodes, div_times) {
+extract_lineage_times <- function(phylo.preprocessed, div.MRCA.nodes, div_times, return_partitions=FALSE) {
     times.ord <- order(-div_times)
     k_div <- length(div_times)
 
@@ -342,6 +350,12 @@ extract_lineage_times <- function(phylo.preprocessed, div.MRCA.nodes, div_times)
 
     coal.times <- list()
     sam.times <- list()
+
+    if (return_partitions) {
+        partitions <- list()
+    } else {
+        partitions <- NA
+    }
 
     empty_tips <- FALSE
     partition_counts <- rep(0, k_div)
@@ -370,7 +384,9 @@ extract_lineage_times <- function(phylo.preprocessed, div.MRCA.nodes, div_times)
         }
 
         tip.times <- phylo.preprocessed$nodes.df$times[nodeid(phylo.preprocessed$phy, leaf.labs)]
-
+        if (return_partitions){
+            partitions[[ii]] <- leaf.labs
+        }
         if (length(tip.times)==0) {
             empty_tips <- TRUE
         }
@@ -383,7 +399,11 @@ extract_lineage_times <- function(phylo.preprocessed, div.MRCA.nodes, div_times)
 
         partition_counts[ii] <- partition_counts[ii] + length(sam.times[[ii]])
     }
-    return(list(sam.times=sam.times, coal.times=coal.times, empty_tips=empty_tips, partition_counts=partition_counts))
+    return(list(sam.times=sam.times, 
+                coal.times=coal.times, 
+                empty_tips=empty_tips, 
+                partition_counts=partition_counts, 
+                partitions=partitions))
 }
 
 choose_reaction <- function(rates) {

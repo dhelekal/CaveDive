@@ -4,10 +4,12 @@
 \alias{structured_coal.preprocess_phylo}
 \title{Preprocess phylogeny to speed up likelihood computation}
 \usage{
-structured_coal.preprocess_phylo(phy)
+structured_coal.preprocess_phylo(phy, order_edges_by_node_label = TRUE)
 }
 \arguments{
 \item{phy}{phylogeny}
+
+\item{order_edges_by_node_label}{should edge indexing be ordered by child node label. Default: TRUE}
 }
 \value{
 preprocessed phylogeny
