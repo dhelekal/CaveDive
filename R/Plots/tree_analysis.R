@@ -10,13 +10,12 @@ library(RColorBrewer)
 
 set.seed(3)
 
-run_mcmc <- FALSE
+run_mcmc <- F
 
 data_dir <- "./tree_sim"
 if(run_mcmc) {
     dir.create(file.path(data_dir))
 }
-
 
 tips <- 200
 priors <- standard_priors(expansion_rate=1, 
@@ -52,10 +51,9 @@ inference_priors <- standard_priors(expansion_rate=1,
                     exp_time_kappa=1/2)
 
 n_it <- 1e7
-thinning <- 1e7/1e4
+thinning <- n_it/1e4
 burn_in <- 1e3 #10%
 if(run_mcmc){
-    phy <- makeNodeLabel(phy)
     start <- proc.time()
     expansions <- run_expansion_inference(phy, inference_priors, 1, n_it=n_it, thinning=thinning)
     elapsed <-proc.time() - start
@@ -183,11 +181,11 @@ event_panel <- arrangeGrob(
         grobs=list(K_facet, t_mid_facet),
         nrow=2,
         heights = c(1,1))
-png("event_panel.png", width=3200, height=1600)
+png("fig2a.png", width=1800, height=1600)
 plot(event_panel)
 dev.off()
 
-png("summary_panel.png", width=1600, height=1600)
+png("fig2b.png", width=1600, height=1600)
 plot(summary_panel)
 dev.off()
 

@@ -45,7 +45,7 @@ if (run_mcmc) {
 } else {
     mcmc.df <- read.csv(paste0(data_dir,"/mcmc_df.csv"))
     event.df <- read.csv(paste0(data_dir,"/event_df.csv"))
-    pre <- structured_coal.preprocess_phylo(tree)
+    pre <- structured_coal.preprocess_phylo(tree, order_edges_by_node_label=F)
 }
 ### discard burn in
 mcmc.df <- mcmc.df[burn_in:nrow(mcmc.df),]
@@ -85,7 +85,7 @@ compute_persistence <- function(pre, df) {
 }
 
 
-p_mat <- compute_persistence(pre, event_mode_dim_marginal)
+p_mat <- compute_persistence(pre, event.df)
 #ord <- hclust(as.dist(1-p_mat, diag = T, upper = T), method = "ward.D")$order
 
 readResist=function() {
@@ -125,7 +125,7 @@ plot_tree<-function(pre,event.df){
 
    x_max <- -min(pre$nodes.df$times)
 
-   p1 <- ggtree(tree.full, aes(color=frequency), size=1.5, ladderize=F) +
+   p1 <- ggtree(tree.full, aes(color=frequency), size=1, ladderize=F) +
    geom_point() +
    #geom_text2(aes(label=edge_id, 
    #              subset=!is.na(lab), 
@@ -134,12 +134,15 @@ plot_tree<-function(pre,event.df){
    scale_x_continuous(limits=c(0, x_max)) +
    scale_color_viridis(option="plasma") +
    theme_tree2() + 
-   theme_bw() +
+   theme_minimal() +
    theme(axis.title.x = element_blank(), 
           axis.text.x = element_blank(), 
           axis.title.y = element_blank(),
           axis.text.y = element_blank(),
           axis.ticks.y = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.margin = margin(0, 0, 0, 0, "cm"),
           legend.position = "none")
 
 }
@@ -156,9 +159,11 @@ p_df$sample_2 <- factor(x = p_df$sample_2,
 
 heatmap <- ggplot(data = p_df, aes(x = sample_1, y = sample_2)) +
   geom_tile(aes(fill = value)) +
-  scale_fill_viridis(option= "plasma",  na.value = "white") +
+  scale_fill_viridis_c(option= "plasma", na.value = "white") +
   ggtitle("Persistence Matrix") +
-  labs(fill = "Expectedd Level")+
+  labs(fill = "Pairwise Probability")+
+  guides(fill=guide_legend(title.position = "right", vjust=0.5)) +
+  theme_minimal() +
   theme(axis.title.y = element_blank(), 
         axis.text.y = element_blank(), 
         axis.ticks.y = element_blank(),
@@ -167,8 +172,11 @@ heatmap <- ggplot(data = p_df, aes(x = sample_1, y = sample_2)) +
         axis.ticks.x = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
+        plot.margin = margin(0, 0, 0, 0, "cm"),
         plot.title = element_text(size = 32, face = "bold",hjust=0.5),
-        legend.position = c(0.2,0.8))
+        text = element_text(size=30),
+        legend.position = c(0.1,0.9),
+        legend.title = element_text(angle = -90))
 
 r_df <- as.data.frame(readResist())
 r_df$x <- rownames(r_df) 
@@ -179,21 +187,41 @@ r_df$x <- factor(x = r_df$x,
 
 resistmap <- ggplot(data = r_df, aes(x = x, y = variable)) +
                     geom_tile(aes(fill = factor(value, levels=c(0,1,2), ordered=TRUE))) +
-                    scale_fill_viridis(option= "viridis", discrete=T) +
-                    theme_bw() + 
+                    scale_fill_viridis(option= "viridis", na.value="gray50" , discrete=T) +
+                    theme_minimal() +
                     ylab("Antimicrobial")+
                     labs(fill = "Resistance Level")+
                     guides(fill=guide_legend(title.position = "top"))+
                     theme(axis.title.x = element_blank(), 
                           axis.text.x = element_blank(), 
                           axis.ticks.x = element_blank(),
+                          panel.grid.major = element_blank(),
+                          panel.grid.minor = element_blank(),
                           text = element_text(size=30),
+                          plot.margin = margin(0, 0, 0, 0, "cm"),
                           legend.position="bottom")
-treemap <- plot_tree(pre, event_mode_dim_marginal) + scale_x_reverse()
+
+hist_dim <- ggplot(mcmc.df, aes(dim)) +  
+   geom_histogram(aes(y = stat(count / sum(count))), binwidth=1) + 
+   theme_minimal() +
+   xlab("Number of Expansions")+
+   ylim(0,1)+
+   scale_fill_brewer(palette="Dark2")  + 
+   theme(axis.title.y = element_blank(), 
+         axis.text.y = element_blank(), 
+         axis.ticks.y = element_blank(),
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(),
+         plot.margin = margin(1, 0, 0, 0, "cm"),
+         text = element_text(size=30))
+
+treemap <- plot_tree(pre, event.df) + scale_x_reverse()
 summary_panel <- ggarrange(
-        heatmap, treemap, resistmap,
+        heatmap, treemap, resistmap,hist_dim,
         widths=c(16,12),heights=c(16,4))
 
-png("Heatmap.png", width=32, height=24, "in", res=300)
-plot(summary_panel)
+
+
+png("grad2016_heatmap.png", width=32, height=24, "in", res=300, bg="white")
+summary_panel
 dev.off() 
