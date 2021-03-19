@@ -9,7 +9,8 @@ plot_tree_freq(
   event.df,
   pre,
   prior_t_given_N = NULL,
-  highlight_node = NULL
+  highlight_node = NULL,
+  MRCA_lab = c()
 )
 }
 \arguments{
