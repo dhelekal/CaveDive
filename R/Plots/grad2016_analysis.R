@@ -14,8 +14,8 @@ set.seed(3)
 
 run_mcmc <- FALSE
 
-n_it <- 1e7
-thinning <- 1e7/1e4
+n_it <- 2e7
+thinning <- n_it/1e4
 burn_in <- 1e3 #10%
 
 data_dir <- "./grad2016"
@@ -160,7 +160,6 @@ p_df$sample_2 <- factor(x = p_df$sample_2,
 heatmap <- ggplot(data = p_df, aes(x = sample_1, y = sample_2)) +
   geom_tile(aes(fill = value)) +
   scale_fill_viridis_c(option= "plasma", na.value = "white") +
-  ggtitle("Persistence Matrix") +
   labs(fill = "Pairwise Probability")+
   guides(fill=guide_legend(title.position = "right", vjust=0.5)) +
   theme_minimal() +
@@ -173,9 +172,8 @@ heatmap <- ggplot(data = p_df, aes(x = sample_1, y = sample_2)) +
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         plot.margin = margin(0, 0, 0, 0, "cm"),
-        plot.title = element_text(size = 32, face = "bold",hjust=0.5),
         text = element_text(size=30),
-        legend.position = c(0.1,0.9),
+        legend.position = c(0.1,0.8),
         legend.title = element_text(angle = -90))
 
 r_df <- as.data.frame(readResist())
@@ -186,7 +184,7 @@ r_df$x <- factor(x = r_df$x,
                      ordered = TRUE)
 
 resistmap <- ggplot(data = r_df, aes(x = x, y = variable)) +
-                    geom_tile(aes(fill = factor(value, levels=c(0,1,2), ordered=TRUE))) +
+                    geom_tile(aes(fill = factor(value, levels=c(0,1,2), labels = c("Susceptible", "Intermediate", "Resistant"), ordered=TRUE))) +
                     scale_fill_viridis(option= "viridis", na.value="gray50" , discrete=T) +
                     theme_minimal() +
                     ylab("Antimicrobial")+
@@ -219,8 +217,6 @@ treemap <- plot_tree(pre, event.df) + scale_x_reverse()
 summary_panel <- ggarrange(
         heatmap, treemap, resistmap,hist_dim,
         widths=c(16,12),heights=c(16,4))
-
-
 
 png("grad2016_heatmap.png", width=32, height=24, "in", res=300, bg="white")
 summary_panel

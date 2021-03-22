@@ -7,6 +7,7 @@ library(treeio)
 library(viridis)
 library(gridExtra)
 library(RColorBrewer)
+library(egg)
 
 set.seed(3)
 
@@ -73,24 +74,18 @@ func_plt <- func_plt + scale_fill_brewer(palette="Dark2")  +
    coord_flip() +
    theme_bw() +
    xlab("Time Before Present") +
-   theme(axis.title.x = element_blank(),
-         axis.text.x = element_blank(),
-         axis.ticks.x = element_blank(),
-         axis.line.x = element_blank(),
-         legend.position="none", 
+   theme(legend.position="none", 
          panel.grid.major = element_blank(), 
          panel.grid.minor = element_blank(),
          panel.border = element_blank(),
          axis.line = element_line(color = 'black'), 
          text = element_text(size=20))
 
-p <- arrangeGrob(
-    grobs=list(func_plt,tree_plt),
-    nrow=1,
-    ncol=2,
-    widths = c(5,5),
-    heights = 5)
+p <- ggarrange(
+    func_plt,tree_plt,
+    widths = c(2,2),
+    heights= c(2))
 
 png("fig1.png",width=1600,height=900)
-plot(p)
+p
 dev.off()
