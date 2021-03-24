@@ -181,10 +181,10 @@ event_panel <- arrangeGrob(
         nrow=2,
         heights = c(1,1))
 png("fig2a.png", width=1800, height=1600)
-plot(event_panel)
+event_panel
 dev.off()
 
 png("fig2b.png", width=1600, height=1600)
-plot(summary_panel)
+summary_panel
 dev.off()
 
