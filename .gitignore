@@ -61,3 +61,4 @@ R/trees/*/mcmc_out/*.csv
 *mcmc_df.csv
 *event_df.csv
 
+validation/R/sim_one_exp/*
