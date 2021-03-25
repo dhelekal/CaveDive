@@ -85,6 +85,24 @@ if(given$n_exp > 0) {
     }
 }
 
+compute_ci <- function(x, conf=0.95) {
+  ci <- c()
+  x_ord <- order(x)
+  if(length(x)%%2==0) {
+    l<-length(x)/2
+    p1 <- x[x_ord][(l+1):length(x)]
+    p2 <- x[x_ord][1:l]
+  } else {
+    l <-floor(length(x)/2)
+    p1 <- x[x_ord][(l+2):length(x)]
+    p2 <- x[x_ord][1:l]
+  }
+  ci[1] <- p2[l*(1-conf)]
+  ci[2] <- p1[l*conf]
+  return(ci)
+}
+
+
 ### discard burn in
 mcmc.df <- mcmc.df[burn_in:nrow(mcmc.df),]
 event.df <- event.df[which(event.df$it >= burn_in), ]
@@ -149,6 +167,18 @@ summary_panel <- arrangeGrob(
 dummy_gt <- data.frame(br=unique(mode_br_df$br))
 dummy_gt$gt.K <- sapply(dummy_gt$br, function (x) params$K[which(root_set==x)])
 dummy_gt$gt.t_mid <- sapply(dummy_gt$br, function (x) params$t_mid[which(root_set==x)])
+dummy_gt$median.K <- sapply(dummy_gt$br, function (x) median(mode_br_df$K[which(mode_br_df$br==x)]))
+dummy_gt$median.t_mid <- sapply(dummy_gt$br, function (x) median(mode_br_df$t_mid[which(mode_br_df$br==x)]))
+
+
+K_ci <- lapply(dummy_gt$br, function (x) compute_ci(mode_br_df$K[which(mode_br_df$br==x)]))
+t_mid_ci <- lapply(dummy_gt$br, function (x) compute_ci(mode_br_df$t_mid[which(mode_br_df$br==x)]))
+
+dummy_gt$ci_lo.K <- sapply(K_ci, function (x) x[1])
+dummy_gt$ci_hi.K <- sapply(K_ci, function (x) x[2])
+
+dummy_gt$ci_lo.t_mid <- sapply(t_mid_ci, function (x) x[1])
+dummy_gt$ci_hi.t_mid <- sapply(t_mid_ci, function (x) x[2])
 
 br.labs <- sapply(unique(mode_br_df$br), function (x) paste0("Branch: ",x))
 names(br.labs) <- unique(mode_br_df$br)
@@ -158,18 +188,20 @@ prior_mixture <- function(prior, cond_values) {
      return(stat_function(fun=f_mixture, colour="purple", size=2))
 }
 
-K_facet <- ggplot(mode_br_df, aes(x=K)) + 
-           geom_histogram(aes(y = stat(count / sum(count))), bins=100) +
+K_facet <- ggplot(mode_br_df) + 
+           geom_histogram(aes(x=K, y = stat(count / sum(count))), bins=100) +
            prior_mixture(function(x,N) exp(inference_priors$prior_K_given_N(x,N)),mode_br_mcmc_df$N) +
+           geom_rect(data = dummy_gt, aes(xmin = ci_lo.K, xmax = ci_hi.K), ymin=-Inf, ymax=Inf, fill="blue", alpha=0.3) +
            facet_wrap(~br, labeller=labeller(br = br.labs)) +
            geom_vline(data = dummy_gt, aes(xintercept = gt.K), color="red",lwd=3) +
            labs(x="Carrying Capacity") +
            theme_bw() +
            theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),text = element_text(size=20))
 
-t_mid_facet <- ggplot(mode_br_df, aes(x=t_mid)) + 
-           geom_histogram(aes(y = stat(count / sum(count))), bins=100) +
+t_mid_facet <- ggplot(mode_br_df) + 
+           geom_histogram(aes(x=t_mid, y = stat(count / sum(count))), bins=100) +
            prior_mixture(function(x,N) exp(inference_priors$prior_t_mid_given_N(x,N)),mode_br_mcmc_df$N) +
+           geom_rect(data = dummy_gt, aes(xmin = ci_lo.t_mid, xmax = ci_hi.t_mid), ymin=-Inf, ymax=Inf, fill="blue", alpha=0.3) +
            facet_wrap(~br, labeller=labeller(br = br.labs)) +
            geom_vline(data = dummy_gt, aes(xintercept = gt.t_mid), color="red",lwd=3) +
            labs(x="Time to Midpoint") +
@@ -180,11 +212,11 @@ event_panel <- arrangeGrob(
         grobs=list(K_facet, t_mid_facet),
         nrow=2,
         heights = c(1,1))
-png("fig2a.png", width=1800, height=1600)
-event_panel
+png("fig2b.png", width=1800, height=1600)
+plot(event_panel)
 dev.off()
 
-png("fig2b.png", width=1600, height=1600)
-summary_panel
+png("fig2a.png", width=1600, height=1600)
+plot(summary_panel)
 dev.off()
 
