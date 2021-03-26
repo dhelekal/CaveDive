@@ -1,3 +1,25 @@
+priorList <- function(prior_i,
+                    prior_i.sample,
+                    prior_N,
+                    prior_N.sample,
+                    prior_t_mid_given_N,
+                    prior_t_mid_given_N.sample,
+                    prior_K_given_N,
+                    prior_K_given_N.sample,
+                    prior_t_given_N,
+                    prior_t_given_N.sample) {
+     return(structure(list(prior_i=prior_i, 
+                            prior_i.sample=prior_i.sample,
+                            prior_N=prior_N,
+                            prior_N.sample=prior_N.sample,
+                            prior_t_mid_given_N=prior_t_mid_given_N,
+                            prior_t_mid_given_N.sample=prior_t_mid_given_N.sample,
+                            prior_K_given_N=prior_K_given_N,
+                            prior_K_given_N.sample=prior_K_given_N.sample,
+                            prior_t_given_N=prior_t_given_N,
+                            prior_t_given_N.sample=prior_t_given_N.sample),class="priorList"))
+}
+
 #' Constructs object of class expansionsMCMC
 #' 
 #' @param o MCMC output
@@ -6,11 +28,14 @@
 #'         event.df contains rows describing different expansions. Columns consist of which iteration does an expansion belong to, 
 #'         and the associated t_mid/K/time/branch/probability values.
 #' @export
-expansionsMCMC <- function(pre, priors, model_data, expansion_data) {
-   stopifnot("pre must be a preprocessed phylogeny"= class(pre) == "preprocessedPhy")
-   stopifnot()
-   out <- list(phylo_preprocessed=pre, priors=priors, model_data=model_data, expansion_data=expansion_data)
-   attr(out, "class") <- "expansionMCMC"
+expansionsMCMC <- function(phylo_preprocessed, priors, model_data, expansion_data) {
+   stopifnot("pre must be of type preprocessed phylogeny"= class(phylo_preprocessed) == "preprocessedPhy")
+   stopifnot("priors must be of type priorList"=class(priors)== "priorList")
+   stopifnot("invalid model data"=all(colnames(model_data)==c("it", "dim", "N", "pr", "lh", "prior")))
+   stopifnot("invalid expansion_data data"=all(colnames(expansion_data)==c("it", "t_mid", "K", "time", "br", "pr")))
+   out <- list(phylo_preprocessed=phylo_preprocessed, priors=priors, model_data=model_data, expansion_data=expansion_data)
+   attr(out, "class") <- "expansionsMCMC"
+   return(out)
 }
 
 #' Converts MCMC output into two data frames, one conaining global model parameters and one containing expansion data

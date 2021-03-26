@@ -18,7 +18,7 @@ standard_priors <- function(expansion_rate=1,
                             K_sd_log=1/2, 
                             exp_time_nu=1/2, 
                             exp_time_kappa=1/8) {
-    return(list(
+    return(priorList(
         prior_i=function(x) dpois(x, expansion_rate, log = TRUE),
         prior_i.sample=function() rpois(1, expansion_rate),
         prior_N=function(x) dlnorm(x, meanlog = N_mean_log, sdlog = N_sd_log, log = TRUE),
@@ -69,8 +69,7 @@ run_expansion_inference <- function(phy, priors, concentration=1, n_it=1e6, thin
     dat <- mcmc2data.frame(o)
     model_data <- dat$mcmc.df
     expansion_data <- dat$event.df
-    out <- list(phylo_preprocessed=pre, priors=priors, model_data=model_data, expansion_data=expansion_data)
-    attr(out, "class") <- "expansionMCMC"
+    out <- expansionsMCMC(phylo_preprocessed=pre, priors=priors, model_data=model_data, expansion_data=expansion_data)
     return(out)
 }
 
