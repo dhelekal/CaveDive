@@ -1,8 +1,31 @@
-#' Simulate a genealogy with clonal expansionss
+#' A phylogeny containing clonal expansions.
+#' Note: The resulting phylogeny contains single child nodes denoting divergence events. use `collapse.singles` to remove these.
+#' @param priors List of priors to simulate parameters from. See `standard priors` for details 
+#' @param sampling_times Vector sampling times, entries must be negative or 0 
+#' @param concentration Scalar concentration hyperparameter for dirichlet expansion model
+#' @param given A list of variables with values given. Supported names: 'n_exp' - number of expansions, 'tip_colours' - tip expansion assignment, N' - Background population size, 'K' - Expansion carrying capacities, 't_mid' - Expansion times to midpoints, 'div_times' - Expansion divergence times, 'div_from' - parent lineages 
+#' @param collapse_singles Whether to remove (collapse) divergence event nodes. Default: FALSE 
+#' @return list of: `tree` - The simulated genealogy, `params` - the simulated parameters for the process
+#' @export
+simulate_expansion_phylo <- function(priors, sampling_times, concentration=2, given=list(), collapse_singles=FALSE) {
+    sim <- expansions_simulate(priors, sampling_times, concentration=concentration, given=given)
+    co <- sim$co
+    params <- sim$params
+    phy.div_nodes <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from)
+    tree  <- read.tree(text = phy.div_nodes$full)
+    if (collapse_singles){
+        tree <- collapse.singles(tree)
+    }
+    return(list(tree=tree, params=params))
+}
+
+
+#' Simulate parameters and event times for a genealogy with clonal expansionss
 #' @param priors List of priors to simulate parameters from. See `standard priors` for details 
 #' @param sampling_times Vector sampling times, entries must be negative or 0 
 #' @param concentration Scalar concentration hyperparameter for dirichlet expansion model
 #' @param given A list of variables with values given. Supported names: 'n_exp' - number of expansions, 'tip_colours' - tip expansion assignment, N' - Background population size, 'K' - Expansion carrying capacities, 't_mid' - Expansion times to midpoints, 'div_times' - Expansion divergence times, 'div_from' - parent lineages  
+#' @return list of: `co` - realisation of the prpcess, `params` - the simulated parameters for the process, `coal_log_lh` - the process likelihood, `param_log_lh` - the prior likelihood
 #' @export
 expansions_simulate <- function(priors, sampling_times, concentration, given=list()) {
 
@@ -131,6 +154,7 @@ expansions_simulate <- function(priors, sampling_times, concentration, given=lis
 #' @param div_times clade divergence times
 #' @param div_cols vector of colours ordered in sequence
 #' @param div_from (optional) parent populations for individual clades. If NA will be randomised equiprobably.
+#' @return list of: `co` - list containing event times, event colour assignment and parents of clonal expansions; log_lh: the log likelihood
 #' @export
 simulate_clonal_tree <- function(n_exp, N, K, A, sampling_times, tip_colours, div_times, div_cols, div_from=NA) {
 

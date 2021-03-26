@@ -1,3 +1,18 @@
+#' Constructs object of class expansionsMCMC
+#' 
+#' @param o MCMC output
+#' @return A list with names mcmc.df and event.df. MCMC dataframe contains iteration numbers, 
+#'         model indicator at given iteration, background population size and likelihood and prior values
+#'         event.df contains rows describing different expansions. Columns consist of which iteration does an expansion belong to, 
+#'         and the associated t_mid/K/time/branch/probability values.
+#' @export
+expansionsMCMC <- function(pre, priors, model_data, expansion_data) {
+   stopifnot("pre must be a preprocessed phylogeny"= class(pre) == "preprocessedPhy")
+   stopifnot()
+   out <- list(phylo_preprocessed=pre, priors=priors, model_data=model_data, expansion_data=expansion_data)
+   attr(out, "class") <- "expansionMCMC"
+}
+
 #' Converts MCMC output into two data frames, one conaining global model parameters and one containing expansion data
 #' 
 #' @param o MCMC output

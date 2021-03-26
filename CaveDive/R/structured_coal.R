@@ -236,6 +236,8 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
 #' @return preprocessed phylogeny
 #' @export
 structured_coal.preprocess_phylo <- function(phy, order_edges_by_node_label=TRUE){
+    stopifnot("phy must be an ape phylogeny"= class(phy) == "phylo")
+
     labs <- c(phy$node.label, phy$tip.label)
     nodes <- nodeid(phy, labs)
     is_tip <- c(rep(FALSE, length(phy$node.label)), rep(TRUE, length(phy$tip.label)))
@@ -272,7 +274,7 @@ structured_coal.preprocess_phylo <- function(phy, order_edges_by_node_label=TRUE
 
     clades.list <- lapply(nodes.df$id[which(nodes.df$is_tip==FALSE)], function(x) extract.clade(phy, x))
 
-    return(list(phy=phy,
+    return(structure(list(phy=phy,
                 nodes.df = nodes.df,
                 edges.df = edges.df,
                 clades.list = clades.list, 
@@ -281,7 +283,7 @@ structured_coal.preprocess_phylo <- function(phy, order_edges_by_node_label=TRUE
                 outgoing = edges.outgoing,
                 t_min = t_min, 
                 t_max = t_max,
-                root_idx = root))
+                root_idx = root), class="preprocessedPhy"))
 }
 
 #' Compute likelihood for preprocessed phylogeny 

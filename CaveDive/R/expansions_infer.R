@@ -66,8 +66,13 @@ run_expansion_inference <- function(phy, priors, concentration=1, n_it=1e6, thin
                             n_it=n_it,
                             thinning=thinning,
                             init=init)
-    return(list(phylo_preprocessed=pre, mcmc_out=o))
-}   
+    dat <- mcmc2data.frame(o)
+    model_data <- dat$mcmc.df
+    expansion_data <- dat$event.df
+    out <- list(phylo_preprocessed=pre, priors=priors, model_data=model_data, expansion_data=expansion_data)
+    attr(out, "class") <- "expansionMCMC"
+    return(out)
+}
 
 #' Run rjmcmc inference on the provided preprocessed phylogeny, and using provided prior distributions
 #' This is a barebones method for advanced usage. For standard usage refer to `run_expansion_inference`
