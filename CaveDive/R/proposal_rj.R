@@ -67,8 +67,8 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
       which_elem <- sample.int(i_prev, size=1)
       x_next <- x_next[-(which_elem+offset)]
 
-      which_prob <- x_prev[[2]][which_elem+1]
-      x_next[[2]] <- x_next[[2]][-(which_elem+1)]
+      which_prob <- x_prev[[2]][which_elem]
+      x_next[[2]] <- x_next[[2]][-which_elem]
 
       which_merge <- sample.int(i_prev, size=1)
 
@@ -330,7 +330,7 @@ prop_lh <- function(x_prev, i_prev, x_next, i_next, pre, initialiser.log_lh, sca
       p_next <- x_next[[2]]
       p_prev <- x_prev[[2]]
 
-      p_diff <- p_prev - p_next[-(unique_idx+1)]
+      p_diff <- p_prev - p_next[-(unique_idx)]
 
       p_idx <- which(p_diff > 1e-6)
       lh <- lh + (log(1/p_prev[p_idx[1]]))
