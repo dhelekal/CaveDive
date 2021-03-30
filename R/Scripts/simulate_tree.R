@@ -119,7 +119,7 @@ phy.div_nodes <- build_coal_tree.structured(sam, co$times, params$tip_colours, c
 
 tree.div  <- read.tree(text = phy.div_nodes$full)
 tree <- collapse.singles(tree.div)
-pre <- structured_coal.preprocess_phylo(tree)
+pre <- preprocess_phylo(tree)
 
 root_set <- rep(NA, given$n_exp)
 if(given$n_exp > 0) {

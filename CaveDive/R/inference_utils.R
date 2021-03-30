@@ -17,25 +17,47 @@ priorList <- function(prior_i,
                             prior_K_given_N=prior_K_given_N,
                             prior_K_given_N.sample=prior_K_given_N.sample,
                             prior_t_given_N=prior_t_given_N,
-                            prior_t_given_N.sample=prior_t_given_N.sample),class="priorList"))
+                            prior_t_given_N.sample=prior_t_given_N.sample), class="priorList"))
 }
 
 #' Constructs object of class expansionsMCMC
 #' 
-#' @param o MCMC output
-#' @return A list with names mcmc.df and event.df. MCMC dataframe contains iteration numbers, 
-#'         model indicator at given iteration, background population size and likelihood and prior values
-#'         event.df contains rows describing different expansions. Columns consist of which iteration does an expansion belong to, 
-#'         and the associated t_mid/K/time/branch/probability values.
+#' @param phylo_preprocessed an object of type preprocessedPhy
+#' @param priors an object of type priorList
+#' @param model_data dataframe containing model data as returned by mcmc2data.frame
+#' @param expansion_data dataframe containing expansion data as returned by mcmc2data.frame
+#' @param metadata mcmc metadata
+#' @return an object of type expansionsMCMC
 #' @export
-expansionsMCMC <- function(phylo_preprocessed, priors, model_data, expansion_data) {
+expansionsMCMC <- function(phylo_preprocessed, priors, model_data, expansion_data, metadata) {
    stopifnot("pre must be of type preprocessed phylogeny"= class(phylo_preprocessed) == "preprocessedPhy")
    stopifnot("priors must be of type priorList"=class(priors)== "priorList")
    stopifnot("invalid model data"=all(colnames(model_data)==c("it", "dim", "N", "pr", "lh", "prior")))
    stopifnot("invalid expansion_data data"=all(colnames(expansion_data)==c("it", "t_mid", "K", "time", "br", "pr")))
-   out <- list(phylo_preprocessed=phylo_preprocessed, priors=priors, model_data=model_data, expansion_data=expansion_data)
+   out <- list(phylo_preprocessed=phylo_preprocessed, priors=priors, model_data=model_data, expansion_data=expansion_data, metadata=metadata)
    attr(out, "class") <- "expansionsMCMC"
    return(out)
+}
+
+#' @export
+print.expansionsMCMC <- function(x, ...) {
+     cat(paste("\nClonal Expansions MCMC result\n\n"))
+     cat(paste("\nFields:", names(x)))
+     cat(paste("\nNumber of mcmc iterations: ", x$metadata$n_it))
+     cat(paste("\nThinning applied: ", x$metadata$thinning,"\n"))
+}
+
+plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence"), k_modes=NA, correlates=NA) {
+     mode <- match.arg(mode)
+     if (mode=="summary") {
+
+     } else if (mode == "modes") {
+
+     } else if (mode=="persistence") {
+
+     } else {
+          stop("Invalid mode selected")
+     }
 }
 
 #' Converts MCMC output into two data frames, one conaining global model parameters and one containing expansion data
@@ -52,14 +74,14 @@ mcmc2data.frame <- function(o) {
    N <- sapply(o$para, function(x) x[[1]])
    lh <- sapply(o$log_lh, function(x) x)
    prior <- sapply(o$log_prior, function(x) x)
-   prob.neutral <- sapply(o$para, function(x) x[[2]][1])
+   prob.neutral <- sapply(o$para, function(x) x[[2]][length(x[[2]])])
 
    it <- c(1:length(dim))
    mcmc.df <- data.frame(it=it, dim=dim, N=N, pr=prob.neutral, lh=lh, prior=prior)
 
    events <- lapply(c(1:length(o$para)), function(x) if(o$dims[[x]] > 0) lapply(c(1:length(o$para[[x]][c(-1, -2)])), function(i){
      y <- (o$para[[x]][c(-1, -2)])[[i]]
-     probs <- o$para[[x]][[2]][-1]
+     probs <- o$para[[x]][[2]][-length(o$para[[x]][[2]])]
      return(list(t_mid=y[[1]], K=y[[2]], time=y[[3]], br=y[[4]], pr=probs[i], it=x))}) else NA)
    events.t_mid <- unlist(lapply(events, function(x) if(all(is.na(x))) NA else lapply(x, function(y) y$t_mid)))
    events.K <- unlist(lapply(events, function(x) if(all(is.na(x))) NA else lapply(x, function(y) y$K)))
@@ -273,6 +295,10 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlig
         widths = grid_width,
         heights = grid_heigth)
    return(p)
+}
+
+plot_persistence <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, correlates=NULL) {
+
 }
 
 prior_mixture <- function(prior, cond_values) {

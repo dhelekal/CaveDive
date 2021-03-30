@@ -235,8 +235,9 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
 #' @param order_edges_by_node_label should edge indexing be ordered by child node label. Default: TRUE
 #' @return preprocessed phylogeny
 #' @export
-structured_coal.preprocess_phylo <- function(phy, order_edges_by_node_label=TRUE){
+preprocess_phylo <- function(phy, order_edges_by_node_label=TRUE){
     stopifnot("phy must be an ape phylogeny"= class(phy) == "phylo")
+    stopifnot("phylogeny must be labeled" = all(!is.na(phy$node.label))&&all(!is.na(phy$tip.label)))
 
     labs <- c(phy$node.label, phy$tip.label)
     nodes <- nodeid(phy, labs)
@@ -265,6 +266,8 @@ structured_coal.preprocess_phylo <- function(phy, order_edges_by_node_label=TRUE
         edges.df$id <- c(1:length(edges.parent))
     }
 
+    stopifnot("branch lengths must be strictly positive" = all(edges.df$length > 0))
+
     edges.outgoing <- lapply(nodes.df$id, function (x) edges.df$id[which(edges.df$node.parent==x)])
     edges.outgoing <- lapply(edges.outgoing, function (x) if (length(x) > 0) x else NA)
     edges.incoming <- lapply(nodes.df$id, function (x) edges.df$id[which(edges.df$node.child==x)])
@@ -285,6 +288,21 @@ structured_coal.preprocess_phylo <- function(phy, order_edges_by_node_label=TRUE
                 t_max = t_max,
                 root_idx = root), class="preprocessedPhy"))
 }
+
+#' @export
+print.preprocessedPhy <- function(x, ...) {
+    cat(paste("\nPreprocessed phylogeny with", x$n_tips, "tips\n\n"))
+    cat("  ",paste("\nThe most recent sampling t_max time is: ", x$t_max), "\n", sep="")
+    cat("  ",paste("\nThe time of the MRCA t_min is: ", x$t_min), "\n", sep="")
+    cat("  ",paste("\nRoot index root_idx: ", x$root_idx), "\n", sep="")
+    cat("  ",paste("\nincoming: a list of length: ", length(x$incoming)), "\n", sep="")
+    cat("  ",paste("\nedges.df: dataframe with names: ", colnames(x$edges.df)), sep="")
+    cat("  ",paste("\nnodes.df: dataframe with names: ", colnames(x$nodes.df)), sep="")
+    cat("  ",paste("\nclades.list: a list of length: ", length(x$clades.list)), "\n", sep="")
+    cat("  ",paste("\nincoming: a list of length: ", length(x$incoming)), "\n", sep="")
+    cat("  ",paste("\noutgoing: a list of length: ", length(x$outgoing)), "\n", sep="")
+}
+
 
 #' Compute likelihood for preprocessed phylogeny 
 #'
