@@ -39,27 +39,6 @@ expansionsMCMC <- function(phylo_preprocessed, priors, model_data, expansion_dat
    return(out)
 }
 
-#' @export
-print.expansionsMCMC <- function(x, ...) {
-     cat(paste("\nClonal Expansions MCMC result\n\n"))
-     cat(paste("\nFields:", names(x)))
-     cat(paste("\nNumber of mcmc iterations: ", x$metadata$n_it))
-     cat(paste("\nThinning applied: ", x$metadata$thinning,"\n"))
-}
-
-plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence"), k_modes=NA, correlates=NA) {
-     mode <- match.arg(mode)
-     if (mode=="summary") {
-
-     } else if (mode == "modes") {
-
-     } else if (mode=="persistence") {
-
-     } else {
-          stop("Invalid mode selected")
-     }
-}
-
 #' Converts MCMC output into two data frames, one conaining global model parameters and one containing expansion data
 #' 
 #' @param o MCMC output
@@ -93,6 +72,317 @@ mcmc2data.frame <- function(o) {
 
    return(list(mcmc.df=mcmc.df, event.df=event.df))
 }
+
+#' @export
+discard_burn_in <- function(x, ...) UseMethod("discard_burn_in")
+
+#' Discard burn in iterations
+#' @param x expansionsMCMC object
+#' @param proportion (Optional) The proportion of iterations to be discarded. Either 'proportion' or 'k_it' must be provided 
+#' @param k_it (Optional) The number of iterations to be discarded. Either 'proportion' or 'k_it' must be provided 
+#' @return expansionsMCMC object with iterations designated as burn in discarded
+#' @export
+discard_burn_in.expansionsMCMC <- function(x, proportion=NULL, k_it=NULL, ...){
+     stopifnot("x must be of type expansionsMCMC"=class(x)=="expansionsMCMC")
+     stopifnot("Only one of arguments proportion, k_it must be provided"=xor(is.null(proportion), is.null(k_it)))
+
+     metadata <- x$metadata
+     if (!is.null(proportion)){
+               stopifnot("proportion must be within interval [0,1)"=(proportion>=0 && proportion < 1))
+               burnin <- metadata$n_it*proportion
+     } else {
+          stopifnot("k_it must be within interval [0, n_it)"=(k_it>=0 && k_it < n_it))
+          burnin <- k_it
+     }
+
+     model_data_burn_in <- x$model_data[(burnin+1):metadata$n_it, ] 
+     expansion_data_burn_in <- x$expansion_data[x$expansion_data %in% model_data_burn_in$it, ]
+
+     metadata$n_it <- metadata$n_it-burnin 
+     metadata$burn_in <- burnin 
+
+     return(expansionsMCMC(x$phylo_preprocessed, x$priors, model_data_burn_in, expansion_data_burn_in, metadata))
+}
+
+#' @export
+print.expansionsMCMC <- function(x, ...) {
+     cat(paste("\nClonal Expansions MCMC result\n\n"))
+     cat(paste("\nFields:", names(x)))
+     cat(paste("\nNumber of mcmc iterations: ", x$metadata$n_it))
+     cat(paste("\nThinning applied: ", x$metadata$thinning,"\n"))
+}
+
+#' @export
+plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence", "traces"), k_modes=NULL, correlates=NULL) {
+     mode <- match.arg(mode)
+
+     expansion_data <- x$expansion_data
+     model_data <- x$model_data
+
+     expansion_data$mode_clade <- NA
+     expansion_data$is.mode <- NA
+
+     head(expansion_data)
+
+     modes <- NULL
+
+     if(!is.null(k_modes)) {
+          unique_br <- unique(expansion_data$br)
+
+          stopifnot("Cannot select modes - no expansions were detected"=(length(unique_br) > 0))
+
+          br_counts <- sapply(unique_br, function (x) length(which(expansion_data$br==x)))
+
+          k <- min(length(unique_br), k_modes)
+          mode_ord <- order(-br_counts)
+
+          modes <- unique_br[mode_ord][c(1:k)]
+
+          expansion_data$mode_clade <- sapply(expansion_data$br, function (x) {
+              a <- modes[which(modes==x)]
+              if(length(a) > 0) return(a[1]) else return(NA)
+          })
+          expansion_data$is.mode <- !sapply(expansion_data$mode_clade, is.na)
+     }
+
+     if (mode=="summary") {
+          if (!is.null(correlates)) warning("Unused argument: correlates")
+          plot_summary(model_data, expansion_data, x$phylo_preprocessed, x$priors, modes)
+
+     } else if (mode == "modes") {
+          stopifnot(!is.null(k_modes))
+          if (!is.null(correlates)) warning("Unused argument: correlates")
+
+
+     } else if (mode=="persistence") {
+          if (!is.null(k_modes)) warning("Unused argument: k_modes")
+          return(plot_persistence(model_data,
+                                  expansion_data, 
+                                  x$phylo_preprocessed, 
+                                  prior_t_given_N=function (x, n) x$priors$prior_t_given_N(x,n), 
+                                  correlates=correlates))
+
+     } else if (mode=="traces") {
+          if (!is.null(k_modes)) warning("Unused argument: k_modes")
+          if (!is.null(correlates)) warning("Unused argument: correlates")
+          return(plot_traces(model_data, expansion_data))
+     } else {
+          stop("Invalid plotting options")
+     }
+}
+
+plot_persistence <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, correlates=NULL) {
+     p_mat <- compute_persistence(pre, event.df)
+
+     p_mat[upper.tri(p_mat)]<-NA
+     p_df <- melt(p_mat)
+     names(p_df) <- c("sample_1", "sample_2", "value")
+     p_df$sample_1 <- factor(x = p_df$sample_1,
+                                    levels = pre$phy$tip.label,#[ord], 
+                                    ordered = TRUE)
+     p_df$sample_2 <- factor(x = p_df$sample_2,
+                                    levels = pre$phy$tip.label,#[ord], 
+                                    ordered = TRUE)
+
+     heatmap <- ggplot(data = p_df, aes(x = sample_1, y = sample_2)) +
+       geom_tile(aes(fill = value)) +
+       scale_fill_viridis_c(option= "plasma", na.value = "white") +
+       labs(fill = "Pairwise Probability")+
+       guides(fill=guide_legend(title.position = "right", vjust=0.5)) +
+       theme_minimal() +
+       theme(axis.title.y = element_blank(), 
+             axis.text.y = element_blank(), 
+             axis.ticks.y = element_blank(),
+             axis.title.x = element_blank(), 
+             axis.text.x = element_blank(), 
+             axis.ticks.x = element_blank(),
+             panel.grid.major = element_blank(),
+             panel.grid.minor = element_blank(),
+             plot.margin = margin(0, 0, 0, 0, "cm"),
+             text = element_text(size=30),
+             legend.position = c(0.1,0.8),
+             legend.title = element_text(angle = -90))
+
+     resistmap <- NULL
+     if(!is.null(correlates)) {
+          stopifnot("Number correlate rows must match number of tips"=nrow(correlates)==pre$n_tips)
+          r_df <- as.data.frame(correlates)
+          r_df$x <- rownames(r_df) 
+          r_df <- melt(r_df)
+          r_df$x <- factor(x = r_df$x,
+                          levels = pre$phy$tip.label, 
+                          ordered = TRUE)
+
+          resistmap <- ggplot(data = r_df, aes(x = x, y = variable)) +
+                         geom_tile(aes(fill = value)) +
+                         scale_fill_viridis(option= "viridis", na.value="gray50" , discrete=is.double(r_df$value)) +
+                         theme_minimal() +
+                         guides(fill=guide_legend(title.position = "top"))+
+                         theme(axis.title.x = element_blank(), 
+                               axis.text.x = element_blank(), 
+                               axis.ticks.x = element_blank(),
+                               panel.grid.major = element_blank(),
+                               panel.grid.minor = element_blank(),
+                               text = element_text(size=30),
+                               plot.margin = margin(0, 0, 0, 0, "cm"),
+                               legend.position="bottom")
+     }
+
+     hist_dim <- ggplot(mcmc.df, aes(dim)) +  
+        geom_histogram(aes(y = stat(count / sum(count))), binwidth=1) + 
+        theme_minimal() +
+        xlab("Number of Expansions")+
+        ylim(0,1)+
+        scale_fill_brewer(palette="Dark2")  + 
+        theme(axis.title.y = element_blank(), 
+              axis.text.y = element_blank(), 
+              axis.ticks.y = element_blank(),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              plot.margin = margin(1, 0, 0, 0, "cm"),
+              text = element_text(size=30))
+
+     treemap <- plot_tree(pre, event.df) + scale_x_reverse()
+     summary_panel <- ggarrange(
+             heatmap, treemap, resistmap,hist_dim,
+             widths=c(16,12),heights=c(16,4))
+     return(summary_panel)
+}
+
+plot_tree<-function(pre,event.df){
+   tree <- pre$phy
+   freq <- table(event.df$br)
+
+   labs <- c(tree$node.label, tree$tip.label)
+   tip <- c(rep("1",length(tree$node.label)), rep("2", length(tree$tip.label)))
+   ids <- nodeid(tree, labs)
+   id_freq <- sapply(ids, function (i) if(pre$nodes.df$is_tip[i]) 0.0 else if (is.na(freq[paste0(pre$incoming[[i]])])) 0.0 else freq[paste0(pre$incoming[[i]])])
+
+   ldf <- data.frame(node = ids, frequency = id_freq, tip=tip)
+   ldf$edge_id <- sapply(ldf$node, function(i) pre$incoming[[i]])
+   tree.full <- full_join(tree, ldf, by = 'node')
+
+   x_max <- -min(pre$nodes.df$times)
+
+   p1 <- ggtree(tree.full, aes(color=frequency), size=1, ladderize=F) +
+   geom_point() +
+   scale_size_manual(values=c(1)) +
+   scale_x_continuous(limits=c(0, x_max)) +
+   scale_color_viridis(option="plasma") +
+   theme_tree2() + 
+   theme_minimal() +
+   theme(axis.title.x = element_blank(), 
+          axis.text.x = element_blank(), 
+          axis.title.y = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks.y = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.margin = margin(0, 0, 0, 0, "cm"),
+          legend.position = "none")
+   return(p1)
+}
+
+plot_summary <- function (model_data, expansion_data, phylo_preprocessed, priors, modes=NULL) {
+     hist_dim <- ggplot(model_data, aes(dim)) +  
+        geom_histogram(aes(y = stat(count / sum(count))), binwidth=1) + 
+        theme_bw() +
+        scale_fill_brewer(palette="Dark2")  + 
+        theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+              text = element_text(size=20))
+     hist_N <- ggplot(model_data, aes(N)) +
+         geom_histogram(aes(y = stat(count / sum(count))), bins=100) +
+         theme_bw() + 
+         scale_fill_brewer(palette="Dark2")  + 
+         theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+               text = element_text(size=20))
+
+
+     hist_br <- ggplot(expansion_data, aes(x=factor(br)))
+        if(is.null(modes)) {
+          hist_br <- hist_br + geom_bar(aes(y = stat(count / sum(count)))) 
+        } else {
+          hist_br <- hist_br + geom_bar(aes(y = stat(count / sum(count)), fill=is.mode)) + 
+          scale_fill_brewer(palette="Dark2") + 
+                     geom_text(stat="count", aes(label = mode_clade, y= ((..count..)/sum(..count..))), vjust = -.25, hjust=-0.1, size=11, color="red")
+        }
+
+        hist_br <- hist_br + theme_bw() + 
+        labs(x="Branch Number",fill="Expansion Root") +
+        theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = c(0.8, 0.2),
+              text = element_text(size=20))
+
+     if (is.null(modes)) MRCA_lab=NULL else MRCA_lab=phylo_preprocessed$edges.df$node.child[modes]
+     tree_freq <- plot_tree_freq(model_data, 
+                              expansion_data, 
+                              phylo_preprocessed, 
+                              prior_t_given_N=function (x, n) exp(priors$prior_t_given_N(x,n)), 
+                              highlight_node=NULL, 
+                              MRCA_lab=MRCA_lab)
+     
+     grid_layout <- rbind(c(1, 2), c(3,4))
+     grid_width <- c(2,2)
+     grid_heigth <- c(2,2)
+     summary_panel <- grid.arrange(
+        grobs=list(hist_N, hist_dim, hist_br, tree_freq),
+        layout_matrix = grid_layout,
+        widths = grid_width,
+        heights = grid_heigth)
+
+     return(summary_panel)
+}
+
+plot_traces <- function(model_data, expansion_data) {
+     trace_lh <- ggplot(model_data, aes(x=it, y=lh)) +
+          geom_line(alpha = 0.3) +
+          theme_bw() + 
+          ylab("log-likelihood") +
+          theme(axis.title.x = element_blank(), axis.text.x = element_blank())
+     trace_prior <- ggplot(model_data, aes(x=it, y=prior)) +
+          geom_line(alpha = 0.3) +
+          theme_bw() + 
+          ylab("log-prior") +
+          theme(axis.title.x = element_blank(), axis.text.x = element_blank())
+     trace_N <- ggplot(model_data, aes(x=it, y=N)) +
+          geom_line(alpha = 0.3) +
+          theme_bw() + 
+          ylab("N") +
+          theme(axis.title.x = element_blank(), axis.text.x = element_blank())
+     trace_dim <- ggplot(model_data, aes(x=it, y=dim)) +
+          geom_line(alpha = 0.3) +
+          theme_bw() +
+          ylab("Number of Expansions") +
+          theme(axis.title.x = element_blank(), axis.text.x = element_blank())
+     trace_br <- ggplot(expansion_data, aes(x=it, y=br)) + 
+          geom_point(alpha=0.1,size=0.1) + 
+          theme_bw() + 
+          ylab("Branch") +
+          theme(axis.title.x = element_blank(), axis.text.x = element_blank())
+
+     return(ggarrange(trace_lh, trace_prior, trace_dim, trace_N, trace_br, widths=c(6), heights=c(2,2,2,2,4)))
+}
+
+prior_mixture <- function(prior, cond_values) {
+     f_mixture <- function (X) sapply(X, function (x) (1/length(cond_values))*sum(sapply(cond_values, function(y) prior(x, y))))
+     return(stat_function(fun=f_mixture, colour="purple", size=2))
+}
+
+compute_persistence <- function(pre, df) {
+    p_mat <- matrix(data = 0, nrow = pre$n_tips, ncol = pre$n_tips, byrow = FALSE,
+       dimnames = list(pre$phy$tip.label,pre$phy$tip.label))
+    for(i in unique(df$it)) {
+        subs_it <- df[which(df$it == i), ]
+        partitions <- extract_lineage_times(pre, pre$phy$node.label[(c(pre$edges.df$node.child[subs_it$br],pre$root_idx)-pre$n_tips)], c(subs_it$time, -Inf), return_partitions=TRUE)$partitions
+        for(p in partitions) {
+            for(t1 in p){
+                p_mat[t1,p] <- p_mat[t1,p] + 1
+            }
+        }
+    }
+    p_mat <- p_mat/length(unique(df$it))
+    return(p_mat)
+}
+
 
 #' Plots mcmc output as several panels
 #' 
@@ -295,13 +585,4 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlig
         widths = grid_width,
         heights = grid_heigth)
    return(p)
-}
-
-plot_persistence <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, correlates=NULL) {
-
-}
-
-prior_mixture <- function(prior, cond_values) {
-     f_mixture <- function (X) sapply(X, function (x) (1/length(cond_values))*sum(sapply(cond_values, function(y) prior(x, y))))
-     return(stat_function(fun=f_mixture, colour="purple", size=2))
 }
