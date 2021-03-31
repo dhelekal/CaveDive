@@ -45,8 +45,16 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
     old_probs <- x_prev[[2]]
     which_split <- sample.int((i_prev+1),1)
     u <- runif(1, 0, old_probs[which_split])
-    new_probs <- c(old_probs, u)
-    new_probs[which_split] <- new_probs[which_split] - u
+
+    stopifnot("probs vector lengths not equal i_prev+1"=length(old_probs)==(i_prev+1))
+
+    new_probs <- c(old_probs[-(i_prev+1)], u, old_probs[(i_prev+1)])
+
+    if(which_split < (i_prev+1)) {
+      new_probs[which_split] <- new_probs[which_split] - u
+    } else {
+      new_probs[which_split+1] <- new_probs[which_split+1] - u
+    }
 
     x_next[[2]] <- new_probs
 
@@ -66,6 +74,8 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
       i_next <- i_prev - 1
       which_elem <- sample.int(i_prev, size=1)
       x_next <- x_next[-(which_elem+offset)]
+
+      stopifnot("x_prev[[2]] vector lengths not equal i_prev+1"=length(x_prev[[2]])==(i_prev+1))
 
       which_prob <- x_prev[[2]][which_elem]
       x_next[[2]] <- x_next[[2]][-which_elem]
