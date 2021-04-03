@@ -45,7 +45,7 @@ if (run_mcmc) {
 } else {
     mcmc.df <- read.csv(paste0(data_dir,"/mcmc_df.csv"))
     event.df <- read.csv(paste0(data_dir,"/event_df.csv"))
-    pre <- structured_coal.preprocess_phylo(tree, order_edges_by_node_label=F)
+    pre <- preprocess_phylo(tree, order_edges_by_node_label=F)
 }
 ### discard burn in
 mcmc.df <- mcmc.df[burn_in:nrow(mcmc.df),]
@@ -144,7 +144,7 @@ plot_tree<-function(pre,event.df){
           panel.grid.minor = element_blank(),
           plot.margin = margin(0, 0, 0, 0, "cm"),
           legend.position = "none")
-
+   return(p1)
 }
 
 p_mat[upper.tri(p_mat)]<-NA
