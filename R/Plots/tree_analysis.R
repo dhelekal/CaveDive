@@ -10,7 +10,7 @@ library(RColorBrewer)
 
 set.seed(3)
 
-run_mcmc <- F
+run_mcmc <- T
 
 data_dir <- "./tree_sim"
 if(run_mcmc) {
@@ -62,9 +62,9 @@ if(run_mcmc){
     print(elapsed)
 
     pre <- expansions$phylo_preprocessed ### keep a hold of this, it's useful for plotting
-    dfs <- mcmc2data.frame(expansions$mcmc_out)
-    mcmc.df <- dfs$mcmc.df
-    event.df <- dfs$event.df
+    #dfs <- mcmc2data.frame(expansions$mcmc_out)
+    mcmc.df <- expansions$model_data
+    event.df <- expansions$expansion_data
     write.csv(mcmc.df, paste0(data_dir,"/mcmc_df.csv"))
     write.csv(event.df, paste0(data_dir,"/event_df.csv"))
 } else {
@@ -150,8 +150,6 @@ hist_br <- ggplot(event.df, aes(x=factor(br), fill=is.gt)) +
    labs(x="Branch Number",fill="Expansion Root") +
    theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = c(0.8, 0.2),
          text = element_text(size=20))
-
-lab_layer <- geom_label(aes(x=branch, label=clade)) 
 
 tree_freq <- plot_tree_freq(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlight_node=NULL, MRCA_lab=pre$edges.df$node.child[root_set])
 

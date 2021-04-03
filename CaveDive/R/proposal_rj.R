@@ -45,8 +45,16 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
     old_probs <- x_prev[[2]]
     which_split <- sample.int((i_prev+1),1)
     u <- runif(1, 0, old_probs[which_split])
-    new_probs <- c(old_probs, u)
-    new_probs[which_split] <- new_probs[which_split] - u
+
+    stopifnot("probs vector lengths not equal i_prev+1"=length(old_probs)==(i_prev+1))
+
+    new_probs <- c(old_probs[-(i_prev+1)], u, old_probs[(i_prev+1)])
+
+    if(which_split < (i_prev+1)) {
+      new_probs[which_split] <- new_probs[which_split] - u
+    } else {
+      new_probs[which_split+1] <- new_probs[which_split+1] - u
+    }
 
     x_next[[2]] <- new_probs
 
@@ -67,8 +75,10 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
       which_elem <- sample.int(i_prev, size=1)
       x_next <- x_next[-(which_elem+offset)]
 
-      which_prob <- x_prev[[2]][which_elem+1]
-      x_next[[2]] <- x_next[[2]][-(which_elem+1)]
+      stopifnot("x_prev[[2]] vector lengths not equal i_prev+1"=length(x_prev[[2]])==(i_prev+1))
+
+      which_prob <- x_prev[[2]][which_elem]
+      x_next[[2]] <- x_next[[2]][-which_elem]
 
       which_merge <- sample.int(i_prev, size=1)
 
@@ -162,10 +172,10 @@ move_update_mid.time <- function(x_prev, pre, scale) { ### update mid.time
   div.branch <- x_prev[[4]]
 
   mid.time_upd <- rnorm(1, mean=mid.time, sd=scale) 
-  K_upd  <- rlnorm(1, meanlog=log(K), sdlog=0.2)
+  K_upd  <- rlnorm(1, meanlog=log(K), sdlog=0.15)
 
-  qr <- -dnorm(mid.time_upd, mean=mid.time, sd=scale, log=TRUE) - dlnorm(K_upd, meanlog=log(K), sdlog=0.2, log=TRUE) ## proposal lh
-  qr <- qr + dnorm(mid.time, mean=mid.time_upd, sd=scale, log=TRUE) + dlnorm(K, meanlog=log(K_upd), sdlog=0.2, log=TRUE) ## reverse lh
+  qr <- -dnorm(mid.time_upd, mean=mid.time, sd=scale, log=TRUE) - dlnorm(K_upd, meanlog=log(K), sdlog=0.15, log=TRUE) ## proposal lh
+  qr <- qr + dnorm(mid.time, mean=mid.time_upd, sd=scale, log=TRUE) + dlnorm(K, meanlog=log(K_upd), sdlog=0.15, log=TRUE) ## reverse lh
   
   x_next[[1]] <- mid.time_upd 
   x_next[[2]] <- K_upd
@@ -259,9 +269,9 @@ move_update_branch <- function(x_prev, pre, scale) { ### update branch
 
 move_update_N <- function(N_prev, pre, scale) {
 
-  N_upd <- rlnorm(1, meanlog=log(N_prev), sdlog=0.2)
-  qr <- -dlnorm(N_upd, meanlog=log(N_prev), sdlog=0.2, log=TRUE) ## proposal lh
-  qr <- qr + dlnorm(N_prev, meanlog = log(N_upd), sdlog=0.2, log=TRUE) ## reverse lh
+  N_upd <- rlnorm(1, meanlog=log(N_prev), sdlog=0.15)
+  qr <- -dlnorm(N_upd, meanlog=log(N_prev), sdlog=0.15, log=TRUE) ## proposal lh
+  qr <- qr + dlnorm(N_prev, meanlog = log(N_upd), sdlog=0.15, log=TRUE) ## reverse lh
   return(list(N_next = N_upd, qr=qr))
 }
 
@@ -295,7 +305,7 @@ move_update_probs <- function(probs, pre, fixed_index = NA) {
 prop_lh <- function(x_prev, i_prev, x_next, i_next, pre, initialiser.log_lh, scale=10) {
   lh <- 0
     if (i_next == i_prev) {
-        lh <- lh + dlnorm(x_next[[1]], meanlog= log(x_prev[[1]]), sdlog= 0.2, log=TRUE)
+        lh <- lh + dlnorm(x_next[[1]], meanlog= log(x_prev[[1]]), sdlog= 0.15, log=TRUE)
         p_next <- x_next[[2]]
         p_prev <- x_prev[[2]]
         lh <- lh + log(1/((length(p_next)**2)))
@@ -330,7 +340,7 @@ prop_lh <- function(x_prev, i_prev, x_next, i_next, pre, initialiser.log_lh, sca
       p_next <- x_next[[2]]
       p_prev <- x_prev[[2]]
 
-      p_diff <- p_prev - p_next[-(unique_idx+1)]
+      p_diff <- p_prev - p_next[-(unique_idx)]
 
       p_idx <- which(p_diff > 1e-6)
       lh <- lh + (log(1/p_prev[p_idx[1]]))
@@ -343,7 +353,7 @@ prop_lh <- function(x_prev, i_prev, x_next, i_next, pre, initialiser.log_lh, sca
 model_lh <- function(mdl_prev, mdl_next, pre, scale) {
   lh <- 0
   lh <- lh + dnorm(mdl_next[[1]], mean=mdl_prev[[1]], sd=scale, log=TRUE) +  ### Rates and Carrying capacity
-             dlnorm(mdl_next[[2]], meanlog=log(mdl_prev[[2]]), sdlog=0.2, log=TRUE) 
+             dlnorm(mdl_next[[2]], meanlog=log(mdl_prev[[2]]), sdlog=0.15, log=TRUE) 
 
   br_next <- mdl_next[[4]]
   br_prev <- mdl_prev[[4]]

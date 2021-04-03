@@ -35,6 +35,9 @@ simulate_clonal_tree(
 
 \item{div_from}{(optional) parent populations for individual clades. If NA will be randomised equiprobably.}
 }
+\value{
+list of: `co` - list containing event times, event colour assignment and parents of clonal expansions; log_lh: the log likelihood
+}
 \description{
 Simulate an instance of coalescent process with local population structure
 }
