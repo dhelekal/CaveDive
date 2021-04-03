@@ -150,17 +150,16 @@ plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence"
           plot_summary(model_data, expansion_data, x$phylo_preprocessed, x$priors, modes)
 
      } else if (mode == "modes") {
-          stopifnot(!is.null(k_modes))
+          stopifnot("Number of modes must be supplied"=!is.null(k_modes))
           if (!is.null(correlates)) warning("Unused argument: correlates")
-
 
      } else if (mode=="persistence") {
           if (!is.null(k_modes)) warning("Unused argument: k_modes")
-          return(plot_persistence(model_data,
+          plot_persistence(model_data,
                                   expansion_data, 
                                   x$phylo_preprocessed, 
                                   prior_t_given_N=function (x, n) x$priors$prior_t_given_N(x,n), 
-                                  correlates=correlates))
+                                  correlates=correlates)
 
      } else if (mode=="traces") {
           if (!is.null(k_modes)) warning("Unused argument: k_modes")
@@ -174,7 +173,7 @@ plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence"
 plot_persistence <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, correlates=NULL) {
      p_mat <- compute_persistence(pre, event.df)
 
-     p_mat[upper.tri(p_mat)]<-NA
+     p_mat[lower.tri(p_mat)]<-NA
      p_df <- melt(p_mat)
      names(p_df) <- c("sample_1", "sample_2", "value")
      p_df$sample_1 <- factor(x = p_df$sample_1,
@@ -184,7 +183,7 @@ plot_persistence <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, corre
                                     levels = pre$phy$tip.label,#[ord], 
                                     ordered = TRUE)
 
-     heatmap <- ggplot(data = p_df, aes(x = sample_1, y = sample_2)) +
+     heat_map <- ggplot(data = p_df, aes(x = sample_1, y = sample_2)) +
        geom_tile(aes(fill = value)) +
        scale_fill_viridis_c(option= "plasma", na.value = "white") +
        labs(fill = "Pairwise Probability")+
@@ -200,10 +199,11 @@ plot_persistence <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, corre
              panel.grid.minor = element_blank(),
              plot.margin = margin(0, 0, 0, 0, "cm"),
              text = element_text(size=30),
-             legend.position = c(0.1,0.8),
+             legend.position = c(0.8,0.1),
              legend.title = element_text(angle = -90))
 
-     resistmap <- NULL
+     corr_map <- NULL
+     corr_legend <- NULL
      if(!is.null(correlates)) {
           stopifnot("Number correlate rows must match number of tips"=nrow(correlates)==pre$n_tips)
           r_df <- as.data.frame(correlates)
@@ -213,19 +213,24 @@ plot_persistence <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, corre
                           levels = pre$phy$tip.label, 
                           ordered = TRUE)
 
-          resistmap <- ggplot(data = r_df, aes(x = x, y = variable)) +
+          corr_map <- ggplot(data = r_df, aes(x = x, y = variable)) +
                          geom_tile(aes(fill = value)) +
                          scale_fill_viridis(option= "viridis", na.value="gray50" , discrete=is.double(r_df$value)) +
                          theme_minimal() +
+                         coord_flip() + 
                          guides(fill=guide_legend(title.position = "top"))+
-                         theme(axis.title.x = element_blank(), 
-                               axis.text.x = element_blank(), 
-                               axis.ticks.x = element_blank(),
+                         theme(axis.title.y = element_blank(), 
+                               axis.text.y = element_blank(), 
+                               axis.ticks.y = element_blank(),
                                panel.grid.major = element_blank(),
                                panel.grid.minor = element_blank(),
                                text = element_text(size=30),
                                plot.margin = margin(0, 0, 0, 0, "cm"),
                                legend.position="bottom")
+          temp <- ggplotGrob(corr_map)
+          leg_index <- which(sapply(temp$grobs, function(x) x$name) == "guide-box")
+          corr_legend <- temp$grobs[[leg_index]]
+          corr_map <- corr_map + theme(legend.position="none")
      }
 
      hist_dim <- ggplot(mcmc.df, aes(dim)) +  
@@ -242,11 +247,53 @@ plot_persistence <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, corre
               plot.margin = margin(1, 0, 0, 0, "cm"),
               text = element_text(size=30))
 
-     treemap <- plot_tree(pre, event.df) + scale_x_reverse()
-     summary_panel <- ggarrange(
-             heatmap, treemap, resistmap,hist_dim,
-             widths=c(16,12),heights=c(16,4))
-     return(summary_panel)
+
+     x_max <- -min(pre$nodes.df$times)
+     event.df_invtime <- event.df
+     event.df_invtime$time <- x_max+event.df_invtime$time
+     time_hist <- ggplot(event.df_invtime, aes(time)) +  
+     geom_histogram(aes(y = stat(density)), colour="orange", fill="orange", breaks=seq(0, x_max,length.out=100)) +
+     scale_x_continuous(limits=c(0, x_max))
+     if (!is.null(prior_t_given_N)) {
+       time_hist <- time_hist + prior_mixture(function(t,n) prior_t_given_N(t-x_max, n), mcmc.df$N)
+     }
+     time_hist <- time_hist + theme_bw() + theme(axis.title.y = element_blank(),
+                                    axis.text.y = element_blank(),
+                                    axis.ticks.y = element_blank())
+
+     tree_map <- plot_tree(pre, event.df)
+
+     arrange_persistence(tree_map, time_hist, heat_map, dim_hist, corr_map, corr_legend)
+}
+
+arrange_persistence <- function(tree_map, time_hist, heat_map, dim_hist, corr_map, corr_legend) {
+     g <- ggplotGrob(tree_map)
+     panel_id <- g$layout[g$layout$name == "panel",c("t","l","b","r")]
+
+     g <- gtable_add_rows(g, unit(0.5,"null"), -1)
+     g <- gtable_add_grob(g, ggplotGrob(time_hist),
+                     t = nrow(g), l = panel_id$l, r=panel_id$r, b = nrow(g))
+     
+     lb <- ncol(g)
+     rb <- ncol(g)
+     g <- gtable_add_cols(g, unit(1,"null"), -1)
+     g <- gtable_add_grob(g, ggplotGrob(heat_map),
+                      t = panel_id$t,b = panel_id$b, l = lb, r=rb)
+     g <- gtable_add_grob(g, ggplotGrob(dim_hist),
+                      t = nrow(g), b = nrow(g), l = lb, r=rb)
+
+     if (!is.null(r)) {
+          g <- gtable_add_cols(g, unit(0.5,"null"), -1) 
+          lb <- ncol(g)
+          rb <- ncol(g)   
+          g <- gtable_add_grob(g, ggplotGrob(corr_map),
+                         t = panel_id$t, b=panel_id$b, l = lb,r = rb)
+          g <- gtable_add_grob(g, ggplotGrob(corr_legend),
+                         t = nrow(g), b=nrow(g), l = lb,r = rb)
+     }
+     
+     grid.newpage()
+     grid.draw(g)
 }
 
 plot_tree<-function(pre,event.df){
