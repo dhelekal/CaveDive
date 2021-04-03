@@ -266,7 +266,7 @@ preprocess_phylo <- function(phy, order_edges_by_node_label=TRUE){
         edges.df$id <- c(1:length(edges.parent))
     }
 
-    stopifnot("branch lengths must be strictly positive" = all(edges.df$length > 0))
+    stopifnot("branch lengths must be nonegative" = all(edges.df$length >= 0))
 
     edges.outgoing <- lapply(nodes.df$id, function (x) edges.df$id[which(edges.df$node.parent==x)])
     edges.outgoing <- lapply(edges.outgoing, function (x) if (length(x) > 0) x else NA)
