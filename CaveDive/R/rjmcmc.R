@@ -14,6 +14,10 @@ rjmcmc <- function(posterior, proposal.sampler, x0, i0, max_it, thinning=1) {
     prior_prev <- posterior_prop$prior
     lh_prev <- posterior_prop$lh
 
+    acceptance <- 0
+
+    r_ac <- floor(max_it/100)
+
     for(it in c(1:max_it)) {
         if (it%%thinning == 0) {
             utils::setTxtProgressBar(pb, it)
@@ -22,6 +26,8 @@ rjmcmc <- function(posterior, proposal.sampler, x0, i0, max_it, thinning=1) {
             out.lh[[it/thinning]] <- lh_prev
             out.prior[[it/thinning]] <- prior_prev
         } 
+
+        if (it%%r_ac == 0) print(paste("The acceptance rate is: ", format(acceptance/it, digits=4)))
 
         prop <- proposal.sampler(x_prev, i_prev)
         x_prop <- prop$x
@@ -52,6 +58,7 @@ rjmcmc <- function(posterior, proposal.sampler, x0, i0, max_it, thinning=1) {
 
                 x_prev <- x_prop
                 i_prev <- i_prop
+                acceptance <- acceptance+1
             }
         }
     }

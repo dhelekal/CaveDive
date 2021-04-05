@@ -277,7 +277,7 @@ test_that("Coalescent Tree matches precomputed tree", {
 })
 
 context("Structured Coalescent")
-test_that("structured_coal.preprocess_phylo works", {
+test_that("preprocess_phylo works", {
     set.seed(1)
     
     sam <- runif(100, 0, 10)
@@ -301,14 +301,14 @@ test_that("structured_coal.preprocess_phylo works", {
     tree <- read.tree(text = tr$full)
     tree.nodiv <- collapse.singles(tree)
 
-    pre <- structured_coal.preprocess_phylo(tree.nodiv)
+    pre <- preprocess_phylo(tree.nodiv)
 
     expect_equal(all(sapply(pre$edges.df$id,
                 function(i) pre$nodes.df$times[pre$edges.df$node.child[i]]>pre$nodes.df$times[pre$edges.df$node.parent[i]])),
                 TRUE)
   })
 
-  test_that("structured_coal.preprocess_phylo edge indexing is invariant of node indexing if order_edges_by_node_label is true.", {
+  test_that("preprocess_phylo edge indexing is invariant of node indexing if order_edges_by_node_label is true.", {
     set.seed(1)
     
     sam <- runif(100, 0, 10)
@@ -332,8 +332,8 @@ test_that("structured_coal.preprocess_phylo works", {
     tree <- read.tree(text = tr$full)
     tree.nodiv <- collapse.singles(tree)
 
-    pre <- structured_coal.preprocess_phylo(ladderize(tree.nodiv, right=T))
-    pre_l <- structured_coal.preprocess_phylo(ladderize(tree.nodiv, right=F))
+    pre <- preprocess_phylo(ladderize(tree.nodiv, right=T))
+    pre_l <- preprocess_phylo(ladderize(tree.nodiv, right=F))
 
     expect_equal(pre$phy$node.label[pre$edges.df$node.child], pre_l$phy$node.label[pre_l$edges.df$node.child])
     expect_equal(pre$phy$tip.label[pre$edges.df$node.child], pre_l$phy$tip.label[pre_l$edges.df$node.child])
@@ -372,7 +372,7 @@ test_that("extract_lineage_times works", {
     MRCAs.idx <- sapply(c(1:3), function (x) (which(co$colours==x)[which.min(times.nodiv[which(co$colours==x)])])) 
     MRCAs <- sapply(MRCAs.idx, function (x) tree.nodiv$node.label[times.ord[x]])
 
-    pre <- structured_coal.preprocess_phylo(tree.nodiv)
+    pre <- preprocess_phylo(tree.nodiv)
     subtrees <- lapply(c(1:length(MRCAs)), function (x) pre$clades.list[[(nodeid(pre$phy, MRCAs[x])-100)]]) 
     times <- extract_lineage_times(pre, MRCAs, div_times) 
 
@@ -417,7 +417,7 @@ test_that("Structured Coalescent likelihood with only one clade matches neutral 
     tree <- read.tree(text = tr$full)
     tree.nodiv <- collapse.singles(tree)
 
-    pre <- structured_coal.preprocess_phylo(tree.nodiv)
+    pre <- preprocess_phylo(tree.nodiv)
 
     root_MRCA <- pre$phy$node.label[pre$nodes.df$id[which.min(pre$nodes.df$times)]-n_tips]
     root_div <- -Inf
@@ -462,7 +462,7 @@ test_that("Simulation Likelihood matches product of colour specific likelihoods"
     MRCAs.idx <- sapply(c(1:3), function (x) (which(co$colours==x)[which.min(times.nodiv[which(co$colours==x)])])) 
     MRCAs <- sapply(MRCAs.idx, function (x) tree.nodiv$node.label[times.ord[x]])
 
-    pre <- structured_coal.preprocess_phylo(tree.nodiv)
+    pre <- preprocess_phylo(tree.nodiv)
     comp <- structured_coal.likelihood(pre, MRCAs, div_times, A, K, N, type="Sat")
     log_lh <- 0
     for (i in div_cols){
@@ -527,7 +527,7 @@ test_that("Expansion simulation likelihood matches computed expansion likelihood
     MRCAs.idx <- sapply(c(1:(params$n_exp+1)), function (x) (which(co$colours==x)[which.min(times.nodiv[which(co$colours==x)])])) 
     MRCAs <- sapply(MRCAs.idx, function (x) tree.nodiv$node.label[times.ord[x]])
 
-    pre <- structured_coal.preprocess_phylo(tree.nodiv)
+    pre <- preprocess_phylo(tree.nodiv)
     sim_log_lh <- out$coal_log_lh
 
     A <- sapply(params$t_mid, function(x) (1/x)**2)
@@ -572,7 +572,7 @@ test_that("Transdimensional moves are balanced", {
     tr <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from)
     tree <- read.tree(text = tr$full)
     tree.nodiv <- collapse.singles(tree)
-    pre <- structured_coal.preprocess_phylo(tree.nodiv)
+    pre <- preprocess_phylo(tree.nodiv)
 
     fn_log_J <- function(i_prev, x_prev, x_next) {
       return(0)
@@ -676,7 +676,7 @@ test_that("Log-posterior returns correct values", {
     tr <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from)
     tree <- read.tree(text = tr$full)
     tree.nodiv <- collapse.singles(tree)
-    pre <- structured_coal.preprocess_phylo(tree.nodiv)
+    pre <- preprocess_phylo(tree.nodiv)
 
     root_set <- rep(NA, params$n_exp)
     if(params$n_exp > 0) {

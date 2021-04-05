@@ -18,7 +18,7 @@ standard_priors <- function(expansion_rate=1,
                             K_sd_log=1/2, 
                             exp_time_nu=1/2, 
                             exp_time_kappa=1/8) {
-    return(list(
+    return(priorList(
         prior_i=function(x) dpois(x, expansion_rate, log = TRUE),
         prior_i.sample=function() rpois(1, expansion_rate),
         prior_N=function(x) dlnorm(x, meanlog = N_mean_log, sdlog = N_sd_log, log = TRUE),
@@ -52,7 +52,7 @@ standard_priors <- function(expansion_rate=1,
 #' @export
 #' 
 run_expansion_inference <- function(phy, priors, concentration=1, n_it=1e6, thinning=1, init=NULL) {
-    pre <- structured_coal.preprocess_phylo(phy)
+    pre <- preprocess_phylo(phy)
     o <- expansions_infer(pre, 
                             priors$prior_i, 
                             priors$prior_N, 
@@ -66,8 +66,13 @@ run_expansion_inference <- function(phy, priors, concentration=1, n_it=1e6, thin
                             n_it=n_it,
                             thinning=thinning,
                             init=init)
-    return(list(phylo_preprocessed=pre, mcmc_out=o))
-}   
+    dat <- mcmc2data.frame(o)
+    model_data <- dat$mcmc.df
+    expansion_data <- dat$event.df
+    metadata <- list(n_it=n_it, thinning=thinning)
+    out <- expansionsMCMC(phylo_preprocessed=pre, priors=priors, model_data=model_data, expansion_data=expansion_data, metadata=metadata)
+    return(out)
+}
 
 #' Run rjmcmc inference on the provided preprocessed phylogeny, and using provided prior distributions
 #' This is a barebones method for advanced usage. For standard usage refer to `run_expansion_inference`
@@ -116,10 +121,12 @@ expansions_infer <- function(pre,
     max_t <- max(nodes$times)
     min_t <- min(nodes$times)
 
+    max_t_nodes <- max(nodes$times[which(!nodes$is_tip)])
+
     tree_height <- max_t - min_t
 
-    div_time_prop.sample <- function(N) runif(1, min_t, max_t)
-    div_time_prop.lh <- function(x, N) log(1/(max_t-min_t))
+    div_time_prop.sample <- function(N) runif(1, min_t, max_t_nodes)
+    div_time_prop.lh <- function(x, N) log(1/(max_t_nodes-min_t))
 
     const_log_lh <- function(n){
         if (n > 0){
@@ -208,11 +215,9 @@ para.initialiser <- function(N, prop_t_mid_given_N, prop_K_given_N, prop_t_given
     br_extant_after <- br_extant_before[which(nodes$times[edges$node.parent[br_extant_before]] < div.times)]
 
     ### filter out terminal branches as those have 0 prior mass
-    extant_inner <- br_extant_after[which(edges$node.child[br_extant_after]>pre$n_tips)] 
+    extant_inner <- br_extant_after[which(!nodes$is_tip[edges$node.child[br_extant_after]])] 
     ### choose one at random
-
     if(length(extant_inner) < 1) extant_inner <- c(NA)
-
 
     div.branch <- extant_inner[sample.int(length(extant_inner),1)] 
 
@@ -233,15 +238,21 @@ para.log_lh <- function(x, N, prop_t_mid_given_N, prop_K_given_N, prop_t_given_N
     div.times <- x[[3]]
     div.branch <- x[[4]]
 
-    ### which branches exist at time of divergence
-    br_extant_before <- edges$id[which(nodes$times[edges$node.child] > div.times)]
-    br_extant_after <- br_extant_before[which(nodes$times[edges$node.parent[br_extant_before]] < div.times)]
-
-    ### filter out terminal branches as those have 0 prior mass
-    extant_inner <- br_extant_after[which(edges$node.child[br_extant_after]>pre$n_tips)] 
-    if (length(extant_inner) < 1) extant_inner <- c(NA)
-
-    out <- prop_t_mid_given_N(mid.times,N) + prop_K_given_N(K,N) + prop_t_given_N(div.times,N) + log(1/length(extant_inner))
+    if (is.na(div.branch)){ 
+        out <- -Inf
+    } else {
+        ### which branches exist at time of divergence
+        br_extant_before <- edges$id[which(nodes$times[edges$node.child] > div.times)]
+        br_extant_after <- br_extant_before[which(nodes$times[edges$node.parent[br_extant_before]] < div.times)]
+    
+        ### filter out terminal branches as those have 0 prior mass
+        extant_inner <- br_extant_after[which(!nodes$is_tip[edges$node.child[br_extant_after]])] 
+        if (length(extant_inner) < 1) {
+            out <- -Inf
+        } else {
+            out <- prop_t_mid_given_N(mid.times,N) + prop_K_given_N(K,N) + prop_t_given_N(div.times,N) + log(1/length(extant_inner))
+        }
+    }
     return(out)
 }
 
@@ -278,6 +289,8 @@ log_posterior <- function(x,
         mid.times <- sapply(div_ord, function(j) x[[j+offset]][[1]])
         K <- sapply(div_ord, function(j) x[[j+offset]][[2]])
         div.branch <- sapply(div_ord, function(j) x[[j+offset]][[4]])
+
+        probs[c(1:i)] <- probs[div_ord]
     } else {
         mid.times <- c()
         K <- c()
