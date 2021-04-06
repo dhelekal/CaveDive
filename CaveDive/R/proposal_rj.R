@@ -103,9 +103,9 @@ within_model.sampler <- function(x_prev, i_prev, pre, scale, fixed_move=NA, fixe
 
   if (is.na(fixed_move)){
     if (i_prev > 0) {
-      which_move <- sample(c(1,3,4,5), size=1)
+      which_move <- sample(c(1,2,3,4), size=1)
     } else {
-      which_move <- 4
+      which_move <- 3
     }
   } else {
     which_move <- fixed_move
@@ -115,15 +115,11 @@ within_model.sampler <- function(x_prev, i_prev, pre, scale, fixed_move=NA, fixe
     x_prop <- make_move(x_prev, i_prev, pre, move_update_mid.time, scale, fixed_index)
     x_next <- x_prop$x_next
     qr <- x_prop$qr
-  #} else if(which_move==2) {
-  #  x_prop <- make_move(x_prev, i_prev, pre, move_update_time, scale, fixed_index)
-  #  x_next <- x_prop$x_next
-  #  qr <- x_prop$qr
-  } else if(which_move==3) {
+  } else if(which_move==2) {
     x_prop <- make_move(x_prev, i_prev, pre, move_update_branch2, scale, fixed_index)
     x_next <- x_prop$x_next
     qr <- x_prop$qr
-  } else if(which_move==4) {
+  } else if(which_move==3) {
     N_prev <- x_prev[[1]]
     N_prop <- move_update_N(N_prev, pre, scale)
     N_next <- N_prop$N_next
@@ -131,8 +127,7 @@ within_model.sampler <- function(x_prev, i_prev, pre, scale, fixed_move=NA, fixe
 
     x_next <- x_prev
     x_next[[1]] <- N_next 
-  } else if(which_move==5) {
-
+  } else if(which_move==4) {
     probs_prev <- x_prev[[2]]
     probs_prop <- move_update_probs(probs_prev, pre, fixed_index)
     probs_next <- probs_prop$probs_next
@@ -182,87 +177,6 @@ move_update_mid.time <- function(x_prev, pre, scale) { ### update mid.time
   return(list(x_next=x_next, qr=qr))
 }
 
-move_update_time <- function(x_prev, pre, scale) { ### update time
-  x_next <- vector(mode = "list", length = length(x_prev))
-
-  mid.time <- x_prev[[1]]
-  K <- x_prev[[2]]
-  div.times <- x_prev[[3]]
-  div.branch <- x_prev[[4]]
-
-  len_scale <- pre$edges.df$length[div.branch]/10
-
-  div.times_upd <- rnorm(1, mean=div.times, sd=1*len_scale)
-
-  qr <- -dnorm(div.times_upd, mean=div.times, sd=1*len_scale, log=TRUE) ##proposal lh
-  qr <- qr + dnorm(div.times, mean=div.times_upd, sd=1*len_scale, log=TRUE) ##reversal lh
-
-  x_next[[1]] <- mid.time
-  x_next[[2]] <- K
-  x_next[[3]] <- div.times_upd
-  x_next[[4]] <- div.branch
-
-  return(list(x_next=x_next, qr=qr))
-}
-
-move_update_branch <- function(x_prev, pre, scale) { ### update branch
-  x_next <- vector(mode = "list", length = length(x_prev))
-
-  mid.time <- x_prev[[1]]
-  K <- x_prev[[2]]
-  div.times <- x_prev[[3]]
-  div.branch <- x_prev[[4]]
-
-  edges <- pre$edges.df
-  nodes <- pre$nodes.df
-
-  outgoing <- pre$outgoing
-  incoming <- pre$incoming
-
-  root <- pre$root_idx
-
-  div.branch_upd <- div.branch
-  div.times_upd <- div.times
-
-    ## decide whether moving up or down
-  r1 <- runif(1,0,2)
-  qr <- -log(1/2) ## proposal direction lh
-  qr <- qr + log(1/2) ## reverse lh
-  if (r1 < 1) { ###up
-    if (edges$node.parent[div.branch]!=root) {
-      div.branch_upd <- incoming[[edges$node.parent[div.branch]]]
-      qr <- qr + log(1/2) ## reverse lh
-    } else {
-      div.branch_upd <- outgoing[[root]][which(outgoing[[root]]!=div.branch)]
-            ##no reverse  lh as direction effectively changes
-    }
-  } else { ###down
-    r2 <- runif(1,0,2)
-    qr <- qr - log(1/2) ## proposal which branch lh
-        ## no reverse lh as always only one parent
-    if (r2 < 1) {
-      div.branch_upd <- outgoing[[edges$node.child[div.branch]]][1]
-    } else {
-      div.branch_upd <- outgoing[[edges$node.child[div.branch]]][2]  
-    }
-  }
-
-  old_len <- edges$length[div.branch]
-  new_len <- edges$length[div.branch_upd]
-
-  qr <- qr - log(1/new_len)
-  qr <- qr + log(1/old_len)
-
-  div.times_upd <- runif(1, nodes$times[edges$node.parent[div.branch_upd]], nodes$times[edges$node.child[div.branch_upd]])
-
-  x_next[[1]] <- mid.time
-  x_next[[2]] <- K
-  x_next[[3]] <- div.times_upd
-  x_next[[4]] <- div.branch_upd
-
-  return(list(x_next = x_next, qr=qr))
-}
-
 move_update_branch2 <- function(x_prev, pre, scale) { ### update branch
   x_next <- vector(mode = "list", length = length(x_prev))
 
@@ -278,8 +192,6 @@ move_update_branch2 <- function(x_prev, pre, scale) { ### update branch
   incoming <- pre$incoming
 
   root <- pre$root_idx
-
-  div.branch_upd <- div.branch
 
   delta_t <- rnorm(1, mean=0, sd=scale)
   qr <- -dnorm(delta_t, mean=0, sd=scale, log=TRUE)
@@ -321,6 +233,7 @@ move_update_branch2 <- function(x_prev, pre, scale) { ### update branch
   x_next[[2]] <- K
   x_next[[3]] <- div.times_upd
   x_next[[4]] <- curr_br
+
   return(list(x_next = x_next, qr=qr))
 }
 
@@ -370,7 +283,7 @@ prop_lh <- function(x_prev, i_prev, x_next, i_next, pre, initialiser.log_lh, sca
 
     p_diff <- p_prev - p_next
 
-    p_idx <- which(p_diff > 1e-6)
+    p_idx <- which(p_diff > 1e-8)
     if (length(p_idx) > 0) {
       lh <- lh + (log(1/p_prev[p_idx[1]]))
     }
@@ -398,43 +311,12 @@ prop_lh <- function(x_prev, i_prev, x_next, i_next, pre, initialiser.log_lh, sca
     p_next <- x_next[[2]]
     p_prev <- x_prev[[2]]
 
-      p_diff <- p_prev - p_next[-(unique_idx)]
+    p_diff <- p_prev - p_next[-(unique_idx)]
 
-    p_idx <- which(p_diff > 1e-6)
+    p_idx <- which(p_diff > 1e-8)
     lh <- lh + (log(1/p_prev[p_idx[1]]))
   } else {
     lh <- lh + log((1/i_prev**2))
-  }
-  return(lh)
-}
-
-model_lh <- function(mdl_prev, mdl_next, pre, scale) {
-  lh <- 0
-  lh <- lh + dnorm(mdl_next[[1]], mean=mdl_prev[[1]], sd=scale, log=TRUE) +  ### Rates and Carrying capacity
-
-  dlnorm(mdl_next[[2]], meanlog=log(mdl_prev[[2]]), sdlog=0.15, log=TRUE) 
-
-  br_next <- mdl_next[[4]]
-  br_prev <- mdl_prev[[4]]
-
-  if (br_prev != br_next) {
-    if (pre$edges.df$node.parent[br_prev] == pre$edges.df$node.child[br_next]) {
-      lh <- lh + log(1/2)
-      lh <- lh + log(1/pre$edges.df$length[br_next])
-    } 
-    else if (pre$edges.df$node.parent[br_prev] == pre$edges.df$node.parent[br_next]) {
-      lh <- lh + log(1/2)
-      lh <- lh + log(1/pre$edges.df$length[br_next])
-    } else if (pre$edges.df$node.child[br_prev] == pre$edges.df$node.parent[br_next]){
-      lh <- lh + log(1/2)
-      lh <- lh + log(1/2)
-      lh <- lh + log(1/pre$edges.df$length[br_next])
-    } else {
-      lh <- -Inf
-    }
-  } else {
-    len_scale <- pre$edges.df$length[br_next]/10
-    lh <- lh + dnorm(mdl_next[[3]], mean=mdl_prev[[3]], sd=1*len_scale, log=TRUE) 
   }
   return(lh)
 }
@@ -460,37 +342,41 @@ model_lh2 <- function(mdl_prev, mdl_next, pre, scale) {
     incoming <- pre$incoming
 
     root <- pre$root_idx
-    traversed <- 0
+    traversed_1 <- 0
+    traversed_2 <- 0
 
     root_traversed <- FALSE
 
     if (br_prev != br_next) {
         ### if 1 previous branch comes before next branch in tree, if 2 next branch comes before previous branch in tree
-      if (nodes$times[edges$parent[br_prev]] > nodes$times[edges$parent[br_next]]){
+      if (nodes$times[edges$node.parent[br_prev]] > nodes$times[edges$node.parent[br_next]]){
         lower_br <- br_prev
         upper_br <- br_next
-        dir <- 1
+        dir <- TRUE
       } else {
         lower_br <- br_next
         upper_br <- br_prev
-        dir <- -1
+        dir <- FALSE
       }
-
       current_br <- lower_br
       while(current_br != upper_br) { 
-        if (edges$parent[current_br] == root) {
-          current_br <- upper_br
+        if (edges$node.parent[current_br] == root) {
+          tmp <- upper_br
           upper_br <- outgoing[[root]][which(outgoing[[root]]!=current_br)]
-          dir <- -dir
+          current_br <- tmp
           root_traversed <- TRUE
+          dir <- !dir
         } else {
-          current_br <- incoming[[edges$parent[current_br]]]
-          if (dir == -1) traversed <- traversed + 1
+          current_br <- incoming[[edges$node.parent[current_br]]]
+          if (dir == FALSE) {
+            traversed_1 <- traversed_1 + 1
+          }
         }
       }
-      lh <- lh + log(1/2)*traversed
-    }
+      
+      lh <- lh + log(1/2)*traversed_1
 
+    }
     if (root_traversed) {
       lh <- lh + dnorm((nodes$times[root]-t_prev) + (nodes$times[root]-t_next), mean=0, sd=scale, log=TRUE)
     } else {

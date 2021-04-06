@@ -574,6 +574,9 @@ test_that("Transdimensional moves are balanced", {
     tree.nodiv <- collapse.singles(tree)
     pre <- preprocess_phylo(tree.nodiv)
 
+    edges <- pre$edges.df
+    nodes <- pre$nodes.df
+
     fn_log_J <- function(i_prev, x_prev, x_next) {
       return(0)
     }
@@ -582,11 +585,15 @@ test_that("Transdimensional moves are balanced", {
       return(0)
     }
 
-    max_t <- max(pre$nodes.df$times)
-    min_t <- min(pre$nodes.df$times)
+    max_t <- max(nodes$times)
+    min_t <- min(nodes$times)
+
+    max_t_nodes <- max(nodes$times[which(!nodes$is_tip)])
+
     tree_height <- max_t - min_t
-    div_time_prop.sample <- function(N) runif(1, min_t, max_t)
-    div_time_prop.lh <- function(x, N) log(1/(tree_height))
+
+    div_time_prop.sample <- function(N) runif(1, min_t, max_t_nodes)
+    div_time_prop.lh <- function(x, N) log(1/(max_t_nodes-min_t))
 
     p.init <- function(N) para.initialiser(N, s_priors$prior_t_mid_given_N.sample, s_priors$prior_K_given_N.sample, div_time_prop.sample, pre)
     p.log_lh <- function(x, N) para.log_lh(x, N, s_priors$prior_t_mid_given_N, s_priors$prior_K_given_N, div_time_prop.lh, pre)
@@ -602,22 +609,22 @@ test_that("Transdimensional moves are balanced", {
     ### Increase dim up to 10 always check QR both when adding a dim and then remove an event and check QR
     for (i in c(1:20)){
         prop_up <- transdimensional.sampler(x_prev, i_prev, pre, p.init, p.log_lh, fn_log_J, fn_log_J_inv, fixed_move=1)
-        x_next <- prop_up$x
-        i_next <- prop_up$i
+        x_next <- prop_up$x_next
+        i_next <- prop_up$i_next
     
         qr_comp <- prop_up$qr
         qr_test <- -prop_lh(x_prev, i_prev, x_next, i_next, pre, p.log_lh) + prop_lh(x_next, i_next, x_prev, i_prev, pre, p.log_lh)
 
+        x_prev <- prop_up$x_next
+        i_prev <- prop_up$i_next
+
         expect_equal(abs(qr_comp) < Inf, TRUE)
         expect_equal(qr_comp, qr_test)
 
-        x_prev <- x_next
-        i_prev <- i_next
-
         prop_down <- transdimensional.sampler(x_prev, i_prev, pre, p.init, p.log_lh, fn_log_J, fn_log_J_inv, fixed_move=2)
         qr_comp2 <- prop_down$qr
-        x_next2 <- prop_down$x
-        i_next2 <- prop_down$i
+        x_next2 <- prop_down$x_next
+        i_next2 <- prop_down$i_next
 
         qr_test2 <- -prop_lh(x_prev, i_prev, x_next2, i_next2, pre, p.log_lh) + prop_lh(x_next2, i_next2, x_prev, i_prev, pre, p.log_lh)
         
@@ -625,25 +632,27 @@ test_that("Transdimensional moves are balanced", {
         expect_equal(qr_comp2, qr_test2)
     }
     ### x_prev now 10+1-dimensional, test each move 5 times and check QR
-    for (k in c(1,3,4,5)) {
+    for (k in c(1,2,3,4)) {
       ### 5 moves
-      for (l in c(1:10)) {
-          qr_comp <- -Inf
+      for (l in c(1:50)) {
           attempts <- 0
-          while(!(qr_comp > -Inf) && attempts < 100) {
-            prop_within <- within_model.sampler(x_prev, i_prev, pre, 10, fixed_move=k) 
-            x_next <- prop_within$x
+          x_next <- NA
+          i_next <- NA
+          qr_comp <- -Inf
+          while(!(qr_comp > -Inf) && attempts < 10) {
+            prop_within <- within_model.sampler(x_prev, i_prev, pre, tree_height/2, fixed_move=k) 
+            x_next <- prop_within$x_next
             i_next <- i_prev
             qr_comp <- prop_within$qr
             attempts <- attempts + 1
           }
 
-          if (attempts==25) {
+          if (attempts==10) {
             print(x_next)
           }
 
-          expect_equal((attempts < 25), TRUE)
-          qr_test <- -prop_lh(x_prev, i_prev, x_next, i_next, pre, p.log_lh) + prop_lh(x_next, i_next, x_prev, i_prev, pre, p.log_lh)
+          expect_equal((attempts < 10), TRUE)
+          qr_test <- -prop_lh(x_prev, i_prev, x_next, i_next, pre, p.log_lh, tree_height/2) + prop_lh(x_next, i_next, x_prev, i_prev, pre, p.log_lh, tree_height/2)
           expect_equal(qr_comp, qr_test)
       }
     }
