@@ -44,10 +44,10 @@ expansions_simulate <- function(priors, sampling_times, concentration, given=lis
     exp_probs <- rdirichlet(1, rep(concentration, (n_exp+1)))
 
     div_cols <- c(1:(n_exp+1))
-
+    max_it <- 100
+    
     if(is.null(given$tip_colours)){
         colouring <- c()
-        max_it <- 100
         it <- 0
         while((length(unique(colouring)) < (n_exp+1)) || (!all(clade_sizes>1) && n_exp > 0)) {
             if (it > max_it) {

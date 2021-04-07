@@ -80,39 +80,36 @@ This interface returns an `ape` phylogeny.
 concentration <- 2
 ```
 
-The most basic use is as follows, with all parameters being sampled from priors. We pass 100 uniformly sampled tip times between 0 and -5. By setting `collapse_singles` to `TRUE` we ensure that the simulated genealogy will not contain nodes corresponding to events where an expansion diverges from a parent. 
+The most basic use is as follows, with all parameters being sampled from priors. We pass 100 uniformly sampled tip times between 0 and -5. By setting `collapse_singles` to `TRUE` we can ensure that the simulated genealogy will not contain nodes corresponding to events where an expansion diverges from a parent. 
 Note: time of most recent tip must be 0.
 ```{r simulate a phylogeny, message=FALSE} 
 tip_times <- runif(100, 0, 5)
 tip_times <- tip_times - max(tip_times)
 tip_times <- tip_times[order(-tip_times)]
 
-phy1 <- simulate_expansion_phylo(priors, tip_times, concentration=concentration, collapse_singles=TRUE)
+phy1 <- simulate_expansion_phylo(priors, tip_times, concentration=concentration, collapse_singles=F)
 head(phy1)
+plot_structured_tree(phy1$tree, phy1$params$n_exp+1)
 ```
+
 One can also fix parameters used to simulate a phylogeny. For example, one might wish to generate a phylogeny with 3 expansions and background population size of 100.
 ```{r simulate a phylogeny 2, message=FALSE} 
 tip_times <- runif(100, 0, 5)
 tip_times <- tip_times - max(tip_times)
 tip_times <- tip_times[order(-tip_times)]
 
-phy2 <- simulate_expansion_phylo(priors, tip_times, concentration=concentration, given=list(n_exp=3, N=100), collapse_singles=TRUE)
+phy2 <- simulate_expansion_phylo(priors, tip_times, concentration=concentration, given=list(n_exp=3, N=100), collapse_singles=F)
+plot_structured_tree(phy2$tree, phy2$params$n_exp+1)
 ```
 
 Alternative one may wish to pre-assign the tips to individual expansions. A phylogeny with 2 expansions, where the first 30 tips belong to expansion number 1, the next 30 to expansion number 2, and 40 to the background population.
 ```{r simulate a phylogeny 3, message=FALSE} 
 tip_times <- runif(100, 0, 5)
-tip_times <- runif(100, 0, 5)
 tip_times <- tip_times - max(tip_times)
-tip_colours <- c(rep(1,30), rep(1,30), rep(1,40))
+tip_times <- tip_times[order(-tip_times)]
 
-phy2 <- simulate_expansion_phylo(priors, tip_times, concentration=concentration, given=list(n_exp=2, tip_colours=tip_colours), collapse_singles=TRUE)
-```
+tip_colours <- c(rep(1,30), rep(2,30), rep(3,40))
 
-Plotting the three simulated phylogenies side by side. In order to colour the simulated phylogeny according to which part of the tree belongs to which expansion, we use `plot_structured_tree`. This function requires the number of expansions to colour as an argument. 
-
-```{r,echo=FALSE, out.width='.33\\linewidth',fig.show='hold',fig.align='center'}
-plot_structured_tree(phy1$tree, phy1$n_exp)
-plot_structured_tree(phy2$tree, phy2$n_exp)
-plot_structured_tree(phy3$tree, phy3$n_exp)
+phy3 <- simulate_expansion_phylo(priors, tip_times, concentration=concentration, given=list(n_exp=2, tip_colours=tip_colours), collapse_singles=F)
+plot_structured_tree(phy3$tree, phy3$params$n_exp+1)
 ```

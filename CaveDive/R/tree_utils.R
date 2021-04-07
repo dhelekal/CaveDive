@@ -188,9 +188,9 @@ plot_structured_tree <- function(tree, n_lineages){
 
     tree.full <- full_join(tree, ldf, by = 'node')
 
-    plt<-ggtree(tree.full, aes(color=clade), ladderize=TRUE, size=1.5) +
+    plt<-ggtree(tree.full, aes(color=clade), ladderize=TRUE, size=0.75) +
                     geom_point(aes(shape=type, size=type)) +
-                    scale_size_manual(values=c(2.5,5,2.5)) +
+                    scale_size_manual(values=c(1.5,3,1.5)) +
                     scale_shape_manual(values=c(1,8,2)) +
                     theme_tree2()
     return(plt)
