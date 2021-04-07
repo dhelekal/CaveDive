@@ -50,8 +50,8 @@ inference_priors <- standard_priors(expansion_rate=1,
                     exp_time_nu=1/2, 
                     exp_time_kappa=1/2)
 
-n_it <- 2e6
-thinning <- n_it/1e4
+n_it <- 1e4
+thinning <- n_it/1e3
 burn_in <- 1e3 #10%
 if(run_mcmc){
     start <- proc.time()

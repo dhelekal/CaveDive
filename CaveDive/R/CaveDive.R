@@ -1,8 +1,7 @@
 #' @importFrom ape read.tree axisPhylo ladderize extract.clade node.depth.edgelength collapse.singles makeNodeLabel
 #' @importFrom DirichletReg rdirichlet ddirichlet
-#' @importFrom egg ggarrange
 #' @importFrom reshape2 melt
-#' @import treeio ggtree ggplot2 gridExtra 
+#' @import treeio ggtree ggplot2 gridExtra grid gtable 
 #' @importFrom pracma bisect newtonRaphson
 #' @importFrom Rcpp evalCpp
 #' @useDynLib CaveDive
