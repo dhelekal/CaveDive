@@ -11,7 +11,7 @@ simulate_expansion_phylo <- function(priors, sampling_times, concentration=2, gi
     sim <- expansions_simulate(priors, sampling_times, concentration=concentration, given=given)
     co <- sim$co
     params <- sim$params
-    phy.div_nodes <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from)
+    phy.div_nodes <- build_coal_tree.structured(sampling_times, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from)
     tree  <- read.tree(text = phy.div_nodes$full)
     if (collapse_singles){
         tree <- collapse.singles(tree)
