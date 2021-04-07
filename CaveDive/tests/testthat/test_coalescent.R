@@ -92,43 +92,6 @@ test_that("Computed likelihood matches simulation likelihood with exponential Ne
             expect_equal(comp_lh, log_lh)
           })
 
-test_that("Inhomogenous process with exponential Neg matches rescaled Homogenous process",
-          {
-            sam <- rep(0, 10)
-            lambda <- 1000
-            N <- 1
-            
-            Neg_t <- function (s)
-              return (1 / N * exp(lambda * s))
-            Neg_t.int <- function (t, s) {
-              out <- Inf
-              if (!(exp(lambda * (t + s)) == Inf)) {
-                out <- (1 / (lambda * N)) * (exp(lambda * (t + s)) - exp(lambda * t))
-              }
-              return (out)
-            }
-            Neg_t.inv_int <- function(t, s)
-              return((1 / lambda) * log(lambda * N * s * exp(-lambda * t) + 1))
-            
-            set.seed(1)
-            co <-
-              inhomogenous_coal.simulate(sam, Neg_t, Neg_t.int, Neg_t.inv_int)
-            log_lh <- co$log_likelihood
-            times <- co$coalescent_times
-            
-            set.seed(1)
-            co.gt <- homogenous_coal.simulate(sam, 1)
-            times.rescaled <-
-              rescale_to_exponential(co.gt$coalescent_times, lambda, 0)
-            log_lh.rescaled <- inhomogenous_coal.log_lh(sam,
-                                                        times.rescaled,
-                                                        Neg_t,
-                                                        Neg_t.int)
-            expect_equal(log_lh.rescaled, log_lh)
-            expect_equal(times.rescaled, times)
-            
-          })
-
 test_that("Homogenous process matches inhomogenous process for constant Neg",
           {
             sam <- seq(1, 100, 2) * 100
