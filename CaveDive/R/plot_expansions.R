@@ -208,33 +208,50 @@ plot_summary <- function (model_data, expansion_data, phylo_preprocessed, priors
 }
 
 plot_traces <- function(model_data, expansion_data) {
+     max_it <- max(model_data$it)
+     min_it <- min(model_data$it)
      trace_lh <- ggplot(model_data, aes(x=it, y=lh)) +
           geom_line(alpha = 0.3) +
           theme_bw() + 
           ylab("log-likelihood") +
+          xlim(c(min_it,max_it)) +
           theme(axis.title.x = element_blank(), axis.text.x = element_blank())
      trace_prior <- ggplot(model_data, aes(x=it, y=prior)) +
           geom_line(alpha = 0.3) +
           theme_bw() + 
           ylab("log-prior") +
+          xlim(c(min_it,max_it)) +
           theme(axis.title.x = element_blank(), axis.text.x = element_blank())
      trace_N <- ggplot(model_data, aes(x=it, y=N)) +
           geom_line(alpha = 0.3) +
           theme_bw() + 
           ylab("N") +
+          xlim(c(min_it,max_it)) +
           theme(axis.title.x = element_blank(), axis.text.x = element_blank())
      trace_dim <- ggplot(model_data, aes(x=it, y=dim)) +
           geom_line(alpha = 0.3) +
           theme_bw() +
           ylab("Number of Expansions") +
+          xlim(c(min_it,max_it)) +
           theme(axis.title.x = element_blank(), axis.text.x = element_blank())
      trace_br <- ggplot(expansion_data, aes(x=it, y=br)) + 
           geom_point(alpha=0.1,size=0.1) + 
           theme_bw() + 
           ylab("Branch") +
+          xlim(c(min_it,max_it)) +
           theme(axis.title.x = element_blank(), axis.text.x = element_blank())
 
-     grid.arrange(grobs=list(trace_lh, trace_prior, trace_dim, trace_N, trace_br), nrow=5, widths=c(6), heights=c(2,2,2,2,4))
+     g <- gridExtra::gtable_rbind(ggplotGrob(trace_lh), 
+                           ggplotGrob(trace_prior), 
+                           ggplotGrob(trace_N),
+                           ggplotGrob(trace_dim),
+                           ggplotGrob(trace_br))
+
+     panels <- g$layout$t[grep("panel", g$layout$name)]
+     g$heights[panels] <- unit(c(1,1,1,1,3), "null")
+     
+     grid.newpage()
+     grid.draw(g)
 }
 
 prior_mixture <- function(prior, cond_values) {
