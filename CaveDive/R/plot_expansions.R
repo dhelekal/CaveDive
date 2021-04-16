@@ -234,7 +234,7 @@ plot_traces <- function(model_data, expansion_data) {
           ylab("Branch") +
           theme(axis.title.x = element_blank(), axis.text.x = element_blank())
 
-     grid.arrange(list(trace_lh, trace_prior, trace_dim, trace_N, trace_br), nrow=5, widths=c(6), heights=c(2,2,2,2,4))
+     grid.arrange(grobs=list(trace_lh, trace_prior, trace_dim, trace_N, trace_br), nrow=5, widths=c(6), heights=c(2,2,2,2,4))
 }
 
 prior_mixture <- function(prior, cond_values) {

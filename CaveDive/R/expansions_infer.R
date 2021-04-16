@@ -69,7 +69,9 @@ run_expansion_inference <- function(phy, priors, concentration=1, n_it=1e6, thin
     dat <- mcmc2data.frame(o)
     model_data <- dat$mcmc.df
     expansion_data <- dat$event.df
-    metadata <- list(n_it=n_it, thinning=thinning)
+    effective_it <- floor(n_it/thinning)
+    stopifnot(length(unique(model_data$it))==effective_it)
+    metadata <- list(n_it=n_it, thinning=thinning, effective_it=effective_it)
     out <- expansionsMCMC(phylo_preprocessed=pre, priors=priors, model_data=model_data, expansion_data=expansion_data, metadata=metadata)
     return(out)
 }
