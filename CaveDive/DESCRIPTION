@@ -23,6 +23,9 @@ Imports:
     ggplot2,
     viridis,
     gridExtra,
+    grid,
+    gtable,
+    egg,
     pracma, 
     ape
 VignetteBuilder: knitr

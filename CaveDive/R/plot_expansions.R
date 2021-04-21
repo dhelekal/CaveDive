@@ -27,101 +27,39 @@ plot_persistence <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, corre
              panel.grid.minor = element_blank(),
              plot.margin = margin(0, 0, 0, 0, "cm"),
              text = element_text(size=30),
-             legend.position = "none",#c(0.8,0.1),
-             legend.title = element_text(angle = -90))
-
+             legend.position = c(0.8,0.1),
+             legend.title = element_text(angle = -90),
+             aspect.ratio=1)
      corr_map <- NULL
-     corr_legend <- NULL
      if(!is.null(correlates)) {
           stopifnot("Number correlate rows must match number of tips"=nrow(correlates)==pre$n_tips)
-          r_df <- as.data.frame(correlates)
-          rownames(r_df) <- pre$phy$tip.label
-          r_df$x <- rownames(r_df) 
+          stopifnot("Correlates must be a data.frame with rownames equal to tip labels"=rownames(correlates)[order(rownames(correlates))]==pre$phy$tip.label[order(pre$phy$tip.label)])
+          r_df <- correlates
+          r_df$tip_id <- rownames(r_df) 
           r_df <- melt(r_df)
-          r_df$x <- factor(x = r_df$x,
+          r_df$tip_id <- factor(x = r_df$tip_id,
                           levels = pre$phy$tip.label, 
                           ordered = TRUE)
 
-          corr_map <- ggplot(data = r_df, aes(x = x, y = variable)) +
+          corr_map <- ggplot(data = r_df, aes(x = tip_id, y = variable)) +
                          geom_tile(aes(fill = value)) +
                          scale_fill_viridis(option= "viridis", na.value="gray50" , discrete=!is.double(r_df$value)) +
                          theme_minimal() +
-                         coord_flip() + 
-                         guides(fill=guide_legend(title.position = "top"))+
+                         guides(fill=guide_legend(title.position = "right"))+
+                         coord_flip()+
                          theme(axis.title.y = element_blank(), 
                                axis.text.y = element_blank(), 
                                axis.ticks.y = element_blank(),
                                panel.grid.major = element_blank(),
                                panel.grid.minor = element_blank(),
                                text = element_text(size=30),
-                               legend.position="bottom")
-          temp <- ggplotGrob(corr_map)
-          leg_index <- which(sapply(temp$grobs, function(x) x$name) == "guide-box")
-          corr_legend <- temp$grobs[[leg_index]]
-          corr_map <- corr_map + theme(legend.position="none")
+                               legend.position="right",
+                               legend.title = element_text(angle = -90))
      }
-
-     hist_dim <- ggplot(mcmc.df, aes(dim)) +  
-        geom_histogram(aes(y = stat(count / sum(count))), binwidth=1) + 
-        theme_minimal() +
-        xlab("Number of Expansions")+
-        ylim(0,1)+
-        scale_fill_brewer(palette="Dark2")  + 
-        theme(axis.title.y = element_blank(), 
-              axis.text.y = element_blank(), 
-              axis.ticks.y = element_blank(),
-              panel.grid.major = element_blank(),
-              panel.grid.minor = element_blank(),
-              plot.margin = margin(1, 0, 0, 0, "cm"),
-              text = element_text(size=30))
-
-
-     x_max <- -min(pre$nodes.df$times)
-     event.df_invtime <- event.df
-     event.df_invtime$time <- x_max+event.df_invtime$time
-     time_hist <- ggplot(event.df_invtime, aes(time)) +  
-     geom_histogram(aes(y = stat(density)), colour="orange", fill="orange", breaks=seq(0, x_max,length.out=100)) +
-     scale_x_continuous(limits=c(0, x_max))
-     if (!is.null(prior_t_given_N)) {
-       time_hist <- time_hist + prior_mixture(function(t,n) prior_t_given_N(t-x_max, n), mcmc.df$N)
-     }
-     time_hist <- time_hist + theme_bw() + theme(axis.title.y = element_blank(),
-                                    axis.text.y = element_blank(),
-                                    axis.ticks.y = element_blank())
-
      tree_map <- plot_tree(pre, event.df)
-
-     arrange_persistence(tree_map, time_hist, heat_map, hist_dim, corr_map, corr_legend)
-}
-
-arrange_persistence <- function(tree_map, time_hist, heat_map, dim_hist, corr_map, corr_legend) {
-     g <- ggplotGrob(tree_map)
-     panel_id <- g$layout[g$layout$name == "panel",c("t","l","b","r")]
-
-     g <- gtable_add_rows(g, unit(0.5,"null"), -1)
-     g <- gtable_add_grob(g, ggplotGrob(time_hist),
-                     t = nrow(g), l = panel_id$l, r=panel_id$r, b = nrow(g))
-
-     if (!is.null(corr_map)) {
-          g <- gtable_add_cols(g, unit(0.5,"null"), -1) 
-          lb <- ncol(g)
-          rb <- ncol(g)   
-          g <- gtable_add_grob(g, ggplotGrob(corr_map),
-                         t = panel_id$t, b=panel_id$b, l = lb,r = rb)
-          g <- gtable_add_grob(g, corr_legend,
-                         t = nrow(g), b=nrow(g), l = lb,r = rb)
-     }
-     
-     g <- gtable_add_cols(g, unit(1,"null"), -1)
-     lb <- ncol(g)
-     rb <- ncol(g)
-     g <- gtable_add_grob(g, ggplotGrob(heat_map),
-                      t = panel_id$t,b = panel_id$b, l = lb, r=rb)
-     g <- gtable_add_grob(g, ggplotGrob(dim_hist),
-                      t = nrow(g), b = nrow(g), l = lb, r=rb)
-     
-     grid.newpage()
-     grid.draw(g)
+     tree_map_t <- tree_map + coord_flip() + scale_x_reverse()
+     blank <- ggplot() + theme_minimal()
+     ggarrange(blank, tree_map_t, blank, tree_map, heat_map, corr_map, widths=c(1,3,0.75), heights=c(1,3))
 }
 
 plot_tree<-function(pre,event.df){
@@ -252,7 +190,7 @@ plot_traces <- function(model_data, expansion_data) {
      
      grid.newpage()
      grid.draw(g)
-}
+} 
 
 prior_mixture <- function(prior, cond_values) {
      f_mixture <- function (X) sapply(X, function (x) (1/length(cond_values))*sum(sapply(cond_values, function(y) prior(x, y))))
@@ -291,7 +229,7 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlig
    labs <- c(tree$node.label, tree$tip.label)
    tip <- c(rep("1",length(tree$node.label)), rep("2", length(tree$tip.label)))
    ids <- nodeid(tree, labs)
-   id_freq <- sapply(ids, function (i) if(pre$nodes.df$is_tip[i]) NA else if (is.na(freq[paste0(pre$incoming[[i]])])) 0.0 else freq[paste0(pre$incoming[[i]])])
+   id_freq <- sapply(ids, function (i) if(pre$nodes.df$is_tip[i]) 0.0 else if (is.na(freq[paste0(pre$incoming[[i]])])) 0.0 else freq[paste0(pre$incoming[[i]])])
 
    ldf <- data.frame(node = ids, frequency = id_freq, tip=tip)
    ldf$edge_id <- sapply(ldf$node, function(i) pre$incoming[[i]])
@@ -303,7 +241,7 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlig
 
    x_max <- -min(pre$nodes.df$times)
 
-   p1 <- ggtree(tree.full, aes(color=frequency), size=0.75, ladderize=TRUE) +
+   p1 <- ggtree(tree.full, aes(color=frequency), size=0.75, ladderize=F) +
    geom_point() +
    geom_text2(aes(label=edge_id, 
                  subset=!is.na(lab), 
