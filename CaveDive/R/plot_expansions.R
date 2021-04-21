@@ -289,7 +289,7 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlig
 
 plot_mode_summary <- function(mcmc.df, event.df, priors) {
   mode_br_df <- event.df[which(event.df$is.mode),]
-  mode_br_mcmc_df <- mode_dim_marginal[mode_dim_marginal$it %in% mode_br_df$it, ]
+  mode_br_mcmc_df <- mcmc.df[mcmc.df$it %in% mode_br_df$it, ]
 
   dummy_gt <- data.frame(br=unique(mode_br_df$br))
   dummy_gt$median.K <- sapply(dummy_gt$br, function (x) median(mode_br_df$K[which(mode_br_df$br==x)]))
@@ -456,4 +456,21 @@ plot_dim_panel <- function(mcmc.df, prior_N=NULL) {
         widths = grid_width,
         heights = grid_heigth)
    return(dim_panel)
+}
+
+compute_ci <- function(x, conf=0.95) {
+  ci <- c()
+  x_ord <- order(x)
+  if(length(x)%%2==0) {
+    l<-length(x)/2
+    p1 <- x[x_ord][(l+1):length(x)]
+    p2 <- x[x_ord][1:l]
+  } else {
+    l <-floor(length(x)/2)
+    p1 <- x[x_ord][(l+2):length(x)]
+    p2 <- x[x_ord][1:l]
+  }
+  ci[1] <- p2[l*(1-conf)]
+  ci[2] <- p1[l*conf]
+  return(ci)
 }
