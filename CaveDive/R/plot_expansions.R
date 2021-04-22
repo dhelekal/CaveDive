@@ -1,4 +1,4 @@
-plot_persistence <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, correlates=NULL) {
+plot_persistence <- function(mcmc.df, event.df, pre, axis_title, legend_title, prior_t_given_N=NULL, correlates=NULL) {
      p_mat <- compute_persistence(pre, event.df)
 
      p_mat[lower.tri(p_mat)]<-NA
@@ -46,7 +46,8 @@ plot_persistence <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, corre
                          scale_fill_viridis(option= "viridis", na.value="gray50" , discrete=!is.double(r_df$value)) +
                          theme_minimal() +
                          guides(fill=guide_legend(title.position = "right"))+
-                         coord_flip()+
+                         coord_flip() +
+                         labs(y=axis_title, fill=legend_title) +
                          theme(axis.title.y = element_blank(), 
                                axis.text.y = element_blank(), 
                                axis.ticks.y = element_blank(),
@@ -123,7 +124,8 @@ plot_summary <- function (model_data, expansion_data, phylo_preprocessed, priors
         hist_br <- hist_br + theme_bw() + 
         labs(x="Branch Number",fill="Expansion Root") +
         theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = c(0.8, 0.2),
-              text = element_text(size=20))
+              text = element_text(size=14),
+              axis.text.x = element_text(size=12, angle=45))
 
      if (is.null(modes)) MRCA_lab=NULL else MRCA_lab=phylo_preprocessed$edges.df$node.child[modes]
      tree_freq <- plot_tree_freq(model_data, 

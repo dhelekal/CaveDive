@@ -113,7 +113,8 @@ print.expansionsMCMC <- function(x, ...) {
 }
 
 #' @export
-plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence", "traces"), k_modes=NULL, correlates=NULL) {
+plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence", "traces"), k_modes=NULL, correlates=NULL, corr_axis_title="Variable",
+                                  corr_legend_title="Value") {
      mode <- match.arg(mode)
 
      expansion_data <- x$expansion_data
@@ -161,6 +162,8 @@ plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence"
           plot_persistence(model_data,
                                   expansion_data, 
                                   x$phylo_preprocessed, 
+                                  corr_axis_title,
+                                  corr_legend_title,
                                   prior_t_given_N=function (t, n) exp(x$priors$prior_t_given_N(t,n)), 
                                   correlates=correlates)
 

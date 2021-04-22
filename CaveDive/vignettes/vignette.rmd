@@ -161,11 +161,11 @@ inference_priors <- standard_priors(expansion_rate=1,
 
 To perform MCMC inference, we use `run_expansion_inference`. 
 ```{r run inference, message=FALSE}
-n_it <- 1e4
+n_it <- 1e7
 thinning <- n_it/1e4
 phy_inf <- collapse.singles(phy3$tree)
 start <- Sys.time()
-expansions <- run_expansion_inference(phy_inf, inference_priors, concentration=1, n_it=n_it, thinning=thinning) 
+expansions <- run_expansion_inference(phy_inf, priors, concentration=1, n_it=n_it, thinning=thinning) 
 end <- Sys.time()
 total_time <- as.numeric (end - start, units = "mins")
 print(paste("Total time elapsed: ",total_time))
@@ -191,8 +191,8 @@ plot(expansions,mode="traces")
 ```
 
 A summary plot depicting posterior marginals for the number of expansions, background population size, and position of expansions along the tree can be obtained via:
-```{r plot summary, out.width="90%", fig.width=10, fig.height=10, dpi=300, fig.align="center", message=FALSE,eval=T} 
-plot(expansions,mode="summary")
+```{r plot summary, out.width="90%", fig.width=20, fig.height=20, dpi=300, fig.align="center", message=FALSE,eval=T} 
+plot(expansions,mode="summary", k_modes=2)
 ```
 
 Correlates can be visualised as follows:
