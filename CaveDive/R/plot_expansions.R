@@ -78,7 +78,7 @@ plot_tree<-function(pre,event.df){
 
    x_max <- -min(pre$nodes.df$times)
 
-   p1 <- ggtree(tree.full, aes(color=frequency), size=0.75, ladderize=F) +
+   p1 <- ggtree(tree.full, aes(color=frequency), size=0.75, ladderize=T) +
    geom_point() +
    scale_size_manual(values=c(1)) +
    scale_x_continuous(limits=c(0, x_max)) +
@@ -234,6 +234,7 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlig
    id_freq <- sapply(ids, function (i) if(pre$nodes.df$is_tip[i]) 0.0 else if (is.na(freq[paste0(pre$incoming[[i]])])) 0.0 else freq[paste0(pre$incoming[[i]])])
 
    ldf <- data.frame(node = ids, frequency = id_freq, tip=tip)
+   ldf <- ldf[order(ldf$node),]
    ldf$edge_id <- sapply(ldf$node, function(i) pre$incoming[[i]])
    ldf$lab <- sapply(ldf$node, function (x) {
                     a <- MRCA_lab[which(MRCA_lab==x)]
@@ -243,7 +244,7 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlig
 
    x_max <- -min(pre$nodes.df$times)
 
-   p1 <- ggtree(tree.full, aes(color=frequency), size=0.75, ladderize=F) +
+   p1 <- ggtree(tree.full, aes(color=frequency), size=0.75, ladderize=T) +
    geom_point() +
    geom_text2(aes(label=edge_id, 
                  subset=!is.na(lab), 

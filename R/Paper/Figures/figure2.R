@@ -1,0 +1,70 @@
+library(CaveDive)
+library(rmutil)
+library(ape)
+library(ggplot2)
+library(ggtree)
+library(treeio)
+library(viridis)
+library(gridExtra)
+library(RColorBrewer)
+
+set.seed(3)
+
+run_mcmc <- T
+
+data_dir <- "./tree_sim"
+if(run_mcmc) {
+    dir.create(file.path(data_dir))
+    tips <- 200
+    priors <- standard_priors(expansion_rate=1, 
+                        N_mean_log=4, 
+                        N_sd_log=1/2, 
+                        t_mid_rate=5, 
+                        K_sd_log=1, 
+                        exp_time_nu=1/2, 
+                        exp_time_kappa=1/4)
+    given <- list(n_exp=3)
+
+    sam <- runif(200,-10, 0)
+    sam <- sam - max(sam)
+    sam <- sam[order(-sam)]
+
+    sim <- expansions_simulate(priors, sam, 2, given=given)
+
+    co <- sim$co
+    params <- sim$params
+
+    set.seed(3)
+    phy.txt.div <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from)
+    phy.div <- read.tree(text=phy.txt.div$full)
+    phy <- collapse.singles(phy.div)
+
+    n_it <- 1e7
+    thinning <- n_it/1e4
+
+    start <- proc.time()
+    expansions <- run_expansion_inference(phy, priors, 2, n_it=n_it, thinning=thinning)
+    elapsed <-proc.time() - start
+
+    print(paste0(n_it," RjMCMC iterations completed. Time elapsed:"))
+    print(elapsed)
+
+    expansions <- discard_burn_in(expansions, proportion=0.1)
+    
+    saveRDS(expansions, file = paste0(data_dir, "/expansions.rds"))
+} else {
+    expansions <- readRDS(file = paste0(data_dir, "/expansions.rds"))
+}
+
+png("fig2a.png", width=1600, height=1600)
+plot(expansions, mode="summary", k_modes=3)
+dev.off()
+
+png("fig2b.png", width=1800, height=1600)
+plot(expansions, mode="modes", k_modes=3)
+dev.off()
+
+png("fig2_trace.png", width=1600, height=1600)
+plot(expansions, mode="traces")
+dev.off()
+

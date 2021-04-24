@@ -85,7 +85,7 @@ rownames(correlates) <- phy3$tree$tip.label[tip.ord]
 plot_structured_tree(phy3$tree, phy3$params$n_exp+1)
 
 ## ----run inference, message=FALSE---------------------------------------------
-n_it <- 1e7
+n_it <- 1e5
 thinning <- n_it/1e4
 phy_inf <- collapse.singles(phy3$tree)
 start <- Sys.time()
