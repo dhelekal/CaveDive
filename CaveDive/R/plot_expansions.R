@@ -1,15 +1,22 @@
 plot_persistence <- function(mcmc.df, event.df, pre, axis_title, legend_title, prior_t_given_N=NULL, correlates=NULL) {
-     p_mat <- compute_persistence(pre, event.df)
+     phy <- pre$phy
+     tree_map <- plot_tree(pre, event.df)
 
+     dat <- tree_map[["data"]]
+     dat <- dat[dat$isTip,]
+     tip.ord <- order(dat$y)
+
+     p_mat <- compute_persistence(pre, event.df)
+     p_mat <- p_mat[dat$label[tip.ord],dat$label[tip.ord]]
      p_mat[lower.tri(p_mat)]<-NA
      p_df <- melt(p_mat)
      names(p_df) <- c("sample_1", "sample_2", "value")
-     p_df$sample_1 <- factor(x = p_df$sample_1,
-                                    levels = pre$phy$tip.label,#[ord], 
-                                    ordered = TRUE)
-     p_df$sample_2 <- factor(x = p_df$sample_2,
-                                    levels = pre$phy$tip.label,#[ord], 
-                                    ordered = TRUE)
+     p_df$sample_1 <- factor(p_df$sample_1,
+                              levels = dat$label[tip.ord], 
+                              ordered = TRUE)
+     p_df$sample_2 <- factor(p_df$sample_2,
+                              levels = dat$label[tip.ord], 
+                              ordered = TRUE)
 
      heat_map <- ggplot(data = p_df, aes(x = sample_1, y = sample_2)) +
        geom_tile(aes(fill = value)) +
@@ -30,15 +37,17 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_title, legend_title, p
              legend.position = c(0.8,0.1),
              legend.title = element_text(angle = -90),
              aspect.ratio=1)
-     corr_map <- NULL
+
+     blank <- ggplot() + theme_minimal()
+     corr_map <- blank
      if(!is.null(correlates)) {
           stopifnot("Number correlate rows must match number of tips"=nrow(correlates)==pre$n_tips)
-          stopifnot("Correlates must be a data.frame with rownames equal to tip labels"=rownames(correlates)[order(rownames(correlates))]==pre$phy$tip.label[order(pre$phy$tip.label)])
+          stopifnot("Correlates must be a data.frame with rownames equal to tip labels"=rownames(correlates)[order(rownames(correlates))]==phy$tip.label[order(phy$tip.label)])
           r_df <- correlates
           r_df$tip_id <- rownames(r_df) 
           r_df <- melt(r_df)
           r_df$tip_id <- factor(x = r_df$tip_id,
-                          levels = pre$phy$tip.label, 
+                          levels = dat$label[tip.ord], 
                           ordered = TRUE)
 
           corr_map <- ggplot(data = r_df, aes(x = tip_id, y = variable)) +
@@ -57,9 +66,7 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_title, legend_title, p
                                legend.position="right",
                                legend.title = element_text(angle = -90))
      }
-     tree_map <- plot_tree(pre, event.df)
      tree_map_t <- tree_map + coord_flip() + scale_x_reverse()
-     blank <- ggplot() + theme_minimal()
      ggarrange(blank, tree_map_t, blank, tree_map, heat_map, corr_map, widths=c(1,3,0.75), heights=c(1,3))
 }
 
@@ -200,15 +207,13 @@ prior_mixture <- function(prior, cond_values) {
 }
 
 compute_persistence <- function(pre, df) {
-    p_mat <- matrix(data = 0, nrow = pre$n_tips, ncol = pre$n_tips, byrow = FALSE,
-       dimnames = list(pre$phy$tip.label,pre$phy$tip.label))
+    p_mat <- matrix(data = 0.0, nrow = pre$n_tips, ncol = pre$n_tips, byrow = FALSE,
+       dimnames = list(pre$phy$tip.label, pre$phy$tip.label))
     for(i in unique(df$it)) {
         subs_it <- df[which(df$it == i), ]
         partitions <- extract_lineage_times(pre, pre$phy$node.label[(c(pre$edges.df$node.child[subs_it$br],pre$root_idx)-pre$n_tips)], c(subs_it$time, -Inf), return_partitions=TRUE)$partitions
         for(p in partitions) {
-            for(t1 in p){
-                p_mat[t1,p] <- p_mat[t1,p] + 1
-            }
+          p_mat[p,p] <- p_mat[p,p] + 1
         }
     }
     p_mat <- p_mat/length(unique(df$it))
