@@ -40,8 +40,8 @@ First we set up the MCMC parameters
 ```{r, set parameters}
 set.seed(1)
 
-burn_in <- 0.1
-n_it <- 2e7
+burn_in <- 0.2
+n_it <- 1e8
 thinning <- n_it/1e4
 ```
 
