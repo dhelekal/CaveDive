@@ -316,19 +316,19 @@ plot_mode_summary <- function(mcmc.df, event.df, priors) {
   names(br.labs) <- unique(mode_br_df$br)
 
   K_facet <- ggplot(mode_br_df) + 
-             geom_histogram(aes(x=K, y = stat(count / sum(count))), bins=100) +
+             geom_histogram(aes(x=K, y = ..density..), bins=100) +
              prior_mixture(function(x,N) exp(priors$prior_K_given_N(x,N)),mode_br_mcmc_df$N) +
              geom_rect(data = dummy_gt, aes(xmin = ci_lo.K, xmax = ci_hi.K), ymin=-Inf, ymax=Inf, fill="blue", alpha=0.3) +
-             facet_wrap(~br, labeller=labeller(br = br.labs)) +
+             facet_wrap(~br, labeller=labeller(br = br.labs), scales="free") +
              labs(x="Carrying Capacity") +
              theme_bw() +
              theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),text = element_text(size=20))
 
   t_mid_facet <- ggplot(mode_br_df) + 
-             geom_histogram(aes(x=t_mid, y = stat(count / sum(count))), bins=100) +
+             geom_histogram(aes(x=t_mid, y = ..density..), bins=100) +
              prior_mixture(function(x,N) exp(priors$prior_t_mid_given_N(x,N)),mode_br_mcmc_df$N) +
              geom_rect(data = dummy_gt, aes(xmin = ci_lo.t_mid, xmax = ci_hi.t_mid), ymin=-Inf, ymax=Inf, fill="blue", alpha=0.3) +
-             facet_wrap(~br, labeller=labeller(br = br.labs)) +
+             facet_wrap(~br, labeller=labeller(br = br.labs), scales="free") +
              labs(x="Time to Midpoint") +
              theme_bw() +
              theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),text = element_text(size=20))
