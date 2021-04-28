@@ -8,14 +8,14 @@ output:
 ---
 
 ```{r, eval mcmc}
-eval_mcmc <- F
+eval_mcmc <- T
 ```
 
 ```{bash, clean directory, include=FALSE, eval=eval_mcmc}
-rm -rf ./sim_one_exp
-rm -rf ./tmp
+rm -rf ./Paper/Sim/sim_one_exp
+rm -rf ./Paper/Sim/tmp
 
-mkdir tmp
+mkdir ./Paper/Sim/tmp
 ```
 
 ```{r setup, include=FALSE}
@@ -31,8 +31,8 @@ library(viridis)
 library(rjson)
 library(egg)
 
-dir.create(file.path(".", "sim_one_exp"))
-base_dir <- "./sim_one_exp"
+dir.create(file.path("./Paper/Sim/", "sim_one_exp"))
+base_dir <- "./Paper/Sim/sim_one_exp"
 ```
 ## Simulation Validation
 
@@ -46,9 +46,9 @@ This section validates how well are model parameters recovered across different 
 ```{r, set parameters}
 set.seed(1)
 
-burn_in <- 1000
+burn_in <- 0.1
 n_it <- 1e7
-thinning <- n_it/1e4
+thinning <- n_it/1e4  
 
 repetitions <- 300
 dims <- 1
@@ -90,12 +90,12 @@ for(i in c(1:length(lambdar_range))) {
 
 ### Simulate the parameters of individual processes
 ```{bash, simulate parameters, results=FALSE, eval=eval_mcmc}
-find ./sim_one_exp | grep .*.txt | xargs -L 1 cat | parallel -j 20 --verbose --tmpdir ./tmp -n 10 --halt-on-error 2 eval Rscript "../../R/Scripts/simulate_tree.R {}"
+find ./Paper/Sim/sim_one_exp | grep .*.txt | xargs -L 1 cat | parallel -j 20 --verbose --tmpdir ./Paper/Sim/tmp -n 10 --halt-on-error 2 eval Rscript "./Scripts/simulate_tree.R {}"
 ```
 
 ### Run MCMC inference 
 ```{bash, run mcmc, results=FALSE, eval=eval_mcmc}
-find ./sim_one_exp | grep .*tree.nwk | xargs dirname | parallel -j 20 --verbose --tmpdir ./tmp --halt-on-error 2 eval Rscript "../../R/Scripts/run_expansions_inference_nwk.R -n 2e6 -t 2e2 --lambdar 5 -s 1 -f {}/tree.nwk -o {}"
+find ./Paper/Sim/sim_one_exp | grep .*tree.nwk | xargs dirname | parallel -j 20 --verbose --tmpdir ./Paper/Sim/tmp --halt-on-error 2 eval Rscript "./Scripts/run_expansions_inference_nwk.R -n 1e7 -t 1e3 --lambdar 5 -s 1 -f {}/tree.nwk -o {}"
 ```
 
 ### Produce plots for dimension mode analysis
@@ -117,7 +117,7 @@ compute_ci <- function(x, conf=0.95) {
   return(ci)
 }
 
-experiment_specs <- list.files(path = "./sim_one_exp/test_out", pattern=".*tree_params.json", full.names = TRUE, recursive = TRUE)
+experiment_specs <- list.files(path = paste0(base_dir,"/test_out"), pattern=".*tree_params.json", full.names = TRUE, recursive = TRUE)
 experiment_dirs <- dirname(experiment_specs)
 
 results_data <- lapply(c(1:length(experiment_specs)), function(i){
@@ -125,9 +125,6 @@ results_data <- lapply(c(1:length(experiment_specs)), function(i){
   meta_data <- sim_data$meta
   sim_data <- lapply(sim_data, unlist) 
   sim_data <- lapply(sim_data, as.numeric) 
-
-  tree <- read.tree(file = paste0(experiment_dirs[i],"/tree.nwk")) 
-  pre <- structured_coal.preprocess_phylo(tree, order_edges_by_node_label=FALSE) 
 
   dim.gt <- sim_data$n_exp
   t_mid.gt <- sim_data$t_mid
@@ -138,10 +135,13 @@ results_data <- lapply(c(1:length(experiment_specs)), function(i){
   time.gt <- time.gt[-length(time.gt)]  
 
   ### Check that we got the number of expansions approximately right  
-  mcmc_data <- read.csv(paste0(experiment_dirs[i],"/mcmc_data.csv"))
-  mcmc_data <- mcmc_data[burn_in:nrow(mcmc_data),]
-  event_data <- read.csv(paste0(experiment_dirs[i],"/event_data.csv"))
-  event_data <- event_data[which(event_data$it >= burn_in), ]
+  expansions <- readRDS(paste0(experiment_dirs[i],"/expansions.rds"))
+  expansions <- discard_burn_in(expansions, proportion=burn_in)
+  pre <- expansions$phylo_preprocessed
+
+  mcmc_data <- expansions$model_data
+  event_data <- expansions$expansion_data
+
   p_correct_dim <- length(which(mcmc_data$dim==dim.gt))/length(mcmc_data$dim)
   expected_dim <- sum(mcmc_data$dim)/length(mcmc_data$dim)
 
@@ -172,8 +172,8 @@ results_data <- lapply(c(1:length(experiment_specs)), function(i){
     ci_t_mid <- compute_ci(event_br_marginal$t_mid)
     expected_K <- median(event_br_marginal$K)
     ci_K <- compute_ci(event_br_marginal$K)
-    expected_T <- median(event_br_marginal$time)
-    ci_T <- compute_ci(event_br_marginal$time)
+    expected_T <- median(-event_br_marginal$time)
+    ci_T <- compute_ci(-event_br_marginal$time)
 
     ### jaccard index
     mrca.gt <- pre$edges.df$node.child[br.gt]
@@ -199,6 +199,7 @@ results_data <- lapply(c(1:length(experiment_specs)), function(i){
   return(list(p_correct_dim=p_correct_dim, 
               expected_dim=expected_dim, 
               mode_dim=mode_dim, 
+              mode_branch=mode_branch,
               expected_N=expected_N,
               ci_N_lo=ci_N[1],
               ci_N_hi=ci_N[2],
@@ -219,19 +220,20 @@ results_data <- lapply(c(1:length(experiment_specs)), function(i){
               dim_gt=dim.gt,
               K_gt=K.gt,
               N_gt=N.gt,
-              time_gt=time.gt,
-              N_gt=N.gt))
+              time_gt=-time.gt,
+              N_gt=N.gt,
+              br_gt=br.gt))
 })
 ```
 
 ```{r, create dataframe}
 names(results_data) <- c(1:length(results_data)) 
 data_df <- do.call(rbind.data.frame, results_data)
-data_df_dim <- data_df[which(data_df$mode_dim==1),]
+data_df_dim <- data_df[which(data_df$mode_dim==1 && data_df$mode_branch==data_df$br_gt),]
 data_df_m <- data_df_dim[which(data_df_dim$is_mode_correct),]
 ```
 
-```{r, plot mode dim, eval=T}
+```{r, plot mode dim, eval=T, out.width="90%", fig.width=20, fig.height=20, dpi=300, fig.align="center"}
 dim_hist <- ggplot(data_df, aes(x=mode_dim))
 dim_hist <- dim_hist + ggtitle("Mode Dimension")
 dim_hist <- dim_hist + geom_histogram(aes(y = stat(count / sum(count))), binwidth=1) + ylim(c(0,1)) 
@@ -259,58 +261,55 @@ jacc_hist <- jacc_hist + theme(axis.text.x = element_text(angle = 45, hjust = 1)
                       )
 
 p <- ggarrange(dim_hist, p_hist, jacc_hist, widths=c(2,2,2), heights=c(1))
-png("dim_summary.png", width=1600,height=800)
+png("./Paper/Figures/dim_summary.png", width=1600,height=800)
 p
 dev.off()
-p
 ```
 
-```{r, plot param panel, eval=T}
+```{r, plot param panel, eval=T, out.width="90%", fig.width=20, fig.height=20, dpi=300, fig.align="center"}
+lims <- c(min(data_df_dim$ci_N_lo),max(data_df_dim$ci_N_hi))
 N_scatter <- ggplot(data_df_dim, aes(x=N_gt, y=expected_N))
 N_scatter <- N_scatter + geom_point()
 N_scatter <- N_scatter + geom_errorbar(aes(ymin = ci_N_lo, ymax = ci_N_hi), width = 0.2)
 N_scatter <- N_scatter + ggtitle("True Background Population versus Posterior Median")
+N_scatter <- N_scatter + scale_x_continuous(trans="log", limits=lims) + scale_y_continuous(trans="log", limits=lims)
 N_scatter <- N_scatter + theme_bw() + labs(x ="True Background Population", y="Median Background Population") + coord_fixed(ratio = 1)
 N_scatter <- N_scatter + theme(axis.text.x = element_text(angle = 45, hjust = 1), text = element_text(size=20))
 N_scatter <- N_scatter + geom_abline(intercept = 0, slope = 1)
-lims <- c(min(data_df_dim$ci_N_lo),max(data_df_dim$ci_N_hi))
-N_scatter <- N_scatter + xlim(lims) + ylim(lims)
 
+lims <- c(min(data_df_dim$ci_K_lo),max(data_df_dim$ci_K_hi))
 K_scatter <- ggplot(data_df_dim, aes(x=K_gt, y=expected_K))
 K_scatter <- K_scatter + geom_point()
 K_scatter <- K_scatter + geom_errorbar(aes(ymin = ci_K_lo, ymax = ci_K_hi), width = 0.2)
 K_scatter <- K_scatter + ggtitle("True Carrying Capacity versus Posterior Median")
+K_scatter <- K_scatter + scale_x_continuous(trans="log", limits=lims) + scale_y_continuous(trans="log", limits=lims)
 K_scatter <- K_scatter + theme_bw() + labs(x ="True Carrying Capacity", y="Median Carrying Capacity") + coord_fixed(ratio = 1)
 K_scatter <- K_scatter + theme(axis.text.x = element_text(angle = 45, hjust = 1), text = element_text(size=20))
 K_scatter <- K_scatter + geom_abline(intercept = 0, slope = 1)
-lims <- c(min(data_df_dim$ci_K_lo),max(data_df_dim$ci_K_hi))
-K_scatter <- K_scatter + xlim(lims) + ylim(lims)
 
+lims <- c(min(data_df_dim$ci_T_lo),max(data_df_dim$ci_T_hi))
 T_scatter <- ggplot(data_df_dim, aes(x=time_gt, y=expected_T))
 T_scatter <- T_scatter + geom_point()
 T_scatter <- T_scatter + geom_errorbar(aes(ymin = ci_T_lo, ymax = ci_T_hi), width = 0.2)
 T_scatter <- T_scatter + ggtitle("True Time of Expansions versus Posterior Median")
+T_scatter <- T_scatter + scale_x_continuous(trans="log", limits=lims) + scale_y_continuous(trans="log", limits=lims)
 T_scatter <- T_scatter + theme_bw() + labs(x ="True Time of Expansions", y="Median Time of Expansions") + coord_fixed(ratio = 1)
 T_scatter <- T_scatter + theme(axis.text.x = element_text(angle = 45, hjust = 1), text = element_text(size=20))
 T_scatter <- T_scatter + geom_abline(intercept = 0, slope = 1)
-lims <- c(min(data_df_dim$ci_T_lo),max(data_df_dim$ci_T_hi))
-T_scatter <- T_scatter + xlim(lims) + ylim(lims)
 
+lims <- c(min(data_df_dim$ci_t_mid_lo),max(data_df_dim$ci_t_mid_hi))
 t_mid_scatter <- ggplot(data_df_dim, aes(x=t_mid_gt, y=expected_t_mid))
 t_mid_scatter <- t_mid_scatter + geom_point()
 t_mid_scatter <- t_mid_scatter + geom_errorbar(aes(ymin = ci_t_mid_lo, ymax = ci_t_mid_hi), width = 0.2)
 t_mid_scatter <- t_mid_scatter + ggtitle("True Time to Midpoint versus Posterior Median")
+t_mid_scatter <- t_mid_scatter + scale_x_continuous(trans="log", limits=lims) + scale_y_continuous(trans="log", limits=lims)
 t_mid_scatter <- t_mid_scatter + theme_bw() + labs(x ="True Time to Midpoint", y="Median Time to Midpoint") + coord_fixed(ratio = 1)
 t_mid_scatter <- t_mid_scatter + theme(axis.text.x = element_text(angle = 45, hjust = 1), text = element_text(size=20))
 t_mid_scatter <- t_mid_scatter + geom_abline(intercept = 0, slope = 1)
-lims <- c(min(data_df_dim$ci_t_mid_lo),max(data_df_dim$ci_t_mid_hi))
-t_mid_scatter <- t_mid_scatter + xlim(lims) + ylim(lims)
 
 p <- ggarrange(N_scatter, K_scatter, t_mid_scatter, T_scatter, widths=c(2,2), heights=c(2,2))
-png("param_summary.png", width=1600,height=1600)
+png("./Paper/Figures/param_summary.png", width=1600,height=1600)
 p
 dev.off()
-p
-
 ```
 ### Done

@@ -92,9 +92,5 @@ priors <- standard_priors(expansion_rate=1,
     exp_time_kappa=kappa)
 
 expansions <- run_expansion_inference(tree, priors, 1, n_it=n_it, thinning=thinning)
-mcmc_out <- expansions$mcmc_out
-
-dfs <- mcmc2data.frame(mcmc_out)
-write.csv(dfs$mcmc.df, "./mcmc_data.csv")
-write.csv(dfs$event.df, "./event_data.csv")
+saveRDS(expansions, "./expansions.rds")
 warnings()
