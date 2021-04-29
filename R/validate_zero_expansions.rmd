@@ -12,8 +12,8 @@ eval_mcmc <- TRUE
 ```
 
 ```{bash, clean directory, include=FALSE, eval=eval_mcmc}
-rm -rf ./sim_zero_exp
-rm -rf ./tmp
+rm -rf ./Paper/Sim/sim_zero_exp
+rm -rf ./Paper/Sim/tmp
 
 mkdir tmp
 ```
@@ -30,8 +30,8 @@ library(treeio)
 library(viridis)
 library(rjson)
 
-dir.create(file.path(".", "sim_zero_exp"))
-base_dir <- "./sim_zero_exp"
+dir.create(file.path("./Paper/Sim/", "sim_zero_exp"))
+base_dir <- "./Paper/Sim/sim_zero_exp"
 ```
 ## Simulation Validation
 
@@ -45,13 +45,13 @@ This section validates how well are model parameters recovered across different 
 ```{r, set parameters}
 set.seed(1)
 
-burn_in <- 1000
+burn_in <- 0.1
 n_it <- 2e6
 thinning <- n_it/1e4
 
 repetitions <- 100
 dims <- 0
-lambdar_range <- c(10)
+lambdar_range <- c(5)
 pop_range <- c(4)
 ```
 
@@ -85,17 +85,17 @@ for(j in c(1:length(pop_range))) {
 
 ### Simulate the parameters of individual processes
 ```{bash, simulate parameters, results=FALSE, eval=eval_mcmc}
-find ./sim_zero_exp | grep .*.txt | xargs -L 1 cat | parallel -j 20 --verbose --tmpdir ./tmp -n 8 --halt-on-error 2 eval Rscript "../../R/Scripts/simulate_tree.R {}"
+find ./sim_zero_exp | grep .*.txt | xargs -L 1 cat | parallel -j 20 --verbose --tmpdir ./tmp -n 8 --halt-on-error 2 eval Rscript "./Scripts/simulate_tree.R {}"
 ```
 
 ### Run MCMC inference 
 ```{bash, run mcmc, results=FALSE, eval=eval_mcmc}
-find ./sim_zero_exp | grep .*tree.nwk | xargs dirname | parallel -j 20 --verbose --tmpdir ./tmp --halt-on-error 2 eval Rscript "../../R/Scripts/run_expansions_inference_nwk.R -n 2e6 -t 2e2 --lambdar 1 -s 1 -f {}/tree.nwk -o {}"
+find ./sim_zero_exp | grep .*tree.nwk | xargs dirname | parallel -j 20 --verbose --tmpdir ./tmp --halt-on-error 2 eval Rscript "./Scripts/run_expansions_inference_nwk.R -n 2e6 -t 2e2 --lambdar 1 -s 1 -f {}/tree.nwk -o {}"
 ```
 
 ### Produce plots for dimension mode analysis
 ```{r, process data}
-experiment_specs <- list.files(path = "./sim_zero_exp/test_out", pattern=".*tree_params.json", full.names = TRUE, recursive = TRUE)
+experiment_specs <- list.files(path = paste0(base_dir,"/test_out"), pattern=".*tree_params.json", full.names = TRUE, recursive = TRUE)
 experiment_dirs <- dirname(experiment_specs)
 
 results_data <- lapply(c(1:length(experiment_specs)), function(i){
@@ -103,9 +103,6 @@ results_data <- lapply(c(1:length(experiment_specs)), function(i){
   meta_data <- sim_data$meta
   sim_data <- lapply(sim_data, unlist) 
   sim_data <- lapply(sim_data, as.numeric) 
-
-  tree <- read.tree(file = paste0(experiment_dirs[i],"/tree.nwk")) 
-  pre <- structured_coal.preprocess_phylo(tree) 
 
   dim.gt <- sim_data$n_exp
   t_mid.gt <- sim_data$t_mid
@@ -115,13 +112,16 @@ results_data <- lapply(c(1:length(experiment_specs)), function(i){
   br.gt <- sim_data$root_set
   time.gt <- time.gt[-length(time.gt)]  
 
-  ### Check that we got the number of expansions approximately right  
-  mcmc_data <- read.csv(paste0(experiment_dirs[i],"/mcmc_data.csv"))
-  mcmc_data <- mcmc_data[burn_in:nrow(mcmc_data),]
-  event_data <- read.csv(paste0(experiment_dirs[i],"/event_data.csv"))
-  event_data <- event_data[which(event_data$it >= burn_in), ]
+  ### Check that we got the number of expansions approximately right 
+  expansions <- readRDS(paste0(experiment_dirs[i],"/expansions.rds"))
+  expansions <- discard_burn_in(expansions, proportion=burn_in)
+  pre <- expansions$phylo_preprocessed
+
+  mcmc_data <- expansions$model_data
+  event_data <- expansions$expansion_data
+
   p_correct_dim <- length(which(mcmc_data$dim==dim.gt))/length(mcmc_data$dim)
-  expected_dim <- sum(mcmc_data$dim)/length(mcmc_data$dim)
+  expected_dim <- mean(mcmc_data$dim)
 
   unique.dim <- unique(mcmc_data$dim)
   mode_dim <- unique.dim[which.max(sapply(unique.dim, function(x) length(which(mcmc_data$dim == x))))]
@@ -131,7 +131,7 @@ results_data <- lapply(c(1:length(experiment_specs)), function(i){
   correct_dim_it <- correct_dim$it
 
   if(length(correct_dim_it) > 0) {
-    exp_N <- sum(correct_dim$N)/(length(correct_dim$N))
+    exp_N <- mean(correct_dim$N)
   } else {
     exp_N <- NA
   }
