@@ -295,7 +295,7 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlig
    return(p)
 }
 
-plot_mode_summary <- function(mcmc.df, event.df, priors) {
+plot_mode_summary <- function(mcmc.df, event.df, priors, gt.K=NULL, gt.t_mid=NULL) {
   mode_br_df <- event.df[which(event.df$is.mode),]
   mode_br_mcmc_df <- mcmc.df[mcmc.df$it %in% mode_br_df$it, ]
 
@@ -312,13 +312,25 @@ plot_mode_summary <- function(mcmc.df, event.df, priors) {
   dummy_gt$ci_lo.t_mid <- sapply(t_mid_ci, function (x) x[1])
   dummy_gt$ci_hi.t_mid <- sapply(t_mid_ci, function (x) x[2])
 
+  if(!is.null(gt.K)) {
+     dummy_gt$gt.K <- gt.K
+  }
+
+  if(!is.null(gt.t_mid)) {
+     dummy_gt$gt.t_mid <- gt.t_mid
+  }
+
   br.labs <- sapply(unique(mode_br_df$br), function (x) paste0("Branch: ",x))
   names(br.labs) <- unique(mode_br_df$br)
 
   K_facet <- ggplot(mode_br_df) + 
              geom_histogram(aes(x=K, y = ..density..), bins=100) +
              prior_mixture(function(x,N) exp(priors$prior_K_given_N(x,N)),mode_br_mcmc_df$N) +
-             geom_rect(data = dummy_gt, aes(xmin = ci_lo.K, xmax = ci_hi.K), ymin=-Inf, ymax=Inf, fill="blue", alpha=0.3) +
+             geom_rect(data = dummy_gt, aes(xmin = ci_lo.K, xmax = ci_hi.K), ymin=-Inf, ymax=Inf, fill="blue", alpha=0.3)
+
+  if(!is.null(gt.K)) K_facet <- K_facet + geom_vline(data=dummy_gt, aes(xintercept=gt.K))
+ 
+  K_facet <- K_facet + 
              facet_wrap(~br, labeller=labeller(br = br.labs), scales="free") +
              labs(x="Carrying Capacity") +
              theme_bw() +
@@ -327,7 +339,11 @@ plot_mode_summary <- function(mcmc.df, event.df, priors) {
   t_mid_facet <- ggplot(mode_br_df) + 
              geom_histogram(aes(x=t_mid, y = ..density..), bins=100) +
              prior_mixture(function(x,N) exp(priors$prior_t_mid_given_N(x,N)),mode_br_mcmc_df$N) +
-             geom_rect(data = dummy_gt, aes(xmin = ci_lo.t_mid, xmax = ci_hi.t_mid), ymin=-Inf, ymax=Inf, fill="blue", alpha=0.3) +
+             geom_rect(data = dummy_gt, aes(xmin = ci_lo.t_mid, xmax = ci_hi.t_mid), ymin=-Inf, ymax=Inf, fill="blue", alpha=0.3) 
+  
+  if(!is.null(gt.t_mid)) t_mid_facet <- t_mid_facet + geom_vline(data=dummy_gt, aes(xintercept=gt.t_mid))
+
+  t_mid_facet <- t_mid_facet +
              facet_wrap(~br, labeller=labeller(br = br.labs), scales="free") +
              labs(x="Time to Midpoint") +
              theme_bw() +
