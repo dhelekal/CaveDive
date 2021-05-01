@@ -26,7 +26,8 @@ Imports:
     grid,
     gtable,
     egg,
-    pracma, 
+    pracma,
+    reshape2, 
     ape
 VignetteBuilder: knitr
 RoxygenNote: 7.1.1
