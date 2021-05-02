@@ -8,14 +8,14 @@ output:
 ---
 
 ```{r, eval mcmc}
-eval_mcmc <- TRUE
+eval_mcmc <- T
 ```
 
 ```{bash, clean directory, include=FALSE, eval=eval_mcmc}
 rm -rf ./Paper/Sim/sim_zero_exp
-rm -rf ./Paper/Sim/tmp
+rm -rf ./Paper/Sim/tmp2
 
-mkdir tmp
+mkdir ./Paper/Sim/tmp2
 ```
 
 ```{r setup, include=FALSE}
@@ -85,12 +85,12 @@ for(j in c(1:length(pop_range))) {
 
 ### Simulate the parameters of individual processes
 ```{bash, simulate parameters, results=FALSE, eval=eval_mcmc}
-find ./sim_zero_exp | grep .*.txt | xargs -L 1 cat | parallel -j 20 --verbose --tmpdir ./tmp -n 8 --halt-on-error 2 eval Rscript "./Scripts/simulate_tree.R {}"
+find ./Paper/Sim/sim_zero_exp | grep .*.txt | xargs -L 1 cat | parallel -j 10 --verbose --tmpdir ./Paper/Sim/tmp2 -n 8 --halt-on-error 2 eval Rscript "./Scripts/simulate_tree.R {}"
 ```
 
 ### Run MCMC inference 
 ```{bash, run mcmc, results=FALSE, eval=eval_mcmc}
-find ./sim_zero_exp | grep .*tree.nwk | xargs dirname | parallel -j 20 --verbose --tmpdir ./tmp --halt-on-error 2 eval Rscript "./Scripts/run_expansions_inference_nwk.R -n 2e6 -t 2e2 --lambdar 1 -s 1 -f {}/tree.nwk -o {}"
+find ./Paper/Sim/sim_zero_exp | grep .*tree.nwk | xargs dirname | parallel -j 10 --verbose --tmpdir ./Paper/Sim/tmp2 --halt-on-error 2 eval Rscript "./Scripts/run_expansions_inference_nwk.R -n 2e6 -t 2e2 --lambdar 1 -s 1 -f {}/tree.nwk -o {}"
 ```
 
 ### Produce plots for dimension mode analysis
@@ -165,6 +165,9 @@ plt <- plt + geom_histogram(colour="darkgreen", fill="white", binwidth=1)
 plt <- plt + theme_bw() + labs(x = "model index")
 plt <- plt + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 plot(plt)
+
+prop_correct <- length(which(data_df$mode_dim==0))/length(data_df$mode_dim)
+print(paste("Proportion Correct:", prop_correct))
 ```
 
 
