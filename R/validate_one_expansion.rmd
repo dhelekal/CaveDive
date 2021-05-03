@@ -277,8 +277,8 @@ N_scatter <- N_scatter + theme_bw() + labs(x ="True Background Population", y="M
 N_scatter <- N_scatter + theme(axis.text.x = element_text(angle = 45, hjust = 1), text = element_text(size=20))
 N_scatter <- N_scatter + geom_abline(intercept = 0, slope = 1)
 
-lims <- c(min(data_df_dim$ci_K_lo),max(data_df_dim$ci_K_hi))
-K_scatter <- ggplot(data_df_dim, aes(x=K_gt, y=expected_K))
+lims <- c(min(data_df_m$ci_K_lo),max(data_df_m$ci_K_hi))
+K_scatter <- ggplot(data_df_m, aes(x=K_gt, y=expected_K))
 K_scatter <- K_scatter + geom_point()
 K_scatter <- K_scatter + geom_errorbar(aes(ymin = ci_K_lo, ymax = ci_K_hi), width = 0.2)
 K_scatter <- K_scatter + ggtitle("True Carrying Capacity versus Posterior Median")
@@ -287,8 +287,8 @@ K_scatter <- K_scatter + theme_bw() + labs(x ="True Carrying Capacity", y="Media
 K_scatter <- K_scatter + theme(axis.text.x = element_text(angle = 45, hjust = 1), text = element_text(size=20))
 K_scatter <- K_scatter + geom_abline(intercept = 0, slope = 1)
 
-lims <- c(min(data_df_dim$ci_T_lo),max(data_df_dim$ci_T_hi))
-T_scatter <- ggplot(data_df_dim, aes(x=time_gt, y=expected_T))
+lims <- c(min(data_df_m$ci_T_lo),max(data_df_m$ci_T_hi))
+T_scatter <- ggplot(data_df_m, aes(x=time_gt, y=expected_T))
 T_scatter <- T_scatter + geom_point()
 T_scatter <- T_scatter + geom_errorbar(aes(ymin = ci_T_lo, ymax = ci_T_hi), width = 0.2)
 T_scatter <- T_scatter + ggtitle("True Time of Expansions versus Posterior Median")
@@ -297,8 +297,8 @@ T_scatter <- T_scatter + theme_bw() + labs(x ="True Time of Expansions", y="Medi
 T_scatter <- T_scatter + theme(axis.text.x = element_text(angle = 45, hjust = 1), text = element_text(size=20))
 T_scatter <- T_scatter + geom_abline(intercept = 0, slope = 1)
 
-lims <- c(min(data_df_dim$ci_t_mid_lo),max(data_df_dim$ci_t_mid_hi))
-t_mid_scatter <- ggplot(data_df_dim, aes(x=t_mid_gt, y=expected_t_mid))
+lims <- c(min(data_df_m$ci_t_mid_lo),max(data_df_m$ci_t_mid_hi))
+t_mid_scatter <- ggplot(data_df_m, aes(x=t_mid_gt, y=expected_t_mid))
 t_mid_scatter <- t_mid_scatter + geom_point()
 t_mid_scatter <- t_mid_scatter + geom_errorbar(aes(ymin = ci_t_mid_lo, ymax = ci_t_mid_hi), width = 0.2)
 t_mid_scatter <- t_mid_scatter + ggtitle("True Time to Midpoint versus Posterior Median")
