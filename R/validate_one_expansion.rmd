@@ -228,7 +228,7 @@ results_data <- lapply(c(1:length(experiment_specs)), function(i){
 ```{r, create dataframe}
 names(results_data) <- c(1:length(results_data)) 
 data_df <- do.call(rbind.data.frame, results_data)
-data_df_dim <- data_df[which(data_df$mode_dim==1 && data_df$mode_branch==data_df$br_gt),]
+data_df_dim <- data_df[which(data_df$mode_dim==1),]
 data_df_m <- data_df_dim[which(data_df_dim$is_mode_correct),]
 head(data_df)
 ```
