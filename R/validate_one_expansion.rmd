@@ -50,7 +50,7 @@ burn_in <- 0.1
 n_it <- 1e7
 thinning <- n_it/1e4  
 
-repetitions <- 300
+repetitions <- 100
 dims <- 1
 lambdar_range <- c(5)
 pop_range <- c(5)
@@ -90,12 +90,12 @@ for(i in c(1:length(lambdar_range))) {
 
 ### Simulate the parameters of individual processes
 ```{bash, simulate parameters, results=FALSE, eval=eval_mcmc}
-find ./Paper/Sim/sim_one_exp | grep .*.txt | xargs -L 1 cat | parallel -j 20 --verbose --tmpdir ./Paper/Sim/tmp -n 10 --halt-on-error 2 eval Rscript "./Scripts/simulate_tree.R {}"
+find ./Paper/Sim/sim_one_exp | grep .*.txt | xargs -L 1 cat | parallel -j 10 --verbose --tmpdir ./Paper/Sim/tmp -n 10 --halt-on-error 2 eval Rscript "./Scripts/simulate_tree.R {}"
 ```
 
 ### Run MCMC inference 
 ```{bash, run mcmc, results=FALSE, eval=eval_mcmc}
-find ./Paper/Sim/sim_one_exp | grep .*tree.nwk | xargs dirname | parallel -j 20 --verbose --tmpdir ./Paper/Sim/tmp --halt-on-error 2 eval Rscript "./Scripts/run_expansions_inference_nwk.R -n 1e7 -t 1e3 --lambdar 5 -s 1 -f {}/tree.nwk -o {}"
+find ./Paper/Sim/sim_one_exp | grep .*tree.nwk | xargs dirname | parallel -j 10 --verbose --tmpdir ./Paper/Sim/tmp --halt-on-error 2 eval Rscript "./Scripts/run_expansions_inference_nwk.R -n 1e7 -t 1e3 --lambdar 5 -s 1 -f {}/tree.nwk -o {}"
 ```
 
 ### Produce plots for dimension mode analysis
@@ -161,7 +161,6 @@ results_data <- lapply(c(1:length(experiment_specs)), function(i){
     unique.br <- unique(event_dim_marginal$br)
     mode_branch <- unique.br[which.max(sapply(unique.br, function(x) length(which(event_dim_marginal$br == x))))]
     ### Take mode branch marginal 
-
     is_mode_correct <- mode_branch==br.gt
 
     mode_subs <- which(event_dim_marginal$br == mode_branch)
@@ -231,6 +230,7 @@ names(results_data) <- c(1:length(results_data))
 data_df <- do.call(rbind.data.frame, results_data)
 data_df_dim <- data_df[which(data_df$mode_dim==1 && data_df$mode_branch==data_df$br_gt),]
 data_df_m <- data_df_dim[which(data_df_dim$is_mode_correct),]
+head(data_df)
 ```
 
 ```{r, plot mode dim, eval=T, out.width="90%", fig.width=20, fig.height=20, dpi=300, fig.align="center"}

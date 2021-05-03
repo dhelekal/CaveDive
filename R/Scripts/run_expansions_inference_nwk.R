@@ -68,7 +68,6 @@ if (!is.null(opt$out)) {
 }
 
 tree <- read.tree(file = tree_in)
-tree <- makeNodeLabel(tree)
 
 set.seed(opt$seed)
 setwd(file.path(".", dir_out))
