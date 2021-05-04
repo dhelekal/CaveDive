@@ -52,8 +52,8 @@ thinning <- n_it/1e4
 
 repetitions <- 10
 dims <- c(1:5)
-lambdar_range <-  c(5)
-pop_range <- c(5)
+lambdar <- 5
+pop <- 5
 ```
 
 ```{r, generate parameter specification files, eval=eval_mcmc}
@@ -62,28 +62,26 @@ dir.create(file.path(base_dir, "test_out"))
 
 seed <- 0
 
-for(i in c(1:length(lambdar_range))) {
-  dir_name <- paste0("lambdar_",i)
+for(i in c(1:length(dims))) {
+  dir_name <- paste0("dim_",i)
   dir.create(file.path(paste0(base_dir,"/test_spec"), dir_name))
     dir.create(file.path(paste0(base_dir,"/test_out"), dir_name))
-  for(j in c(1:length(pop_range))) {
     for (l in c(1:repetitions)) {
-      params <- c(paste0("-e ", dims),
+      params <- c(paste0("-e ", dims[i]),
                   paste0("-s ", seed),
-                  paste0("-t ", 100), 
-                  paste0("-l ", lambdar_range[i]),
-                  paste0("--meanscale ", pop_range[i]),
+                  paste0("-t ", 60+dims[i]*40), 
+                  paste0("-l ", lambdar),
+                  paste0("--meanscale ", pop),
                   paste0("--sdscale ", 1/2),
                   paste0("--kappa ", 1/4),
                   paste0("--sdk ", 0.5),
-                  paste0("-o ",base_dir,"/test_out/",dir_name, "/pop_",j,"_r_",l),
-                  paste0("--metadata ", paste0("\"","lambdar_idx:",i,",N_idx:",j,"\""))) 
-      fname <- paste0("pop_",j,"_r_",l,".txt")
+                  paste0("-o ",base_dir,"/test_out/",dir_name, "/r_",l),
+                  paste0("--metadata ", paste0("\"","dim_idx:",i,"\""))) 
+      fname <- paste0("dim_",i,"_r_",l,".txt")
       fileConn<-file(paste0(base_dir,"/test_spec/", dir_name,"/", fname))
         writeLines(params, fileConn)
       close(fileConn)
       seed <- seed+1
-    }
   }
 }
 ```
