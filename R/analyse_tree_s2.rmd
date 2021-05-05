@@ -1,0 +1,140 @@
+---
+title: "Analyse tree"
+author: "David Helekal"
+date: "12/2/2020"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r run mcmc, include=FALSE}
+run_mcmc=T
+```
+
+```{bash, clean directory, include=FALSE, eval=run_mcmc}
+rm -rf ./mcmc_out
+mkdir mcmc_out
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(CaveDive)
+library(rmutil)
+library(ape)
+library(ggplot2)
+library(ggtree)
+library(treeio)
+library(viridis)
+library(rjson)
+library(gridExtra)
+
+base_dir <- "./mcmc_out"
+```
+## Real-life phylogeny analysis
+
+In this notebook a single tree read from a newick string is analysed.
+We proceed by inferring the posterior via RjMCMC, followed by it's analyses. 
+
+### MCMC Controls
+First we set up the MCMC parameters
+```{r, set parameters}
+set.seed(2)
+
+burn_in <- 0.2
+n_it <- 1e8
+thinning <- n_it/1e4
+```
+
+### Priors
+Next, we parametrise and ready the priors for inference.
+We use the following parameters:
+- $poisson(1)$ as the prior on the number of expansions
+- $lognormal(3,3)$ as a relatively uninformative prior on parent population size
+- $exp(10)$ as the prior on how long it takes for an expansion to reach half its carrying capacity in non-dimensional time units
+- $lognormal(\log(N), 1/2)$ where $N$ is the parent population size, as the prior on carrying capacities of individual expansions
+- $gamma$ with mean $\frac{N}{2}$ and variance $\frac{N}{2}$ where $N$ is the parent population size as the prior on when expansions happen
+N.B.: One should note that the model is conditional on the size of the parent population which effectively determines the tree scale. As such it is imperative that there is sufficient signal to infer this parameter with high enough confidence.
+
+```{r, set priors}
+priors <- standard_priors(expansion_rate=1, 
+                    N_mean_log=3, 
+                    N_sd_log=3, 
+                    t_mid_rate=5, 
+                    K_sd_log=1, 
+                    exp_time_nu=1/2, 
+                    exp_time_kappa=1/2)
+```
+
+### Run MCMC
+We now read the tree and run the MCMC.
+```{r, run MCMC, eval=run_mcmc}
+
+tree_in <- list.files(pattern=".*\\.nwk")
+if (length(tree_in) > 0) {
+  tree <- read.tree(file = tree_in)
+} else {
+  tree_in <- list.files(pattern=".*\\.tre")
+  tree <- read.nexus(file = tree_in)
+}
+tree <- makeNodeLabel(tree)
+tree <- ladderize(tree, right = F)
+
+if(length(tree$edge.length[tree$edge.length<0]) > 0) print("Negative branch lengths encountered and rounded to 0")
+
+tree$edge.length[tree$edge.length<0]<-0
+
+start <- proc.time()
+expansions <- run_expansion_inference(tree, priors, 1, n_it=n_it, thinning=thinning)
+elapsed <-proc.time() - start
+
+print(paste0(n_it," RjMCMC iterations completed. Time elapsed:"))
+print(elapsed)
+```
+
+### Process MCMC data
+```{r, process MCMC data, eval=run_mcmc}
+    saveRDS(expansions, file = paste0(base_dir, "/expansions_s2.rds"))
+```
+
+```{r, read cached dataframes, eval=!run_mcmc, include=F}
+    expansions <- readRDS(file = paste0(base_dir, "/expansions_s2.rds"))
+```
+
+```{r, discard burn-in}
+    expansions <- discard_burn_in(expansions, proportion=burn_in)
+```
+
+```{r, plot traces, out.width="90%", fig.width=10, fig.height=10, dpi=300, fig.align="center", message=FALSE}
+  plot(expansions, mode="traces")
+```
+
+### Inspect the base model parameters
+We're mostly interested in the model indicator trace and histogram, as this indicates the number of expansions.
+The population size trace acts as a good sanity check as well.
+```{r, select model, out.width="90%", fig.width=20, fig.height=20, dpi=300, fig.align="center", message=FALSE}
+unique_dims <- unique(expansions$model_data$dim)
+dim_counts <- sapply(unique_dims, function(i) length(which(expansions$model_data$dim==i)))
+mode_dim <- unique_dims[which.max(dim_counts)]
+if (mode_dim > 0) {
+  plot(expansions, mode="summary", k_modes=mode_dim)
+} else {
+  plot(expansions, mode="summary")
+}
+print(paste0("The mode for the number of expansions is: ", mode_dim))
+```
+
+### Analyse the marginal corresponding to the number of expansion mode
+We will look in detail at the marginal corresponding to the mode model, and inspect the top $K$ most likely expansions
+
+```{r, check mode dim greater zero}
+if(mode_dim == 0) {
+  eval_events<-FALSE
+  print(paste0("No events detected"))
+} else {
+  eval_events<-TRUE
+}
+``` 
+
+```{r, extract branch modes, , out.width="90%", fig.width=30, fig.height=15, dpi=300, fig.align="center", message=FALSE, eval=eval_events}
+plot(expansions, mode="modes", k_modes=mode_dim)
+```
