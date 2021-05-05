@@ -42,6 +42,7 @@ if(run_mcmc) {
     n_it <- 1e7
     thinning <- n_it/1e4
 
+    set.seed(1)
     start <- proc.time()
     expansions <- run_expansion_inference(phy, priors, 2, n_it=n_it, thinning=thinning)
     elapsed <-proc.time() - start
@@ -52,6 +53,18 @@ if(run_mcmc) {
     expansions <- discard_burn_in(expansions, proportion=0.1)
     
     saveRDS(expansions, file = paste0(data_dir, "/expansions.rds"))
+
+    set.seed(2)
+    start <- proc.time()
+    expansions2 <- run_expansion_inference(phy, priors, 2, n_it=n_it, thinning=thinning)
+    elapsed <-proc.time() - start
+
+    print(paste0(n_it," RjMCMC iterations completed. Time elapsed:"))
+    print(elapsed)
+
+    expansions2 <- discard_burn_in(expansions2, proportion=0.1)
+    
+    saveRDS(expansions2, file = paste0(data_dir, "/expansions2.rds"))
 } else {
     expansions <- readRDS(file = paste0(data_dir, "/expansions.rds"))
 }
