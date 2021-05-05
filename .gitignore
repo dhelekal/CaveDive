@@ -62,3 +62,4 @@ R/Paper/Figures/*/*.rds
 *event_df.csv
 
 R/Paper/Sim/*
+R/Paper/Stored Trees/*
