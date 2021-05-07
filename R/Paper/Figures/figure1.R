@@ -11,8 +11,6 @@ library(egg)
 
 set.seed(3)
 
-run_mcmc <- T
-
 tips <- 200
 priors <- standard_priors(expansion_rate=1, 
                     N_mean_log=4, 

@@ -12,7 +12,7 @@ library(egg)
 
 set.seed(1)
 
-run_mcmc <- T
+run_mcmc <- F
 
 n_it <- 1e7
 thinning <- n_it/1e4
@@ -42,7 +42,7 @@ if (run_mcmc) {
 
 expansions <- discard_burn_in(expansions, proportion=burn_in)
 
-png("fig_zika_corr.png", width=3200, height=3200)
+png("fig_zika_corr.png", width=1600, height=1600)
 plot(expansions, mode="persistence")#, correlates=corr_df, 
                                      #corr_axis_title="Antibiotic",
                                      #corr_legend_title="Resistance")

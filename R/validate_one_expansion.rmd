@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r, eval mcmc}
-eval_mcmc <- T
+eval_mcmc <- F
 ```
 
 ```{bash, clean directory, include=FALSE, eval=eval_mcmc}
@@ -50,7 +50,7 @@ burn_in <- 0.1
 n_it <- 1e7
 thinning <- n_it/1e4  
 
-repetitions <- 100
+repetitions <- 200
 dims <- 1
 lambdar_range <- c(5)
 pop_range <- c(5)
@@ -75,6 +75,7 @@ for(i in c(1:length(lambdar_range))) {
                   paste0("--meanscale ", pop_range[i]),
                   paste0("--sdscale ", 1/2),
                   paste0("--kappa ", 1/4),
+		  paste0("--nu ", 1/3),
                   paste0("--sdk ", 0.5),
                   paste0("-o ",base_dir,"/test_out/",dir_name, "/pop_",j,"_r_",l),
                   paste0("--metadata ", paste0("\"","lambdar_idx:",i,",N_idx:",j,"\""))) 
@@ -90,7 +91,7 @@ for(i in c(1:length(lambdar_range))) {
 
 ### Simulate the parameters of individual processes
 ```{bash, simulate parameters, results=FALSE, eval=eval_mcmc}
-find ./Paper/Sim/sim_one_exp | grep .*.txt | xargs -L 1 cat | parallel -j 10 --verbose --tmpdir ./Paper/Sim/tmp -n 10 --halt-on-error 2 eval Rscript "./Scripts/simulate_tree.R {}"
+find ./Paper/Sim/sim_one_exp | grep .*.txt | xargs -L 1 cat | parallel -j 10 --verbose --tmpdir ./Paper/Sim/tmp -n 11 --halt-on-error 2 eval Rscript "./Scripts/simulate_tree.R {}"
 ```
 
 ### Run MCMC inference 
@@ -267,8 +268,8 @@ dev.off()
 ```
 
 ```{r, plot param panel, eval=T, out.width="90%", fig.width=20, fig.height=20, dpi=300, fig.align="center"}
-lims <- c(min(data_df_dim$ci_N_lo),max(data_df_dim$ci_N_hi))
-N_scatter <- ggplot(data_df_dim, aes(x=N_gt, y=expected_N))
+lims <- c(min(data_df_m$ci_N_lo),max(data_df_m$ci_N_hi))
+N_scatter <- ggplot(data_df_m, aes(x=N_gt, y=expected_N))
 N_scatter <- N_scatter + geom_point()
 N_scatter <- N_scatter + geom_errorbar(aes(ymin = ci_N_lo, ymax = ci_N_hi), width = 0.2)
 N_scatter <- N_scatter + ggtitle("True Background Population versus Posterior Median")

@@ -7,10 +7,11 @@ library(treeio)
 library(viridis)
 library(gridExtra)
 library(RColorBrewer)
+library(coda)
 
 set.seed(3)
 
-run_mcmc <- T
+run_mcmc <- F
 
 data_dir <- "./tree_sim"
 if(run_mcmc) {
@@ -67,6 +68,7 @@ if(run_mcmc) {
     saveRDS(expansions2, file = paste0(data_dir, "/expansions2.rds"))
 } else {
     expansions <- readRDS(file = paste0(data_dir, "/expansions.rds"))
+    expansions2 <- readRDS(file = paste0(data_dir, "/expansions2.rds"))
 }
 
 png("fig2a.png", width=1600, height=1600)
@@ -81,3 +83,11 @@ png("fig2_trace.png", width=1600, height=1600)
 plot(expansions, mode="traces")
 dev.off()
 
+m1 <- mcmc(expansions$model_data[,2:3],thin=expansions$metadata$thinning)
+m2 <- mcmc(expansions2$model_data[,2:3],thin=expansions2$metadata$thinning)
+
+grs <- gelman.diag(mcmc.list(m1,m2))
+sink("GelmanRubinFig2.txt")
+print(grs$psrf)
+print(grs$mpsrf)
+sink()
