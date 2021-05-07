@@ -191,7 +191,7 @@ This function  exhibits saturating behaviour.\\
 While the intepretation of the carrying capacity $N$ is straightforward, we find $r$ to be best intepreted by considering the time to when the population reaches half the carrying capacity $t_{mid}$ as a function of $r$. It is straightforward to show that $t_{mid}(r) = \frac{1}{\sqrt{r}}$ 
 \begin{figure}[H].
   \centering
-     \includegraphics[width=0.4\textwidth]{../R/test_mcmc/alpha_plots}
+     %%\includegraphics[width=0.4\textwidth]{../R/test_mcmc/alpha_plots}
     \caption{$\alpha(\tau)$ under different parameters, with $T_{div}=20$}
 \end{figure}
 The integral of the reciprocal $\alpha^{-1}(\tau)$ under this formulation is then given by 
@@ -297,34 +297,27 @@ Where $f_{ln}(x; a, b)$ stands for the value of the lognormal distribution pdf w
 
 The second move is:
 \begin{gather}
-x^{(M)}_{t_{div_j}\to t_{div}^{'}}\quad\forall j < M
-\end{gather} 
-This move updates the divergence time of the $j$-th expansion. The new values are distributed according to
-\begin{gather}
-t_{div}^{'}\sim\mathcal{N}(t_{div_j}, \sigma_t)
-\end{gather}
-$\sigma_t$ is chosen dynamically as a fixed fraction of the length of the branch that corresponds to this divergence event. This is the branch that leads into the MRCA of this clonal expansion.\\
-The proposal ratio of this move is $1$.
-
-The third move is:
-\begin{gather}
 x^{(M)}_{\left(\mathbf{f}, t_{div_j}, D\right)\to \left(\mathbf{f}^{'}, t_{div}^{'}, D^{'}\right)}
 \end{gather} 
-This moves updates the colouring of the leaves and thus the memberships of clonal expansions. This is perhaps the most complicated move and proceeds as follows: \\
-Let $b_j$ denote the branch along which the divergence event for the $j$-th expansion lies, i.e. the branch leading into the MRCA of the expansion, and with $m_j$ the MRCA of the expansion. Let $\beta_1$ be a bernoulli variable with probability $1/2$. decide which direction to update the MRCA in. If $\beta_1=0$ move upwards in the tree. In this case there is only one eligible branch as in a tree the MRCA node only has one parent. If $\beta_1 = 1$ move downwards, with probability $1/2$ select one of the branches that lead into the child nodes of the MRCA. Denote the new branch as $b^{'}$, and the new MRCA, that is the child node along branch $b^{'}$, as $m^{'}$.
-We update time so that it is compatible with the new tip partition. The updated time by $t_{div}^{'}$ is distributed according to
-\begin{gather}
-t_{div}^{'}\sim U((t_{b^{'}_2}, t_{b^{'}_1}))
-\end{gather}
-where $t_{b^{'}_1}$ and $t_{b^{'}_2}$ are the times of the child and parent nodes of the branch $b^{'}$ respectively. 
+This moves updates the colouring of the leaves and thus the memberships of clonal expansions, as well as the time of the expansion. This is perhaps the most complicated move and proceeds as follows: \\
+Let $b_j$ denote the branch along which the divergence event for the $j$-th expansion lies, i.e. the branch leading into the MRCA of the expansion, and with $m_j$ the MRCA of the expansion.
+Let $t_\Delta$ be a normally distributed variable centred at $t_{div}$, $t_\Delta \sim \mathcal{N}(t_{div},\sigma_t)$. Define $dir=1$ if $t_\Delta > t_{div}$ and $dir=-1$ otherwise. If $t_\Delta$ is greater than the time of the root $t_{root}$, set $t_{div}^{'} = t_{root} - (t_\Delta - t_{root})$ so that the root acts as a reflecting boundary. Otherwise set $t_{div}^{'}= t_\Delta$.
+Set $b^{'} = b_j$, $u=0$, $v=0$. The following process gets repeated until $t_{div}^{'}$ lies within $b^{'}$, i.e. is less than the time of its parent node and greater than the time of its child.
+
+If $dir>0$ we move towards the root of the tree as follows. If the parent of $b^{'}$ is the root, set $b^{'}$ to be the other child branch exiting the root and $dir = -1$. Otherwise, Set $b^{'}$ to be the edge that terminates in the parent of $b^{'}$ and set $u=u+1$. 
+
+If $dir<0$ we move away from the root of the tree. With equal probability $1/2$ set $b^{'}$ to be one of the two branches exiting the child node of $b^{'}$ and set $v=v+1$.
+
+Finally the new branch as $b^{'}$, and the new MRCA, that is the child node along branch $b^{'}$, as $m^{'}$.
+We update time so that it is compatible with the new tip partition. =
 Colour the tips corresponding to the clade defined by $m^{'}$, with the exception of tips corresponding to clades that diverge earlier as described previously in this section.
 Finally, set the parent populations $D^{'}$ so that they are compatible with the updated divergence times and tip partition. This is done for each expansion $i$, by setting $d_i$ to be equal to the lineage membership of the parent node of the MRCA of expansion $i$.\\
 The proposal ratio for this move is:
 \begin{gather}
-\frac{\left(t_{b^{'}_1}-t_{b^{'}_2}\right)\left(1-\frac{1}{2}\delta_0\left(\beta_1\right)\right)}{\left(t_{b_{j_1}} - t_{b_{j_2}}\right)\left(1-\frac{1}{2}\delta_1\left(\beta_1\right)\right)}
+\frac{2^v}{2^u}
 \end{gather}
 
-The fourth move updates the probabilities vector $\pmb \theta$:
+The third move updates the probabilities vector $\pmb \theta$:
 \begin{gather}
   x^{(M)}_{\pmb\theta\to \pmb\theta^{'}}
 \end{gather}
@@ -334,7 +327,7 @@ The proposal ration for this move is:
 \frac{\theta_k}{\theta^{'}_l}
 \end{gather}
 
-The fifth and final move updates the effective population size $N_M$ of the parent population:
+The fourth and final move updates the effective population size $N_M$ of the parent population:
 \begin{gather}
 x^{(M)}_{N_M\to N^{'}}
 \end{gather}
