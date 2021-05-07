@@ -1,6 +1,7 @@
-plot_persistence <- function(mcmc.df, event.df, pre, axis_title, legend_title, prior_t_given_N=NULL, correlates=NULL) {
+plot_persistence <- function(mcmc.df, event.df, pre, axis_title, legend_title, correlates=NULL, modes=NULL) {
      phy <- pre$phy
-     tree_map <- plot_tree(pre, event.df)
+     if (is.null(modes)) MRCA_lab=NULL else MRCA_lab=pre$edges.df$node.child[modes]
+     tree_map <- plot_tree(pre, event.df, MRCA_lab)
 
      dat <- tree_map[["data"]]
      dat <- dat[dat$isTip,]
@@ -34,7 +35,7 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_title, legend_title, p
              panel.grid.minor = element_blank(),
              plot.margin = margin(0, 0, 0, 0, "cm"),
              text = element_text(size=30),
-             legend.position = c(0.8,0.1),
+             legend.position = c(0.8,0.2),
              legend.title = element_text(angle = -90),
              aspect.ratio=1)
 
@@ -45,7 +46,7 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_title, legend_title, p
           stopifnot("Correlates must be a data.frame with rownames equal to tip labels"=rownames(correlates)[order(rownames(correlates))]==phy$tip.label[order(phy$tip.label)])
           r_df <- correlates
           r_df$tip_id <- rownames(r_df) 
-          r_df <- melt(r_df)
+          r_df <- melt(r_df, id.vars="tip_id")
           r_df$tip_id <- factor(x = r_df$tip_id,
                           levels = dat$label[tip.ord], 
                           ordered = TRUE)
@@ -70,7 +71,7 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_title, legend_title, p
      ggarrange(blank, tree_map_t, blank, tree_map, heat_map, corr_map, widths=c(1,3,0.75), heights=c(1,3))
 }
 
-plot_tree<-function(pre,event.df){
+plot_tree<-function(pre,event.df, MRCA_lab=NULL){
    tree <- pre$phy
    freq <- table(event.df$br)
 
@@ -80,13 +81,21 @@ plot_tree<-function(pre,event.df){
    id_freq <- sapply(ids, function (i) if(pre$nodes.df$is_tip[i]) 0.0 else if (is.na(freq[paste0(pre$incoming[[i]])])) 0.0 else freq[paste0(pre$incoming[[i]])])
 
    ldf <- data.frame(node = ids, frequency = id_freq, tip=tip)
+   ldf <- ldf[order(ldf$node),]
    ldf$edge_id <- sapply(ldf$node, function(i) pre$incoming[[i]])
+   ldf$lab <- sapply(ldf$node, function (x) {
+                    a <- MRCA_lab[which(MRCA_lab==x)]
+                    if(length(a) > 0) return(a[1]) else return(NA)
+               })
    tree.full <- full_join(tree, ldf, by = 'node')
 
    x_max <- -min(pre$nodes.df$times)
 
    p1 <- ggtree(tree.full, aes(color=frequency), size=0.75, ladderize=T) +
    geom_point() +
+   geom_text2(aes(label=edge_id, 
+                 subset=!is.na(lab), 
+                 x=branch), color="red", size=12, vjust=-1) +
    scale_size_manual(values=c(1)) +
    scale_x_continuous(limits=c(0, x_max)) +
    scale_color_viridis(option="plasma") +

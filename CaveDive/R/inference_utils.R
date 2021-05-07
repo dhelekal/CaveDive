@@ -158,14 +158,13 @@ plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence"
 
      } else if (mode=="persistence") {
           stopifnot("No expansions were detected"=nrow(expansion_data)>0)
-          if (!is.null(k_modes)) warning("Unused argument: k_modes")
           plot_persistence(model_data,
                                   expansion_data, 
                                   x$phylo_preprocessed, 
                                   corr_axis_title,
                                   corr_legend_title,
-                                  prior_t_given_N=function (t, n) exp(x$priors$prior_t_given_N(t,n)), 
-                                  correlates=correlates)
+                                  correlates=correlates,
+                                  modes=modes)
 
      } else if (mode=="traces") {
           if (!is.null(k_modes)) warning("Unused argument: k_modes")
