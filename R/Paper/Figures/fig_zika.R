@@ -43,7 +43,17 @@ if (run_mcmc) {
 expansions <- discard_burn_in(expansions, proportion=burn_in)
 
 png("fig_zika_corr.png", width=1600, height=1600)
-plot(expansions, mode="persistence")#, correlates=corr_df, 
-                                     #corr_axis_title="Antibiotic",
-                                     #corr_legend_title="Resistance")
+plot(expansions, mode="persistence")
+dev.off()
+
+unique_br <- unique(expansions$expansion_data$br)
+mode_br <-unique_br[which.max(sapply(unique_br, function(br) length(which(expansions$expansion_data$br==br))))]
+br_marginal <- expansions$expansion_data[which(expansions$expansion_data$br==mode_br),]
+
+png("fig_zika_pop.png",width=1600, height=1600)
+plot(ggplot(br_marginal, aes(K)) +
+         geom_histogram(aes(y = stat(count / sum(count))), bins=100) +
+         theme_bw() + 
+         theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+               text = element_text(size=20)))
 dev.off()

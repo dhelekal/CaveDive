@@ -54,7 +54,7 @@ tree_plt <- plot_structured_tree(phy, 4) + scale_color_brewer(palette="Dark2") +
                   axis.text.x = element_blank(),
                   axis.ticks.x = element_blank(),
                   axis.line.x = element_blank(), 
-                  legend.position = c(0.7, 0.8), 
+                  legend.position = c(0.85,0.85), 
                   text = element_text(size=20))
 
 pop_fs <- data.frame(x=unlist(lapply(c(1:4), function (i) seq(from=-x_upper, to=-x_lower, length.out=500))),
@@ -79,11 +79,9 @@ func_plt <- func_plt + scale_fill_brewer(palette="Dark2")  +
          axis.line = element_line(color = 'black'), 
          text = element_text(size=20))
 
-p <- ggarrange(
+png("fig1.png",width=1600,height=900)
+ggarrange(
     func_plt,tree_plt,
     widths = c(2,2),
     heights= c(2))
-
-png("fig1.png",width=1600,height=900)
-p
 dev.off()
