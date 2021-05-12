@@ -275,7 +275,7 @@ log_posterior <- function(x,
     nodes <- pre$nodes.df
 
     n_tips <- pre$n_tips
-    root_MRCA <- pre$phy$node.label[nodes$id[which.min(nodes$times)]-n_tips]
+    root_MRCA <- pre$nodes.df$lab[pre$root_idx]
     root_div <- -Inf
 
     ### Extract values
