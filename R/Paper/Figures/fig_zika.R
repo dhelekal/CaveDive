@@ -50,10 +50,6 @@ unique_br <- unique(expansions$expansion_data$br)
 mode_br <-unique_br[which.max(sapply(unique_br, function(br) length(which(expansions$expansion_data$br==br))))]
 br_marginal <- expansions$expansion_data[which(expansions$expansion_data$br==mode_br),]
 
-png("fig_zika_pop.png",width=1600, height=1600)
-plot(ggplot(br_marginal, aes(K)) +
-         geom_histogram(aes(y = stat(count / sum(count))), bins=100) +
-         theme_bw() + 
-         theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),
-               text = element_text(size=20)))
+png("fig_zika_pop.png",width=800, height=1600)
+plot(expansions, mode="modes", k_modes=1)
 dev.off()

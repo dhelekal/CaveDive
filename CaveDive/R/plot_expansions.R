@@ -118,12 +118,14 @@ plot_summary <- function (model_data, expansion_data, phylo_preprocessed, priors
      hist_dim <- ggplot(model_data, aes(dim)) +  
         geom_histogram(aes(y = stat(count / sum(count))), binwidth=1) + 
         theme_bw() +
+        xlab("Number of Expansions") + 
         scale_fill_brewer(palette="Dark2")  + 
         theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),
               text = element_text(size=20))
      hist_N <- ggplot(model_data, aes(N)) +
          geom_histogram(aes(y = stat(count / sum(count))), bins=100) +
          theme_bw() + 
+         xlab("N")
          scale_fill_brewer(palette="Dark2")  + 
          theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),
                text = element_text(size=20))
