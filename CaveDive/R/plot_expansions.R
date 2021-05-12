@@ -64,6 +64,7 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_title, legend_title, c
                                panel.grid.major = element_blank(),
                                panel.grid.minor = element_blank(),
                                text = element_text(size=30),
+                               axis.text.x = element_text(size=18, angle=45),
                                legend.position="right",
                                legend.title = element_text(angle = -90))
      }
@@ -304,9 +305,12 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlig
    return(p)
 }
 
-plot_mode_summary <- function(mcmc.df, event.df, priors, gt.K=NULL, gt.t_mid=NULL) {
-  mode_br_df <- event.df[which(event.df$is.mode),]
-  mode_br_mcmc_df <- mcmc.df[mcmc.df$it %in% mode_br_df$it, ]
+plot_mode_summary <- function(mcmc.df, event.df, priors, k_modes, gt.K=NULL, gt.t_mid=NULL) {
+  mcmc_df_k <- mcmc.df[which(mcmc.df$dim==k_modes), ]   
+  event_df_k <- event.df[event.df$it %in% mcmc_df_k$it, ]
+
+  mode_br_df <- event_df_k[which(event_df_k$is.mode),]
+  mode_br_mcmc_df <- mcmc_df_k[mcmc_df_k$it %in% mode_br_df$it, ]
 
   dummy_gt <- data.frame(br=unique(mode_br_df$br))
   dummy_gt$median.K <- sapply(dummy_gt$br, function (x) median(mode_br_df$K[which(mode_br_df$br==x)]))
@@ -337,7 +341,7 @@ plot_mode_summary <- function(mcmc.df, event.df, priors, gt.K=NULL, gt.t_mid=NUL
              prior_mixture(function(x,N) exp(priors$prior_K_given_N(x,N)),mode_br_mcmc_df$N) +
              geom_rect(data = dummy_gt, aes(xmin = ci_lo.K, xmax = ci_hi.K), ymin=-Inf, ymax=Inf, fill="blue", alpha=0.3)
 
-  if(!is.null(gt.K)) K_facet <- K_facet + geom_vline(data=dummy_gt, aes(xintercept=gt.K))
+  if(!is.null(gt.K)) K_facet <- K_facet + geom_vline(data=dummy_gt, aes(xintercept=gt.K), color="red", lwd=2)
  
   K_facet <- K_facet + 
              facet_wrap(~br, labeller=labeller(br = br.labs), scales="free") +
@@ -350,7 +354,7 @@ plot_mode_summary <- function(mcmc.df, event.df, priors, gt.K=NULL, gt.t_mid=NUL
              prior_mixture(function(x,N) exp(priors$prior_t_mid_given_N(x,N)),mode_br_mcmc_df$N) +
              geom_rect(data = dummy_gt, aes(xmin = ci_lo.t_mid, xmax = ci_hi.t_mid), ymin=-Inf, ymax=Inf, fill="blue", alpha=0.3) 
   
-  if(!is.null(gt.t_mid)) t_mid_facet <- t_mid_facet + geom_vline(data=dummy_gt, aes(xintercept=gt.t_mid))
+  if(!is.null(gt.t_mid)) t_mid_facet <- t_mid_facet + geom_vline(data=dummy_gt, aes(xintercept=gt.t_mid),color="red", lwd=2)
 
   t_mid_facet <- t_mid_facet +
              facet_wrap(~br, labeller=labeller(br = br.labs), scales="free") +

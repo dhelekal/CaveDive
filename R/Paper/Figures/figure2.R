@@ -14,27 +14,28 @@ set.seed(3)
 run_mcmc <- F
 
 data_dir <- "./tree_sim"
+
+tips <- 200
+priors <- standard_priors(expansion_rate=1, 
+                    N_mean_log=4, 
+                    N_sd_log=1/2, 
+                    t_mid_rate=5, 
+                    K_sd_log=1, 
+                    exp_time_nu=1/2, 
+                    exp_time_kappa=1/4)
+given <- list(n_exp=3)
+
+sam <- runif(200,-10, 0)
+sam <- sam - max(sam)
+sam <- sam[order(-sam)]
+
+sim <- expansions_simulate(priors, sam, 2, given=given)
+
+co <- sim$co
+params <- sim$params
+
 if(run_mcmc) {
     dir.create(file.path(data_dir))
-    tips <- 200
-    priors <- standard_priors(expansion_rate=1, 
-                        N_mean_log=4, 
-                        N_sd_log=1/2, 
-                        t_mid_rate=5, 
-                        K_sd_log=1, 
-                        exp_time_nu=1/2, 
-                        exp_time_kappa=1/4)
-    given <- list(n_exp=3)
-
-    sam <- runif(200,-10, 0)
-    sam <- sam - max(sam)
-    sam <- sam[order(-sam)]
-
-    sim <- expansions_simulate(priors, sam, 2, given=given)
-
-    co <- sim$co
-    params <- sim$params
-
     set.seed(3)
     phy.txt.div <- build_coal_tree.structured(sam, co$times, params$tip_colours, co$colours, params$div_times, params$div_cols, co$div_from)
     phy.div <- read.tree(text=phy.txt.div$full)
@@ -76,7 +77,7 @@ plot(expansions, mode="summary", k_modes=3)
 dev.off()
 
 png("fig2b.png", width=1800, height=1600)
-plot(expansions, mode="modes", k_modes=3)
+plot(expansions, mode="modes", k_modes=3, gt.K=params$K[c(1,3,2)], gt.t_mid=params$t_mid[c(1,3,2)])
 dev.off()
 
 png("fig2_trace.png", width=1600, height=1600)

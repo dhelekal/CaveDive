@@ -130,34 +130,67 @@ results_data <- lapply(c(1:length(experiment_specs)), function(i){
 })
 ```
 
+```{r, aggregate histograms}
+experiment_specs <- list.files(path = paste0(base_dir,"/test_out"), pattern=".*tree_params.json", full.names = TRUE, recursive = TRUE)
+experiment_dirs <- dirname(experiment_specs)
+
+histogram_dfs <- lapply(c(1:length(experiment_specs)), function(i){
+  sim_data <- fromJSON(file=experiment_specs[i])
+  meta_data <- sim_data$meta
+  sim_data <- lapply(sim_data, unlist) 
+  sim_data <- lapply(sim_data, as.numeric) 
+
+  dim.gt <- sim_data$n_exp
+  ### Check that we got the number of expansions approximately right  
+  expansions <- readRDS(paste0(experiment_dirs[i],"/expansions.rds"))
+  expansions <- discard_burn_in(expansions, proportion=burn_in)
+
+  mcmc_data <- expansions$model_data
+
+  p_correct_dim <- length(which(mcmc_data$dim==dim.gt))/length(mcmc_data$dim)
+  expected_dim <- mean(mcmc_data$dim)
+
+  unique.dim <- unique(mcmc_data$dim)
+  mode_dim <- unique.dim[which.max(sapply(unique.dim, function(x) length(which(mcmc_data$dim == x))))]
+
+  return(data.frame(dim=mcmc_data$dim, gt=dim.gt))
+})
+```
+
 ```{r, create dataframe}
 names(results_data) <- c(1:length(results_data)) 
 data_df <- do.call(rbind.data.frame, results_data)
 data_df$dim_gt <- factor(data_df$dim_gt, levels=c(2:5),ordered=T)
+
+hist_df <- do.call(rbind, histogram_dfs)
+hist_df$gt <- factor(hist_df$gt, levels=c(2:5), ordered=T)
+head(hist_df)
 ```
 
 ```{r, plot mode dim, eval=T, out.width="90%", fig.width=20, fig.height=20, dpi=300, fig.align="center"}
 
-max_e <- max(c(data_df$mode_dim, data_df$expected_dim))
+e_hist <- ggplot(hist_df) + 
+          geom_bar(aes(y=factor(dim,levels=c(0:20), ordered=T), x = (..count..)/sum(..count..))) + 
+          scale_y_discrete(limits=c(0:12)) + 
+          coord_cartesian(ylim = c(-0.5, 9.5),expand = FALSE) +
+          xlab("Number of Expansions") + 
+          facet_grid(cols=vars(gt)) +
+          theme_bw() +
+          theme(text = element_text(size=20),  
+                axis.title.x = element_blank(), 
+                axis.text.x = element_blank(), 
+                axis.ticks.x = element_blank())
 
-mode_dim_scatter <- ggplot(data_df, aes(x=dim_gt, y=mode_dim))
-mode_dim_scatter <- mode_dim_scatter + geom_boxplot()
-mode_dim_scatter <- mode_dim_scatter + ggtitle("Mode Dimension vs. True Dimension")
-mode_dim_scatter <- mode_dim_scatter + geom_dotplot(binaxis='y', stackdir='center', dotsize=0.2)
-mode_dim_scatter <- mode_dim_scatter + theme_bw() + labs(x = "True Number of Expansions", y="Inferred Mode") + scale_x_discrete(c(2:5)) + scale_y_continuous(limits=c(0, max_e))
-mode_dim_scatter <- mode_dim_scatter + theme(axis.text.x = element_text(angle = 45, hjust = 1), text = element_text(size=20))
+max_e <- max(data_df$expected_dim)
 
 e_dim_scatter <- ggplot(data_df, aes(x=dim_gt, y=expected_dim))
 e_dim_scatter <- e_dim_scatter + geom_boxplot()
-e_dim_scatter <- e_dim_scatter + ggtitle("Exppected Dimension vs. True Dimension")
 e_dim_scatter <- e_dim_scatter + geom_jitter(shape=16, dotsize=1, position=position_jitter(0.2))
-e_dim_scatter <- e_dim_scatter + theme_bw() + labs(x = "True Number of Expansions", y="Inferred Mode") + scale_x_discrete(c(2:5)) + scale_y_continuous(limits=c(0, max_e))
+e_dim_scatter <- e_dim_scatter + theme_bw() + labs(x = "True Number of Expansions", y="Expected Number of Expansions") + scale_x_discrete(c(2:5)) + scale_y_continuous(limits=c(0, 12), breaks=c(0:12)) + coord_cartesian(ylim = c(-0.5, 9.5), xlim = c(1.5,5.5),expand = FALSE)
 e_dim_scatter <- e_dim_scatter + theme(axis.text.x = element_text(angle = 45, hjust = 1), text = element_text(size=20),  
-                  axis.title.y = element_blank(), 
-                  axis.text.y = element_blank(), 
-                  axis.ticks.y = element_blank())
+                  axis.title.y = element_blank())
 
-p <- ggarrange(mode_dim_scatter, e_dim_scatter, widths=c(2,2), heights=c(2))
+p <- ggarrange(e_hist, e_dim_scatter, widths=c(2,2), heights=c(2))
 png("./Paper/Figures/dim_summary.png", width=1600,height=800)
 p
 dev.off()
