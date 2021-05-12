@@ -163,13 +163,15 @@ head(hist_df)
 
 e_hist <- ggplot(hist_df) + 
           geom_bar(aes(y=factor(dim,levels=c(0:20), ordered=T), x = (..count..)/sum(..count..))) + 
-          scale_y_discrete(limits=c(0:12)) + 
+          scale_y_discrete(limits=c(0:9)) + 
           coord_cartesian(ylim = c(-0.5, 9.5), xlim=c(0,0.15),expand = FALSE) +
           ylab("Number of Expansions") + 
           facet_grid(cols=vars(gt)) +
           theme_bw() +
-          theme(text = element_text(size=20),  
-                axis.title.x = element_blank())
+          theme(text = element_text(size=35),  
+                axis.title.x = element_blank(),
+                axis.text.x = element_blank(), 
+                axis.ticks.x = element_blank())
 
 max_e <- max(data_df$expected_dim)
 
@@ -178,7 +180,7 @@ e_dim_scatter <- e_dim_scatter + geom_boxplot(aes(group=dim_gt))
 e_dim_scatter <- e_dim_scatter + geom_jitter(shape=16, dotsize=1, position=position_jitter(0.2))
 e_dim_scatter <- e_dim_scatter + theme_bw() + labs(x = "True Number of Expansions", y="Expected Number of Expansions") + scale_x_discrete(limits=c(2:5)) + scale_y_continuous(limits=c(0, 12), breaks=c(0:12)) + coord_cartesian(ylim = c(-0.5, 9.5),xlim=c(1.5,5.5), expand = FALSE)
 e_dim_scatter <- e_dim_scatter + theme(axis.text.x = element_text(angle = 45, hjust = 1),
-                                        text = element_text(size=20),  
+                                        text = element_text(size=35),  
                                         axis.title.y = element_blank(),
                                         axis.title.x = element_blank(), 
                                         axis.text.y = element_blank(), 
@@ -186,7 +188,7 @@ e_dim_scatter <- e_dim_scatter + theme(axis.text.x = element_text(angle = 45, hj
 
 
 p <- ggarrange(e_hist, e_dim_scatter, widths=c(2,2), heights=c(2))
-png("./Paper/Figures/dim_summary.png", width=1600,height=800)
+png("./Paper/Figures/fig4.png", width=1600,height=800)
 p
 dev.off()
 ```
