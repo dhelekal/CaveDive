@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r run mcmc, include=FALSE}
-run_mcmc=T
+run_mcmc=F
 ```
 
 ```{bash, clean directory, include=FALSE, eval=run_mcmc}
@@ -79,10 +79,9 @@ if (length(tree_in) > 0) {
 tree <- makeNodeLabel(tree)
 tree <- ladderize(tree, right = F)
 
-if(length(tree$edge.length[tree$edge.length<0]) > 0) print("Negative branch lengths encountered and rounded to 0")
+if(length(tree$edge.length[tree$edge.length<0]) > 0) print("Negative branch lengths encountered and rounded to 1e-8")
 
-tree$edge.length[tree$edge.length<0]<-0
-
+tree$edge.length[tree$edge.length<0] <- 1e-8 ### Non zero to prevent issues
 start <- proc.time()
 expansions <- run_expansion_inference(tree, priors, 1, n_it=n_it, thinning=thinning)
 elapsed <-proc.time() - start

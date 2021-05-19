@@ -13,7 +13,7 @@ library(coda)
 
 set.seed(1)
 
-run_mcmc <- T
+run_mcmc <- F
 
 n_it <- 1e8
 thinning <- n_it/1e4
@@ -44,15 +44,24 @@ if (run_mcmc) {
 
 expansions <- discard_burn_in(expansions, proportion=burn_in)
 
-corr_df <- read.csv(paste0(base_dir, "/amr-profile.csv"),row.names=1)
-corr_df <- corr_df[, c("AMI","TOB","KAN","MET","PEN","ERY","CIP")]
-corr_df[] <- lapply(corr_df, factor)
+corr_df <- read.csv(paste0(base_dir, "/metadata.csv"),row.names=1)
+corr_df <- data.frame(corr_df)
+corr_df <- corr_df[, c("MRSA", "ACME", "GYRA")]
+
+for(c in colnames(corr_df)) corr_df[,c] <- as.logical(corr_df[,c])
+
+corr_df <- corr_df[expansions$phylo_preprocessed$phy$tip.label,]
 png("fig_uhlemann_corr.png", width=1600, height=1600)
 plot(expansions, mode="persistence",k_modes=3, correlates=corr_df, 
-                                     corr_axis_title="Antibiotic",
-                                     corr_legend_title="Resistance")
+                                     corr_axis_title="",
+                                     corr_legend_title="")
 dev.off()
 
 png("fig_uhlemann_summary.png", width=1600, height=1600)
 plot(expansions, mode="summary",k_modes=3)
 dev.off()# 
+
+png("fig_uhlemann_modes.png", width=1600, height=1600)
+plot(expansions, mode="modes",k_modes=3)
+dev.off()# 
+
