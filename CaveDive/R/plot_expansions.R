@@ -36,7 +36,7 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_title, legend_title, c
              plot.margin = margin(0, 0, 0, 0, "cm"),
              text = element_text(size=30),
              legend.position = c(0.8,0.2),
-             legend.title = element_text(angle = -90),
+             legend.title = element_text(angle = -90, hjust=0.5),
              aspect.ratio=1)
 
      blank <- ggplot() + theme_minimal()
@@ -64,7 +64,7 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_title, legend_title, c
                                panel.grid.major = element_blank(),
                                panel.grid.minor = element_blank(),
                                text = element_text(size=30),
-                               axis.text.x = element_text(size=18, angle=45),
+                               axis.text.x = element_text(size=18, angle=45, hjust=1),
                                legend.position="right",
                                legend.title = element_text(angle = -90))
      }
@@ -96,7 +96,7 @@ plot_tree<-function(pre,event.df, MRCA_lab=NULL){
    geom_point() +
    geom_text2(aes(label=edge_id, 
                  subset=!is.na(lab), 
-                 x=branch), color="red", size=12, vjust=-1) +
+                 x=branch), color="red", size=12, vjust=-1, hjust=1) +
    scale_size_manual(values=c(1)) +
    scale_x_continuous(limits=c(0, x_max)) +
    scale_color_viridis(option="plasma") +
@@ -125,7 +125,7 @@ plot_summary <- function (model_data, expansion_data, phylo_preprocessed, priors
      hist_N <- ggplot(model_data, aes(N)) +
          geom_histogram(aes(y = stat(count / sum(count))), bins=100) +
          theme_bw() + 
-         xlab("N")
+         xlab("N") +
          scale_fill_brewer(palette="Dark2")  + 
          theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),
                text = element_text(size=20))
@@ -339,7 +339,7 @@ plot_mode_summary <- function(mcmc.df, event.df, priors, k_modes, gt.K=NULL, gt.
   names(br.labs) <- unique(mode_br_df$br)
 
   K_facet <- ggplot(mode_br_df) + 
-             geom_histogram(aes(x=K, y = ..density..), bins=100) +
+             geom_histogram(aes(x=K, y = ..density..), bins=50) +
              prior_mixture(function(x,N) exp(priors$prior_K_given_N(x,N)),mode_br_mcmc_df$N) +
              geom_rect(data = dummy_gt, aes(xmin = ci_lo.K, xmax = ci_hi.K), ymin=-Inf, ymax=Inf, fill="blue", alpha=0.3)
 
@@ -352,7 +352,7 @@ plot_mode_summary <- function(mcmc.df, event.df, priors, k_modes, gt.K=NULL, gt.
              theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),text = element_text(size=20))
 
   t_mid_facet <- ggplot(mode_br_df) + 
-             geom_histogram(aes(x=t_mid, y = ..density..), bins=100) +
+             geom_histogram(aes(x=t_mid, y = ..density..), bins=50) +
              prior_mixture(function(x,N) exp(priors$prior_t_mid_given_N(x,N)),mode_br_mcmc_df$N) +
              geom_rect(data = dummy_gt, aes(xmin = ci_lo.t_mid, xmax = ci_hi.t_mid), ymin=-Inf, ymax=Inf, fill="blue", alpha=0.3) 
   
@@ -361,6 +361,45 @@ plot_mode_summary <- function(mcmc.df, event.df, priors, k_modes, gt.K=NULL, gt.
   t_mid_facet <- t_mid_facet +
              facet_wrap(~br, labeller=labeller(br = br.labs), scales="free") +
              labs(x="Time to Midpoint") +
+             theme_bw() +
+             theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),text = element_text(size=20))
+
+  grid.arrange(
+          grobs=list(K_facet, t_mid_facet),
+          nrow=2,
+          heights = c(1,1))
+}
+
+plot_mode_traces <- function(mcmc.df, event.df, k_modes) {
+  mode_br_df <- event.df[which(event.df$is.mode),]
+  mode_br_mcmc_df <- mcmc.df[mcmc.df$it %in% mode_br_df$it, ]
+
+  br.labs <- sapply(unique(mode_br_df$br), function (x) paste0("Branch: ",x))
+  names(br.labs) <- unique(mode_br_df$br)
+  
+  max_it <- max(mode_br_mcmc_df$it)
+  min_it <- min(mode_br_mcmc_df$it)
+
+  K_facet <- ggplot(mode_br_df, aes(x=it, y=K)) +
+               geom_line(alpha = 0.3) +
+               theme_bw() + 
+               xlim(c(min_it,max_it)) +
+               theme(axis.title.x = element_blank(), axis.text.x = element_blank()) 
+  K_facet <- K_facet + 
+             facet_wrap(~br, labeller=labeller(br = br.labs), scales="free") +
+             labs(y="Carrying Capacity") +
+             theme_bw() +
+             theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),text = element_text(size=20))
+
+  t_mid_facet <- ggplot(mode_br_df, aes(x=it, y=t_mid)) +
+               geom_line(alpha = 0.3) +
+               theme_bw() + 
+               xlim(c(min_it,max_it)) +
+               theme(axis.title.x = element_blank(), axis.text.x = element_blank()) 
+  
+  t_mid_facet <- t_mid_facet +
+             facet_wrap(~br, labeller=labeller(br = br.labs), scales="free") +
+             labs(y="Time to Midpoint") +
              theme_bw() +
              theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),text = element_text(size=20))
 
@@ -455,46 +494,6 @@ plot_event_summary <- function(mcmc.df, event.df, which_br, pre,
         widths = grid_width,
         heights = grid_heigth)
    return(list(event_panel=event_panel, tree_highlight_panel=tree_panel))
-}
-
-#' Plots a panel summarising the inferred number of expansions and base population size
-#' 
-#' @param mcmc.df mcmc.df returned by mcmc2data.frame
-#' @param prior_N (Optional) Background population size prior, mutually exclusive with passing list of priors. If either is supplied priors will be overlayed in plotting.
-#' @return a panel containing histograms and traces for the inferred number of expansions and the base population size
-#' @export
-plot_dim_panel <- function(mcmc.df, prior_N=NULL) {
-   trace_N <- ggplot(mcmc.df, aes(x=it, y=N)) +
-   geom_line(alpha = 0.3) +
-   theme_bw() + 
-   theme(axis.title.x = element_blank(), axis.text.x = element_blank())
-   trace_dim <- ggplot(mcmc.df, aes(x=it, y=dim)) +
-   geom_line(alpha = 0.3) +
-   theme_bw() +
-   theme(axis.title.x = element_blank(), axis.text.x = element_blank())
-   hist_N <- ggplot(mcmc.df, aes(N)) +  
-   geom_histogram(aes(y = stat(density)), colour="orange", fill="orange", bins=100) +
-   theme_bw() + 
-   theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())
-   hist_dim <- ggplot(mcmc.df, aes(dim)) +  
-   geom_histogram(aes(y = stat(density)), colour="orange", fill="orange", binwidth=1) + 
-   theme_bw() +
-   theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())
-   
-   if (!is.null(prior_N)) {
-     hist_N <- hist_N + stat_function(fun=prior_N, colour="purple", size=2)
-   }
-
-   grid_layout <- rbind(c(1, 2), c(3,3), c(4,4))
-   grid_width <- c(2,2)
-   grid_heigth <- c(2,1,1)
-
-   dim_panel <- arrangeGrob(
-        grobs=list(hist_N, hist_dim, trace_N, trace_dim),
-        layout_matrix = grid_layout,
-        widths = grid_width,
-        heights = grid_heigth)
-   return(dim_panel)
 }
 
 compute_ci <- function(x, conf=0.95) {

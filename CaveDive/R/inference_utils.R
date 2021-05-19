@@ -113,7 +113,7 @@ print.expansionsMCMC <- function(x, ...) {
 }
 
 #' @export
-plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence", "traces"), k_modes=NULL, correlates=NULL, corr_axis_title="Variable",
+plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence", "traces", "mtraces"), k_modes=NULL, correlates=NULL, corr_axis_title="Variable",
                                   corr_legend_title="Value", gt.K=NULL, gt.t_mid=NULL) {
      mode <- match.arg(mode)
 
@@ -170,6 +170,10 @@ plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence"
           if (!is.null(k_modes)) warning("Unused argument: k_modes")
           if (!is.null(correlates)) warning("Unused argument: correlates")
           plot_traces(model_data, expansion_data)
+     } else if (mode=="mtraces") {
+          stopifnot("No expansions were detected"=nrow(expansion_data)>0)
+          stopifnot("Number of modes must be supplied"=!is.null(k_modes))
+          plot_mode_traces(model_data, expansion_data, k_modes)
      } else {
           stop("Invalid plotting options")
      }
