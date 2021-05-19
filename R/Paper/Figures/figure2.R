@@ -84,6 +84,10 @@ png("fig2_trace.png", width=1600, height=1600)
 plot(expansions, mode="traces")
 dev.off()
 
+png("fig2_mode_trace.png", width=1600, height=1600)
+plot(expansions, mode="mtraces", k_modes=3)
+dev.off()
+
 m1 <- mcmc(expansions$model_data[,2:3],thin=expansions$metadata$thinning)
 m2 <- mcmc(expansions2$model_data[,2:3],thin=expansions2$metadata$thinning)
 

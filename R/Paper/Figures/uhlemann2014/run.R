@@ -1,5 +1,7 @@
 library(ape)
+library(treeio)
 library(BactDating)
+set.seed(1)
 rm(list=ls())
 tree=read.tree('pathogenwatch.nwk')
 metadata=read.table('metadata.csv',sep=',',header=T)
@@ -17,6 +19,9 @@ names(date)<-metadata[,1]
 #rate=3e-6*2872769/3 # for USA300
 
 #roottotip(tree,date)
-res=bactdate(tree,date,showProgress = T,updateRoot = 'branch')
+tree <- makeNodeLabel(tree)
+tree <- extract.clade(tree, nodeid(tree, "Node10"))
+date[tree$tip.label]
+res=bactdate(tree,date,showProgress = T,updateRoot = 'branch', nbIts=1e6)
 plot(res,'trace')
 write.tree(res$tree,'dated.nwk')
