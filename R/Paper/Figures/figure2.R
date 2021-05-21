@@ -52,6 +52,11 @@ if(run_mcmc) {
     print(paste0(n_it," RjMCMC iterations completed. Time elapsed:"))
     print(elapsed)
 
+    sink("TimeFig2.txt")
+    print(paste0(n_it," RjMCMC iterations completed. Time elapsed:"))
+    print(elapsed)
+    sink()
+
     expansions <- discard_burn_in(expansions, proportion=0.1)
     
     saveRDS(expansions, file = paste0(data_dir, "/expansions.rds"))
@@ -95,4 +100,5 @@ grs <- gelman.diag(mcmc.list(m1,m2))
 sink("GelmanRubinFig2.txt")
 print(grs$psrf)
 print(grs$mpsrf)
+print(effectiveSize(m1))
 sink()

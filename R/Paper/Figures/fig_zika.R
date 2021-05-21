@@ -43,13 +43,13 @@ if (run_mcmc) {
 expansions <- discard_burn_in(expansions, proportion=burn_in)
 
 png("fig_zika_corr.png", width=1600, height=1600)
-plot(expansions, mode="persistence")
+plot(expansions, mode="persistence",k_modes=1)
 dev.off()
 
 unique_br <- unique(expansions$expansion_data$br)
 mode_br <-unique_br[which.max(sapply(unique_br, function(br) length(which(expansions$expansion_data$br==br))))]
 br_marginal <- expansions$expansion_data[which(expansions$expansion_data$br==mode_br),]
 
-png("fig_zika_pop.png",width=800, height=1600)
+png("fig_zika_pop.png",width=1600, height=900)
 plot(expansions, mode="modes", k_modes=1)
 dev.off()

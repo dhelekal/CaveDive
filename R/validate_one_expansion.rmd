@@ -30,7 +30,7 @@ library(treeio)
 library(viridis)
 library(rjson)
 library(egg)
-
+library(scales)
 dir.create(file.path("./Paper/Sim/", "sim_one_exp"))
 base_dir <- "./Paper/Sim/sim_one_exp"
 ```
@@ -236,13 +236,15 @@ head(data_df)
 
 ```{r, plot mode dim, eval=T, out.width="90%", fig.width=20, fig.height=20, dpi=300, fig.align="center"}
 dim_hist <- ggplot(data_df, aes(x=mode_dim))
-dim_hist <- dim_hist + geom_histogram(aes(y = stat(count / sum(count))), binwidth=1) + ylim(c(0,1)) 
-dim_hist <- dim_hist + theme_bw() + labs(x = "Mode No. of Expansions", y="Probability Mass") 
+dim_hist <- dim_hist + geom_bar(aes(y = ..prop..), stat="count") + 
+            geom_text(aes( label = scales::percent(..prop..), y= ..prop.. ), stat= "count", vjust = -.5, size=15)
+dim_hist <- dim_hist + theme_bw() + labs(x = "Mode No. of Expansions") + scale_y_continuous(labels=percent, limits=c(0,1)) 
 dim_hist <- dim_hist + theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+                             axis.title.y = element_blank(),
                              text = element_text(size=35))
 
 p_hist <- ggplot(data_df_dim, aes(x=p_correct_br))
-p_hist <- p_hist + geom_histogram(aes(y = stat(count / sum(count))), bins=40) + ylim(c(0,1)) 
+p_hist <- p_hist + geom_histogram(aes(y = stat(count) / sum(count)), bins=40) + scale_y_continuous(labels=percent, limits=c(0,1)) 
 p_hist <- p_hist + theme_bw() + labs(x ="Prob. Correct Branch") 
 p_hist <- p_hist + theme(axis.text.x = element_text(angle = 45, hjust = 1),
                       axis.title.y = element_blank(), 
@@ -251,7 +253,7 @@ p_hist <- p_hist + theme(axis.text.x = element_text(angle = 45, hjust = 1),
                       text = element_text(size=35))
 
 jacc_hist <- ggplot(data_df_dim, aes(x=jacc_dist))
-jacc_hist <- jacc_hist + geom_histogram(aes(y = stat(count / sum(count))), bins=40) + ylim(c(0,1)) 
+jacc_hist <- jacc_hist + geom_histogram(aes(y = stat(count) / sum(count)), bins=40) + scale_y_continuous(labels=percent, limits=c(0,1)) 
 jacc_hist <- jacc_hist + theme_bw() + labs(x ="Jaccard Distance")
 jacc_hist <- jacc_hist + theme(axis.text.x = element_text(angle = 45, hjust = 1),
                       axis.title.y = element_blank(), 
