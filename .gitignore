@@ -63,3 +63,4 @@ R/Paper/Figures/*/*.rds
 
 R/Paper/Sim/*
 R/Paper/Stored Trees/*
+*.rds
