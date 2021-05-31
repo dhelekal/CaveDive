@@ -16,7 +16,7 @@ simulate_expansion_phylo <- function(priors, sampling_times, concentration=2, gi
     if (collapse_singles){
         tree <- collapse.singles(tree)
     }
-    return(list(tree=tree, params=params))
+    return(list(tree=tree, params=params, coal_log_lh=sim$coal_log_lh, param_log_lh=sim$param_log_lh))
 }
 
 

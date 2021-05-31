@@ -51,9 +51,10 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_title, legend_title, c
                           levels = dat$label[tip.ord], 
                           ordered = TRUE)
 
+          discrete=!is.numeric(r_df$value)
+
           corr_map <- ggplot(data = r_df, aes(x = tip_id, y = variable)) +
                          geom_tile(aes(fill = value)) +
-                         scale_fill_viridis(option= "viridis", na.value="gray50" , discrete=!is.double(r_df$value)) +
                          theme_minimal() +
                          guides(fill=guide_legend(title.position = "right"))+
                          coord_flip() +
@@ -67,6 +68,13 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_title, legend_title, c
                                axis.text.x = element_text(size=18, angle=45, hjust=1),
                                legend.position="right",
                                legend.title = element_text(angle = -90))
+
+          if (!discrete) {
+               corr_map <- corr_map + scale_fill_viridis(option= "viridis", na.value="gray50" , discrete=!is.double(r_df$value))
+          } else {
+               corr_map <- corr_map + scale_fill_brewer(palette = "Dark2")
+          }
+
      }
      tree_map_t <- tree_map + coord_flip() + scale_x_reverse()
      ggarrange(blank, tree_map_t, blank, tree_map, heat_map, corr_map, widths=c(1,3,0.75), heights=c(1,3))
@@ -74,7 +82,7 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_title, legend_title, c
 
 plot_tree<-function(pre,event.df, MRCA_lab=NULL){
    tree <- pre$phy
-   freq <- table(event.df$br)
+   freq <- table(event.df$br) 
 
    labs <- c(tree$node.label, tree$tip.label)
    tip <- c(rep("1",length(tree$node.label)), rep("2", length(tree$tip.label)))
@@ -115,13 +123,16 @@ plot_tree<-function(pre,event.df, MRCA_lab=NULL){
 }
 
 plot_summary <- function (model_data, expansion_data, phylo_preprocessed, priors, modes=NULL) {
-     hist_dim <- ggplot(model_data, aes(dim)) +  
-        geom_histogram(aes(y = stat(count / sum(count))), binwidth=1) + 
-        theme_bw() +
-        xlab("Number of Expansions") + 
-        scale_fill_brewer(palette="Dark2")  + 
-        theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),
-              text = element_text(size=20))
+     
+     hist_dim <- ggplot(model_data, aes(x=dim)) +
+                 geom_bar(aes(y = ..prop..), stat="count") + 
+                 geom_text(aes( label = scales::percent(..prop..), y= ..prop.. ), stat= "count", vjust = -.5, size=12) +
+                 theme_bw() + 
+                 xlab("Number of Expansions") + 
+                 scale_y_continuous(labels=percent, limits=c(0,1)) +
+                 theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+                                  axis.title.y = element_blank(),
+                                  text = element_text(size=20))
      hist_N <- ggplot(model_data, aes(N)) +
          geom_histogram(aes(y = stat(count / sum(count))), bins=100) +
          theme_bw() + 
@@ -341,7 +352,8 @@ plot_mode_summary <- function(mcmc.df, event.df, priors, k_modes, gt.K=NULL, gt.
   K_facet <- ggplot(mode_br_df) + 
              geom_histogram(aes(x=K, y = ..density..), bins=50) +
              prior_mixture(function(x,N) exp(priors$prior_K_given_N(x,N)),mode_br_mcmc_df$N) +
-             geom_rect(data = dummy_gt, aes(xmin = ci_lo.K, xmax = ci_hi.K), ymin=-Inf, ymax=Inf, fill="blue", alpha=0.3)
+             geom_rect(data = dummy_gt, aes(xmin = ci_lo.K, xmax = ci_hi.K), ymin=-Inf, ymax=Inf, fill="blue", alpha=0.3)+
+             geom_vline(data=dummy_gt, aes(xintercept=median.K), colour="orange", linetype = "longdash", lwd=2)
 
   if(!is.null(gt.K)) K_facet <- K_facet + geom_vline(data=dummy_gt, aes(xintercept=gt.K), color="red", lwd=2)
  
@@ -354,8 +366,9 @@ plot_mode_summary <- function(mcmc.df, event.df, priors, k_modes, gt.K=NULL, gt.
   t_mid_facet <- ggplot(mode_br_df) + 
              geom_histogram(aes(x=t_mid, y = ..density..), bins=50) +
              prior_mixture(function(x,N) exp(priors$prior_t_mid_given_N(x,N)),mode_br_mcmc_df$N) +
-             geom_rect(data = dummy_gt, aes(xmin = ci_lo.t_mid, xmax = ci_hi.t_mid), ymin=-Inf, ymax=Inf, fill="blue", alpha=0.3) 
-  
+             geom_rect(data = dummy_gt, aes(xmin = ci_lo.t_mid, xmax = ci_hi.t_mid), ymin=-Inf, ymax=Inf, fill="blue", alpha=0.3) +
+             geom_vline(data=dummy_gt, aes(xintercept=median.t_mid), colour="orange", linetype = "longdash",lwd=2)
+
   if(!is.null(gt.t_mid)) t_mid_facet <- t_mid_facet + geom_vline(data=dummy_gt, aes(xintercept=gt.t_mid),color="red", lwd=2)
 
   t_mid_facet <- t_mid_facet +

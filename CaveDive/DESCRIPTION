@@ -1,8 +1,8 @@
 Package: CaveDive
-Title: What the Package Does (one line, title case)
-Version: 0.0.0.9000
-Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Title: Phylodynamics for Clonal Expansion
+Version: 0.8.0
+Authors@R: person("David", "Helekal", email = "David.Helekal@warwick.ac.uk", role = c("aut", "cre"))
+Description: CaveDive implements simulations and inference of phylogenies containing phylodynamic signatures consistent with the presence of one or several clonal expansions within the sampled population.
 Depends: R (>= 4.0.0)
 License: What license is it under?
 Encoding: UTF-8
@@ -28,6 +28,8 @@ Imports:
     egg,
     pracma,
     reshape2, 
+    scales,
+    RColorBrewer,
     ape
 VignetteBuilder: knitr
 RoxygenNote: 7.1.1

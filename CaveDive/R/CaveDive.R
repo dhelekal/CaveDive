@@ -2,7 +2,8 @@
 #' @importFrom DirichletReg rdirichlet ddirichlet
 #' @importFrom reshape2 melt
 #' @importFrom egg ggarrange
-#' @import treeio ggtree ggplot2 gridExtra grid gtable viridis
+#' @importFrom scales percent
+#' @import treeio ggtree ggplot2 gridExtra grid gtable viridis RColorBrewer
 #' @importFrom pracma bisect newtonRaphson
 #' @importFrom Rcpp evalCpp
 #' @useDynLib CaveDive
