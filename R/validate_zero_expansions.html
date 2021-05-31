@@ -187,7 +187,7 @@ summary {
 </div>
 
 
-<pre class="r"><code>eval_mcmc &lt;- T</code></pre>
+<pre class="r"><code>eval_mcmc &lt;- F</code></pre>
 <div id="simulation-validation" class="section level2">
 <h2>Simulation Validation</h2>
 <p>This notebook simulates several different sets of genealogies containing a single expnasion and tests MCMC inference against them, aiming to validate how well are parameters recovered across different scales.</p>
@@ -309,6 +309,9 @@ plot(plt)</code></pre>
 <pre class="r"><code>prop_correct &lt;- length(which(data_df$mode_dim==0))/length(data_df$mode_dim)
 print(paste(&quot;Proportion Correct:&quot;, prop_correct))</code></pre>
 <pre><code>## [1] &quot;Proportion Correct: 0.98&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;Incorrect:&quot;, experiment_dirs[which(data_df$mode_dim&gt;0)]))</code></pre>
+<pre><code>## [1] &quot;Incorrect: ./Paper/Sim/sim_zero_exp/test_out/pop_1/r_11&quot;
+## [2] &quot;Incorrect: ./Paper/Sim/sim_zero_exp/test_out/pop_1/r_34&quot;</code></pre>
 <pre class="r"><code>plt &lt;- ggplot(data_df, aes(x=N_gt, y=exp_N))
 plt &lt;- plt + ggtitle(&quot;Inferred N versus true N&quot;)
 plt &lt;- plt + geom_point()

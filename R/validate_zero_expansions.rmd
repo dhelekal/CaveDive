@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r, eval mcmc}
-eval_mcmc <- T
+eval_mcmc <- F
 ```
 
 ```{bash, clean directory, include=FALSE, eval=eval_mcmc}
@@ -168,6 +168,7 @@ plot(plt)
 
 prop_correct <- length(which(data_df$mode_dim==0))/length(data_df$mode_dim)
 print(paste("Proportion Correct:", prop_correct))
+print(paste("Incorrect:", experiment_dirs[which(data_df$mode_dim>0)]))
 ```
 
 

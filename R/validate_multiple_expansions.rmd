@@ -30,6 +30,7 @@ library(treeio)
 library(viridis)
 library(rjson)
 library(egg)
+library(scales)
 
 dir.create(file.path("./Paper/Sim/", "sim_validate_multiple_exp"))
 base_dir <- "./Paper/Sim/sim_validate_multiple_exp"
@@ -161,10 +162,11 @@ head(hist_df)
 
 ```{r, plot mode dim, eval=T, out.width="90%", fig.width=20, fig.height=20, dpi=300, fig.align="center"}
 
-e_hist <- ggplot(hist_df) + 
-          geom_bar(aes(y=factor(dim,levels=c(0:20), ordered=T), x = (..count..)/sum(..count..))) + 
+e_hist <- ggplot(hist_df, aes(y=dim)) + 
+          geom_bar(aes(x = ..prop..), stat="count") + 
           scale_y_discrete(limits=c(0:9)) + 
-          coord_cartesian(ylim = c(-0.5, 9.5), xlim=c(0,0.15),expand = FALSE) +
+          scale_x_continuous(labels=percent, limits=c(0,1))+
+          coord_cartesian(ylim = c(-0.5, 9.5), xlim=c(0,0.5),expand = FALSE) +
           ylab("Number of Expansions") + 
           facet_grid(cols=vars(gt)) +
           theme_bw() +
@@ -176,7 +178,7 @@ e_hist <- ggplot(hist_df) +
 max_e <- max(data_df$expected_dim)
 
 e_dim_scatter <- ggplot(data_df, aes(dim_gt, expected_dim))
-e_dim_scatter <- e_dim_scatter + geom_boxplot(aes(group=dim_gt))
+e_dim_scatter <- e_dim_scatter + geom_boxplot(aes(group=dim_gt)) + stat_summary(fun.y=mean, geom="point", lwd=2, color="red")
 e_dim_scatter <- e_dim_scatter + geom_jitter(shape=16, dotsize=1, position=position_jitter(0.2))
 e_dim_scatter <- e_dim_scatter + theme_bw() + labs(x = "True Number of Expansions", y="Expected Number of Expansions") + scale_x_discrete(limits=c(2:5)) + scale_y_continuous(limits=c(0, 12), breaks=c(0:12)) + coord_cartesian(ylim = c(-0.5, 9.5),xlim=c(1.5,5.5), expand = FALSE)
 e_dim_scatter <- e_dim_scatter + theme(axis.text.x = element_text(angle = 45, hjust = 1),
