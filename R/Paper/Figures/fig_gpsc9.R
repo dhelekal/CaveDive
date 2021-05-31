@@ -19,7 +19,7 @@ n_it <- 1e8
 thinning <- n_it/1e4
 burn_in <- 0.3
 
-base_dir <- "./uhlemann2014"
+base_dir <- "./gpsc9"
 if(run_mcmc) {
     dir.create(file.path(base_dir))
 }
@@ -44,24 +44,25 @@ if (run_mcmc) {
 
 expansions <- discard_burn_in(expansions, proportion=burn_in)
 
-corr_df <- read.csv(paste0(base_dir, "/metadata.csv"),row.names=1)
-corr_df <- data.frame(corr_df)
-corr_df <- corr_df[, c("MRSA", "ACME")]
+corr_df <- read.csv(paste0(base_dir, "/microreact-project-gpsGPSC9-data.csv"),row.names=1)
+corr_df <- as.data.frame(corr_df)
 
-for(c in colnames(corr_df)) corr_df[,c] <- sapply(corr_df[,c], function (x) if (x==0) "absent" else "present")
+corr_df <- corr_df[,"erm",drop=F]
+corr_df$erm <- sapply(corr_df$erm, function(x) if (x=="neg") "absent" else x)
+colnames(corr_df) <- "erm gene"
 
-corr_df <- corr_df[expansions$phylo_preprocessed$phy$tip.label,]
-png("fig_uhlemann_corr.png", width=1600, height=1600)
-plot(expansions, mode="persistence",k_modes=3, correlates=corr_df, 
+#for(c in colnames(corr_df)) corr_df[,c] <- as.logical(corr_df[,c])
+
+#corr_df <- corr_df[expansions$phylo_preprocessed$phy$tip.label,]
+png("fig_gpsc9_corr.png", width=1600, height=1600)
+plot(expansions, mode="persistence", k_modes=3, correlates=corr_df, 
                                      corr_axis_title="",
                                      corr_legend_title="")
 dev.off()
 
-png("fig_uhlemann_summary.png", width=1600, height=1600)
-plot(expansions, mode="summary",k_modes=3)
-dev.off()# 
-
-png("fig_uhlemann_modes.png", width=1600, height=1600)
-plot(expansions, mode="modes",k_modes=3)
-dev.off()# 
+png("fig_gpsc9_param.png", width=1600, height=1600)
+plot(expansions, mode="modes", k_modes=3, 
+                                     corr_axis_title="",
+                                     corr_legend_title="")
+dev.off()
 
