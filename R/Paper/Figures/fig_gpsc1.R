@@ -22,7 +22,8 @@ expansions <- discard_burn_in(expansions, proportion=burn_in)
 corr_df <- read.csv(paste0(base_dir, "/microreact-project-gpsGPSC1-data.csv"),row.names=1)
 corr_df <- as.data.frame(corr_df)
 
-corr_df <- corr_df[,c("ermB", "mefA", "folA_I100L", "cat"),drop=F]
+#corr_df <- corr_df[,c("ermB", "mefA", "folA_I100L", "cat"),drop=F]
+corr_df <- corr_df[,c("Continent"),drop=F]
 #corr_df$erm <- sapply(corr_df$erm, function(x) if (x=="neg") "absent" else x)
 #colnames(corr_df) <- "erm gene"
 

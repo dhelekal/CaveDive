@@ -13,38 +13,13 @@ library(coda)
 
 set.seed(1)
 
-run_mcmc <- F
-
-n_it <- 1e8
-thinning <- n_it/1e4
 burn_in <- 0.3
 
-base_dir <- "./gpsc9"
-if(run_mcmc) {
-    dir.create(file.path(base_dir))
-}
-
-priors <- standard_priors(expansion_rate=1, 
-                    N_mean_log=3, 
-                    N_sd_log=3, 
-                    t_mid_rate=5, 
-                    K_sd_log=1, 
-                    exp_time_nu=1/2, 
-                    exp_time_kappa=1/2)
-
-if (run_mcmc) {
-    tree <- read.tree(file = paste0(base_dir,"/","dated.nwk"))
-    tree <- makeNodeLabel(tree)
-    tree <- ladderize(tree, F)
-    expansions <- run_expansion_inference(tree, priors, 1, n_it=n_it, thinning=thinning)
-    saveRDS(expansions, file = paste0(base_dir, "/expansions.rds"))
-} else {
-    expansions <- readRDS(file = paste0(base_dir, "/expansions.rds"))
-}
-
+base_dir <- "../GPSC_Trees/GPS9"
+expansions <- readRDS(file = paste0(base_dir, "/mcmc_out/expansions.rds"))
 expansions <- discard_burn_in(expansions, proportion=burn_in)
 
-corr_df <- read.csv(paste0(base_dir, "/microreact-project-gpsGPSC9-data.csv"),row.names=1)
+corr_df <- read.csv(paste0(base_dir, "/microreact-project-gpsGPS9-data.csv"),row.names=1)
 corr_df <- as.data.frame(corr_df)
 
 corr_df <- corr_df[,"erm",drop=F]
