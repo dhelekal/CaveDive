@@ -52,9 +52,7 @@ for(c in colnames(corr_df)) corr_df[,c] <- sapply(corr_df[,c], function (x) if (
 
 corr_df <- corr_df[expansions$phylo_preprocessed$phy$tip.label,]
 png("fig_uhlemann_corr.png", width=1600, height=1600)
-plot(expansions, mode="persistence",k_modes=3, correlates=corr_df, 
-                                     corr_axis_title="",
-                                     corr_legend_title="")
+plot(expansions, mode="persistence",k_modes=3, correlates=list(corr_df))
 dev.off()
 
 png("fig_uhlemann_summary.png", width=1600, height=1600)
