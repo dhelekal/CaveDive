@@ -113,8 +113,8 @@ print.expansionsMCMC <- function(x, ...) {
 }
 
 #' @export
-plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence", "traces", "mtraces"), k_modes=NULL, correlates=NULL, corr_axis_title="Variable",
-                                  corr_legend_title="Value", gt.K=NULL, gt.t_mid=NULL) {
+plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence", "traces", "mtraces"), k_modes=NULL, correlates=list(), corr_axis_title=list(),
+                                  corr_legend_title=list(), gt.K=NULL, gt.t_mid=NULL) {
      mode <- match.arg(mode)
 
      expansion_data <- x$expansion_data
@@ -147,13 +147,13 @@ plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence"
 
      if (mode=="summary") {
           stopifnot("No expansions were detected"=nrow(expansion_data)>0)
-          if (!is.null(correlates)) warning("Unused argument: correlates")
+          if (length(correlates)>0) warning("Unused argument: correlates")
           plot_summary(model_data, expansion_data, x$phylo_preprocessed, x$priors, modes)
 
      } else if (mode == "modes") {
           stopifnot("No expansions were detected"=nrow(expansion_data)>0)
           stopifnot("Number of modes must be supplied"=!is.null(k_modes))
-          if (!is.null(correlates)) warning("Unused argument: correlates")
+          if (length(correlates)>0) warning("Unused argument: correlates")
           plot_mode_summary(model_data, expansion_data, x$priors, k_modes, gt.K, gt.t_mid)
 
      } else if (mode=="persistence") {
@@ -168,9 +168,10 @@ plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence"
 
      } else if (mode=="traces") {
           if (!is.null(k_modes)) warning("Unused argument: k_modes")
-          if (!is.null(correlates)) warning("Unused argument: correlates")
+          if (length(correlates)>0) warning("Unused argument: correlates")
           plot_traces(model_data, expansion_data)
      } else if (mode=="mtraces") {
+          if (length(correlates)>0) warning("Unused argument: correlates")
           stopifnot("No expansions were detected"=nrow(expansion_data)>0)
           stopifnot("Number of modes must be supplied"=!is.null(k_modes))
           plot_mode_traces(model_data, expansion_data, k_modes)

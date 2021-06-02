@@ -1,4 +1,4 @@
-plot_persistence <- function(mcmc.df, event.df, pre, axis_title, legend_title, correlates=NULL, modes=NULL) {
+plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_titles=list(), correlates=list(), modes=NULL) {
      phy <- pre$phy
      if (is.null(modes)) MRCA_lab=NULL else MRCA_lab=pre$edges.df$node.child[modes]
      tree_map <- plot_tree(pre, event.df, MRCA_lab)
@@ -40,44 +40,64 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_title, legend_title, c
              aspect.ratio=1)
 
      blank <- ggplot() + theme_minimal()
-     corr_map <- blank
-     if(!is.null(correlates)) {
-          stopifnot("Number correlate rows must match number of tips"=nrow(correlates)==pre$n_tips)
-          stopifnot("Correlates must be a data.frame with rownames equal to tip labels"=rownames(correlates)[order(rownames(correlates))]==phy$tip.label[order(phy$tip.label)])
-          r_df <- correlates
-          r_df$tip_id <- rownames(r_df) 
-          r_df <- melt(r_df, id.vars="tip_id")
-          r_df$tip_id <- factor(x = r_df$tip_id,
-                          levels = dat$label[tip.ord], 
-                          ordered = TRUE)
-
-          discrete=!is.numeric(r_df$value)
-
-          corr_map <- ggplot(data = r_df, aes(x = tip_id, y = variable)) +
-                         geom_tile(aes(fill = value)) +
-                         theme_minimal() +
-                         guides(fill=guide_legend(title.position = "right"))+
-                         coord_flip() +
-                         labs(y=axis_title, fill=legend_title) +
-                         theme(axis.title.y = element_blank(), 
-                               axis.text.y = element_blank(), 
-                               axis.ticks.y = element_blank(),
-                               panel.grid.major = element_blank(),
-                               panel.grid.minor = element_blank(),
-                               text = element_text(size=30),
-                               axis.text.x = element_text(size=18, angle=45, hjust=1),
-                               legend.position="right",
-                               legend.title = element_text(angle = -90))
-
-          if (!discrete) {
-               corr_map <- corr_map + scale_fill_viridis(option= "viridis", na.value="gray50" , discrete=!is.double(r_df$value))
-          } else {
-               corr_map <- corr_map + scale_fill_brewer(palette = "Dark2")
-          }
-
+     corr_maps <- blank
+     n_cor <- length(correlates)
+     if(n_cor > 0) {
+          corr_maps <- sapply(c(1:n_cor), function(i) list(build_correlate_map(correlates[[i]], pre, dat, tip.ord, unlist(axis_titles[i]), unlist(legend_titles[i]))))
      }
      tree_map_t <- tree_map + coord_flip() + scale_x_reverse()
-     ggarrange(blank, tree_map_t, blank, tree_map, heat_map, corr_map, widths=c(1,3,0.75), heights=c(1,3))
+
+     do.call("ggarrange",c(c(list(blank), list(tree_map_t), rep(list(blank), max(1, n_cor)), list(tree_map), list(heat_map), corr_maps), 
+                              list(widths=c(1,3,rep(0.75, max(1,n_cor))), heights=c(1,3))))
+}
+
+build_correlate_map <- function(correlate, pre, dat, tip.ord, axis_title, leg_title) {
+     stopifnot("Number correlate rows must match number of tips"=nrow(correlate)==pre$n_tips)
+     stopifnot("Correlates must be a data.frame with rownames equal to tip labels"=rownames(correlate)[order(rownames(correlate))]==pre$phy$tip.label[order(pre$phy$tip.label)])
+     r_df <- correlate
+     r_df$tip_id <- rownames(r_df) 
+     r_df <- melt(r_df, id.vars="tip_id")
+     r_df$tip_id <- factor(x = r_df$tip_id,
+                     levels = dat$label[tip.ord], 
+                     ordered = TRUE)
+
+     col_scheme <- NULL
+     categ=!is.numeric(r_df$value)
+     if (categ) {
+          if (length(unique(r_df$value))==2){
+               rdbu <- brewer.pal(n = 3, name = "RdBu")
+               col_scheme <- scale_fill_manual(values=c(rdbu[1], rdbu[3]), na.value=rdbu[2])
+          } else if (length(unique(r_df$value))<=12){
+               col_scheme <- scale_fill_brewer(palette = "Paired", na.value="white")
+          } else {
+               col_scheme <- scale_fill_viridis(option= "viridis", na.value="white" , discrete=T)
+          }
+     } else {
+          col_scheme <- scale_fill_viridis(option= "viridis", na.value="white" , discrete=!is.double(r_df$value))
+     }
+     axis_title_str <- " "
+     leg_title_str <- " "
+
+     if(!is.null(axis_title)) axis_title_str <- axis_title
+     if(!is.null(leg_title)) leg_title_str <- leg_title
+
+     corr_map <- ggplot(data = r_df, aes(x = tip_id, y = variable)) +
+                    geom_tile(aes(fill = value)) +
+                    col_scheme +
+                    theme_minimal() +
+                    guides(fill=guide_legend(title.position = "left"))+
+                    coord_flip() +
+                    labs(y=axis_title_str, fill=leg_title_str) +
+                    theme(axis.title.y = element_blank(), 
+                          axis.text.y = element_blank(), 
+                          axis.ticks.y = element_blank(),
+                          panel.grid.major = element_blank(),
+                          panel.grid.minor = element_blank(),
+                          text = element_text(size=30),
+                          axis.text.x = element_text(size=18, angle=45, hjust=1),
+                          legend.position="bottom", legend.direction="vertical",
+                          legend.title = element_text(angle = -90))
+     return(corr_map)
 }
 
 plot_tree<-function(pre,event.df, MRCA_lab=NULL){
@@ -319,11 +339,8 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlig
 }
 
 plot_mode_summary <- function(mcmc.df, event.df, priors, k_modes, gt.K=NULL, gt.t_mid=NULL) {
-  mcmc_df_k <- mcmc.df[which(mcmc.df$dim==k_modes), ]   
-  event_df_k <- event.df[event.df$it %in% mcmc_df_k$it, ]
-
-  mode_br_df <- event_df_k[which(event_df_k$is.mode),]
-  mode_br_mcmc_df <- mcmc_df_k[mcmc_df_k$it %in% mode_br_df$it, ]
+  mode_br_df <- event.df[which(event.df$is.mode),]
+  mode_br_mcmc_df <- mcmc.df[mcmc.df$it %in% mode_br_df$it, ]
 
   dummy_gt <- data.frame(br=unique(mode_br_df$br))
   dummy_gt$median.K <- sapply(dummy_gt$br, function (x) median(mode_br_df$K[which(mode_br_df$br==x)]))
