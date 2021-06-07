@@ -40,7 +40,7 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_
              aspect.ratio=1)
 
      blank <- ggplot() + theme_minimal()
-     corr_maps <- blank
+     corr_maps <- list(blank)
      n_cor <- length(correlates)
      if(n_cor > 0) {
           corr_maps <- sapply(c(1:n_cor), function(i) list(build_correlate_map(correlates[[i]], pre, dat, tip.ord, unlist(axis_titles[i]), unlist(legend_titles[i]))))
