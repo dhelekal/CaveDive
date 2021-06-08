@@ -40,7 +40,7 @@ First we set up the MCMC parameters
 ```{r, set parameters}
 set.seed(1)
 
-burn_in <- 100
+burn_in <- 0.2
 n_it <- 1e8
 thinning <- n_it/1e4
 ```
@@ -68,9 +68,20 @@ priors <- standard_priors(expansion_rate=1,
 ### Run MCMC
 We now read the tree and run the MCMC.
 ```{r, run MCMC, eval=run_mcmc}
+
 tree_in <- list.files(pattern=".*\\.nwk")
-tree <- read.tree(file = tree_in)
+if (length(tree_in) > 0) {
+  tree <- read.tree(file = tree_in)
+} else {
+  tree_in <- list.files(pattern=".*\\.tre")
+  tree <- read.nexus(file = tree_in)
+}
 tree <- makeNodeLabel(tree)
+tree <- ladderize(tree, right = F)
+
+if(length(tree$edge.length[tree$edge.length<0]) > 0) print("Negative branch lengths encountered and rounded to 1e-8")
+
+tree$edge.length[tree$edge.length<0]<-1e-8
 
 start <- proc.time()
 expansions <- run_expansion_inference(tree, priors, 1, n_it=n_it, thinning=thinning)
@@ -82,48 +93,38 @@ print(elapsed)
 
 ### Process MCMC data
 ```{r, process MCMC data, eval=run_mcmc}
-pre <- expansions$phylo_preprocessed ### keep a hold of this, it's useful for plotting
-dfs <- mcmc2data.frame(expansions$mcmc_out)
-mcmc.df <- dfs$mcmc.df
-event.df <- dfs$event.df
-write.csv(mcmc.df, paste0(base_dir,"/mcmc_df.csv"))
-write.csv(event.df, paste0(base_dir,"/event_df.csv"))
+    saveRDS(expansions, file = paste0(base_dir, "/expansions.rds"))
 ```
 
 ```{r, read cached dataframes, eval=!run_mcmc, include=F}
-mcmc.df <- read.csv(paste0(base_dir,"/mcmc_df.csv"))
-event.df <- read.csv(paste0(base_dir,"/event_df.csv"))
-
-tree_in <- list.files(pattern=".*\\.nwk")
-tree <- read.tree(file = tree_in)
-tree <- makeNodeLabel(tree)
-
-pre <- structured_coal.preprocess_phylo(tree)
+    expansions <- readRDS(file = paste0(base_dir, "/expansions.rds"))
 ```
 
 ```{r, discard burn-in}
-  mcmc.df <- mcmc.df[burn_in:nrow(mcmc.df),]
-  event.df <- event.df[which(event.df$it >= burn_in), ]
+    expansions <- discard_burn_in(expansions, proportion=burn_in)
+```
+
+```{r, plot traces, out.width="90%", fig.width=10, fig.height=10, dpi=300, fig.align="center", message=FALSE}
+  plot(expansions, mode="traces")
 ```
 
 ### Inspect the base model parameters
 We're mostly interested in the model indicator trace and histogram, as this indicates the number of expansions.
 The population size trace acts as a good sanity check as well.
-```{r, select model}
-dim_panel <- plot_dim_panel(mcmc.df, prior_N=function(x) exp(priors$prior_N(x)))
-unique_dims <- unique(mcmc.df$dim)
-dim_counts <- sapply(unique_dims, function(i) length(which(mcmc.df$dim==i)))
+```{r, select model, out.width="90%", fig.width=20, fig.height=20, dpi=300, fig.align="center", message=FALSE}
+unique_dims <- unique(expansions$model_data$dim)
+dim_counts <- sapply(unique_dims, function(i) length(which(expansions$model_data$dim==i)))
 mode_dim <- unique_dims[which.max(dim_counts)]
-plot(dim_panel)
+if (mode_dim > 0) {
+  plot(expansions, mode="summary", k_modes=mode_dim)
+} else {
+  plot(expansions, mode="summary")
+}
 print(paste0("The mode for the number of expansions is: ", mode_dim))
 ```
 
 ### Analyse the marginal corresponding to the number of expansion mode
 We will look in detail at the marginal corresponding to the mode model, and inspect the top $K$ most likely expansions
-```{r, extract dim marginal}
-  mode_dim_marginal <- mcmc.df[which(mcmc.df$dim==mode_dim),]
-  mode_dim_marginal_it <- mode_dim_marginal$it
-```
 
 ```{r, check mode dim greater zero}
 if(mode_dim == 0) {
@@ -134,37 +135,6 @@ if(mode_dim == 0) {
 }
 ``` 
 
-```{r, extract branch modes, eval=eval_events}
-  event_mode_dim_marginal <- event.df[unlist(sapply(mode_dim_marginal_it, function (x) which(event.df$it==x))),]
-  unique.br <- unique(event_mode_dim_marginal$br)
-  branch_counts <- sapply(unique.br, function(x) length(which(event_mode_dim_marginal$br == x)))
-  br_count_ord <- order(-branch_counts)
-
-  k_mode_br <- unique.br[br_count_ord[c(1:mode_dim)]]
+```{r, extract branch modes, , out.width="90%", fig.width=30, fig.height=15, dpi=300, fig.align="center", message=FALSE, eval=eval_events}
+plot(expansions, mode="modes", k_modes=mode_dim)
 ```
-
-### First inspect how the tree branch frequency looks like for the mode dimension, and contrast it with the tree branch frequency of the entire posterior. 
-```{r, fig.cap="Tree Branch Frequency. Left: Marginal. Right: Full posterior", out.width="50%", fig.show="hold", echo=F, eval=eval_events}
-marginal_freq <- plot_tree_freq(mcmc.df, event.df, pre, prior_t_given_N=function(t,N) exp(priors$prior_t_given_N(t,N)))
-full_freq <- plot_tree_freq(mode_dim_marginal, event_mode_dim_marginal, pre, prior_t_given_N=function(t,N) exp(priors$prior_t_given_N(t,N)))
-plot(marginal_freq)
-plot(full_freq)
-```
-
-### Now plot branch expansion marginals
-```{r, fig.cap="Branch Marginals", out.width="50%", fig.show="hold", echo=F, eval=eval_events}
-for(mbr in k_mode_br) {
-
-  br_event_it <- event_mode_dim_marginal[which(event_mode_dim_marginal$br==mbr),]$it
-  br_event_mar <- event_mode_dim_marginal[unlist(sapply(br_event_it, function (x) which(event_mode_dim_marginal$it==x))),]
-  br_mcmc_mar <- mode_dim_marginal[unlist(sapply(br_event_it, function (x) which(mode_dim_marginal$it==x))),]
-  plts <- plot_event_summary(br_mcmc_mar, br_event_mar, mbr, pre, 
-   prior_N=function (x) exp(priors$prior_N(x)), 
-   prior_t_mid_given_N=function (x,n) exp(priors$prior_t_mid_given_N(x,n)), 
-   prior_K_given_N=function (x,n) exp(priors$prior_K_given_N(x,n)), 
-   prior_t_given_N=function (x,n) exp(priors$prior_t_given_N(x,n)))
-   plot(plts$tree_highlight_panel)
-   plot(plts$event_panel)
-}
-```
-

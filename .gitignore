@@ -56,9 +56,11 @@ CaveDive/R/RcppExports.R
 validation/R/debug/
 
 
-R/trees/*/analyse_tree.rmd
-R/trees/*/mcmc_out/*.csv
-*mcmc_df.csv
+R/Paper/Trees/*/analyse_tree.rmd
+R/Paper/Trees/*/mcmc_out/*.rds
+R/Paper/Figures/*/*.rds
 *event_df.csv
 
-validation/R/sim_one_exp/*
+R/Paper/Sim/*
+R/Paper/Stored Trees/*
+*.rds

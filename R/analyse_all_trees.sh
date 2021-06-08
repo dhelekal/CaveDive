@@ -1,2 +1,2 @@
 #!/bin/bash
-ls ./trees | parallel -j 20 --verbose --halt-on-error 0 eval sh "run_analyse_tree.sh ./trees/{}"
+ls $1 | parallel -j 6 sh run_analyse_tree.sh $1/{}

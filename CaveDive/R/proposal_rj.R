@@ -9,21 +9,21 @@ prop.sampler <- function (x_prev, i_prev, pre, para.initialiser, initialiser.log
   jump_scale <- pop_scale/10
 
   if (r < p) { ## transdimensional
-  x_prop <- transdimensional.sampler(x_prev, i_prev, pre, para.initialiser, initialiser.log_lh, fn_log_J, fn_log_J_inv)
-  x_next <- x_prop$x_next
-  i_next <- x_prop$i_next
+    x_prop <- transdimensional.sampler(x_prev, i_prev, pre, para.initialiser, initialiser.log_lh, fn_log_J, fn_log_J_inv)
+    x_next <- x_prop$x_next
+    i_next <- x_prop$i_next
 
-  log_J <- x_prop$log_J
-  qr <- x_prop$qr 
-} else { ## within-model
-x_prop <- within_model.sampler(x_prev, i_prev, pre, jump_scale)
-x_next <- x_prop$x_next
-i_next <- i_prev
+    log_J <- x_prop$log_J
+    qr <- x_prop$qr 
+  } else { ## within-model
+    x_prop <- within_model.sampler(x_prev, i_prev, pre, jump_scale)
+    x_next <- x_prop$x_next
+    i_next <- i_prev
 
-log_J <- 0
-qr <- x_prop$qr 
-}
-return(list(x_next=x_next,i_next=i_next, qr=qr, log_J=log_J))
+    log_J <- 0
+    qr <- x_prop$qr 
+  }
+  return(list(x_next=x_next,i_next=i_next, qr=qr, log_J=log_J))
 }
 
 transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, initialiser.log_lh, fn_log_J, fn_log_J_inv, fixed_move=NA) {
@@ -42,19 +42,19 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
 
   x_next[[i_next + offset]] <- para.initialiser(N_prev)
 
-    old_probs <- x_prev[[2]]
-    which_split <- sample.int((i_prev+1),1)
-    u <- runif(1, 0, old_probs[which_split])
+  old_probs <- x_prev[[2]]
+  which_split <- sample.int((i_prev+1),1)
+  u <- runif(1, 0, old_probs[which_split])
 
-    stopifnot("probs vector lengths not equal i_prev+1"=length(old_probs)==(i_prev+1))
+  stopifnot("probs vector lengths not equal i_prev+1"=length(old_probs)==(i_prev+1))
 
-    new_probs <- c(old_probs[-(i_prev+1)], u, old_probs[(i_prev+1)])
+  new_probs <- c(old_probs[-(i_prev+1)], u, old_probs[(i_prev+1)])
 
-    if(which_split < (i_prev+1)) {
-      new_probs[which_split] <- new_probs[which_split] - u
-    } else {
-      new_probs[which_split+1] <- new_probs[which_split+1] - u
-    }
+  if(which_split < (i_prev+1)) {
+    new_probs[which_split] <- new_probs[which_split] - u
+  } else {
+    new_probs[which_split+1] <- new_probs[which_split+1] - u
+  }
   x_next[[2]] <- new_probs
 
   qr <- qr - log(1/(i_prev+1))
@@ -66,7 +66,7 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
   if(abs(sum(x_next[[2]]) - 1) > 1e-8) warning("prob sum error")
 
     log_J <- fn_log_J(i_prev, x_prev, x_next)
-   } else { ### decrease dim
+  } else { ### decrease dim
     x_next <- x_prev
     N_prev <- x_prev[[1]]
     if (i_prev > 0) {
@@ -82,21 +82,21 @@ transdimensional.sampler <- function(x_prev, i_prev, pre, para.initialiser, init
       which_merge <- sample.int(i_prev, size=1)
 
       x_next[[2]][which_merge] <- x_next[[2]][which_merge] + which_prob
-      
+
       qr <- qr - log(1/i_prev) ## proposal remove model 
       qr <- qr - log(1/i_prev) ## proposal merge with this probaility
       qr <- qr + initialiser.log_lh(x_prev[[(which_elem+offset)]], N_prev) ## reverse lh of adding that model
       qr <- qr + log(1/i_prev) ## reverse pick same prob for split 
       qr <- qr + log(1/x_next[[2]][which_merge]) ##pick the same split from uniform
-      
+
       if(abs(sum(x_next[[2]]) - 1) > 1e-8) warning("prob sum error")
-      if(length(x_next[[2]]) != (i_next+1)) warning("prob length error")
-      log_J <- fn_log_J_inv(i_prev, x_prev, x_next, which_elem)
-  } else {
-    i_next <- i_prev
+        if(length(x_next[[2]]) != (i_next+1)) warning("prob length error")
+          log_J <- fn_log_J_inv(i_prev, x_prev, x_next, which_elem)
+      } else {
+        i_next <- i_prev
+      }
   }
-}
-return(list(x_next=x_next, i_next=i_next, log_J=log_J, qr=qr))
+  return(list(x_next=x_next, i_next=i_next, log_J=log_J, qr=qr))
 }
 
 within_model.sampler <- function(x_prev, i_prev, pre, scale, fixed_move=NA, fixed_index=NA) {
@@ -169,7 +169,7 @@ move_update_mid.time <- function(x_prev, pre, scale) { ### update mid.time
 
   qr <- -dnorm(mid.time_upd, mean=mid.time, sd=scale, log=TRUE) - dlnorm(K_upd, meanlog=log(K), sdlog=0.15, log=TRUE) ## proposal lh
   qr <- qr + dnorm(mid.time, mean=mid.time_upd, sd=scale, log=TRUE) + dlnorm(K, meanlog=log(K_upd), sdlog=0.15, log=TRUE) ## reverse lh
-  
+
   x_next[[1]] <- mid.time_upd 
   x_next[[2]] <- K_upd
   x_next[[3]] <- div.times
@@ -197,7 +197,7 @@ move_update_branch2 <- function(x_prev, pre, scale) { ### update branch
   qr <- -dnorm(delta_t, mean=0, sd=scale, log=TRUE)
   qr <- qr + dnorm(delta_t, mean=0, sd=scale, log=TRUE)
 
-  ## Root acts as reflecting boundary for time. 
+    ## Root acts as reflecting boundary for time. 
   if ((div.times+delta_t) < nodes$times[root]) {
     div.times_upd <- ((div.times+delta_t) - nodes$times[root])
   } else {
@@ -275,11 +275,11 @@ move_update_probs <- function(probs, pre, fixed_index = NA) {
 ### Proposal likelihood functions used for testing
 prop_lh <- function(x_prev, i_prev, x_next, i_next, pre, initialiser.log_lh, scale=10) {
   lh <- 0
-    if (i_next == i_prev) {
-        lh <- lh + dlnorm(x_next[[1]], meanlog= log(x_prev[[1]]), sdlog= 0.15, log=TRUE)
-        p_next <- x_next[[2]]
-        p_prev <- x_prev[[2]]
-        lh <- lh + log(1/((length(p_next)**2)))
+  if (i_next == i_prev) {
+    lh <- lh + dlnorm(x_next[[1]], meanlog= log(x_prev[[1]]), sdlog= 0.15, log=TRUE)
+    p_next <- x_next[[2]]
+    p_prev <- x_prev[[2]]
+    lh <- lh + log(1/((length(p_next)**2)))
 
     p_diff <- p_prev - p_next
 

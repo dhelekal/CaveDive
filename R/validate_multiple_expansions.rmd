@@ -1,0 +1,196 @@
+---
+title: "Validate multiple expansions"
+author: "David Helekal"
+date: "12/2/2020"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r, eval mcmc}
+eval_mcmc <- F
+```
+
+```{bash, clean directory, include=FALSE, eval=eval_mcmc}
+rm -rf ./Paper/Sim/sim_validate_multiple_exp
+rm -rf ./Paper/Sim/tmp3
+
+mkdir ./Paper/Sim/tmp3
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(CaveDive)
+library(rmutil)
+library(ape)
+library(ggplot2)
+library(ggtree)
+library(ggExtra)
+library(treeio)
+library(viridis)
+library(rjson)
+library(egg)
+library(scales)
+
+dir.create(file.path("./Paper/Sim/", "sim_validate_multiple_exp"))
+base_dir <- "./Paper/Sim/sim_validate_multiple_exp"
+```
+## Simulation Validation
+
+This notebook simulates several different sets of genealogies containing a number of expansions and tests MCMC inference against them, aiming to validate whether the correct number of expansions can be recovered.
+
+### Number of expansions recovery
+
+This section validates how well the correct number of expansions can recovered. We consider genealogies with 1 to 5 expansions and 60 tips + 40 per expansion  
+
+### Set up the experiment 
+```{r, set parameters}
+set.seed(1)
+
+burn_in <- 0.1
+n_it <- 2e7
+thinning <- n_it/1e4  
+
+repetitions <- 25
+dims <- c(2:5)
+lambdar <- 5
+pop <- 5
+```
+
+```{r, generate parameter specification files, eval=eval_mcmc}
+dir.create(file.path(base_dir, "test_spec"))
+dir.create(file.path(base_dir, "test_out"))
+
+seed <- 0
+
+for(i in c(1:length(dims))) {
+  dir_name <- paste0("dim_",i)
+  dir.create(file.path(paste0(base_dir,"/test_spec"), dir_name))
+    dir.create(file.path(paste0(base_dir,"/test_out"), dir_name))
+    for (l in c(1:repetitions)) {
+      params <- c(paste0("-e ", dims[i]),
+                  paste0("-s ", seed),
+                  paste0("-t ", 60+dims[i]*40), 
+                  paste0("-l ", lambdar),
+                  paste0("--meanscale ", pop),
+                  paste0("--sdscale ", 1/2),
+                  paste0("--nu ", 1/3),
+                  paste0("--kappa ", 1/4),
+                  paste0("--sdk ", 0.5),
+                  paste0("-o ",base_dir,"/test_out/",dir_name, "/r_",l),
+                  paste0("--metadata ", paste0("\"","dim_idx:",i,"\""))) 
+      fname <- paste0("dim_",i,"_r_",l,".txt")
+      fileConn<-file(paste0(base_dir,"/test_spec/", dir_name,"/", fname))
+        writeLines(params, fileConn)
+      close(fileConn)
+      seed <- seed+1
+  }
+}
+```
+
+### Simulate the parameters of individual processes
+```{bash, simulate parameters, results=FALSE, eval=eval_mcmc}
+find ./Paper/Sim/sim_validate_multiple_exp | grep .*.txt | xargs -L 1 cat | parallel -j 10 --verbose --tmpdir ./Paper/Sim/tmp3 -n 11 --halt-on-error 2 eval Rscript "./Scripts/simulate_tree.R {}"
+```
+
+### Run MCMC inference 
+```{bash, run mcmc, results=FALSE, eval=eval_mcmc}
+find ./Paper/Sim/sim_validate_multiple_exp | grep .*tree.nwk | xargs dirname | parallel -j 10 --verbose --tmpdir ./Paper/Sim/tmp3 --halt-on-error 2 eval Rscript "./Scripts/run_expansions_inference_nwk.R -n 2e7 -t 2e3 --lambdar 5 -s 1 -f {}/tree.nwk -o {}"
+```
+
+### Produce plots for dimension mode analysis
+```{r, process data}
+experiment_specs <- list.files(path = paste0(base_dir,"/test_out"), pattern=".*tree_params.json", full.names = TRUE, recursive = TRUE)
+experiment_dirs <- dirname(experiment_specs)
+
+results_data <- lapply(c(1:length(experiment_specs)), function(i){
+  sim_data <- fromJSON(file=experiment_specs[i])
+  meta_data <- sim_data$meta
+  sim_data <- lapply(sim_data, unlist) 
+  sim_data <- lapply(sim_data, as.numeric) 
+
+  dim.gt <- sim_data$n_exp
+  ### Check that we got the number of expansions approximately right  
+  expansions <- readRDS(paste0(experiment_dirs[i],"/expansions.rds"))
+  expansions <- discard_burn_in(expansions, proportion=burn_in)
+  pre <- expansions$phylo_preprocessed
+
+  mcmc_data <- expansions$model_data
+  event_data <- expansions$expansion_data
+
+  p_correct_dim <- length(which(mcmc_data$dim==dim.gt))/length(mcmc_data$dim)
+  expected_dim <- mean(mcmc_data$dim)
+
+  unique.dim <- unique(mcmc_data$dim)
+  mode_dim <- unique.dim[which.max(sapply(unique.dim, function(x) length(which(mcmc_data$dim == x))))]
+
+  return(list(p_correct_dim=p_correct_dim, 
+              expected_dim=expected_dim, 
+              mode_dim=mode_dim, 
+              dim_gt=dim.gt))
+})
+```
+
+```{r, aggregate histograms}
+experiment_specs <- list.files(path = paste0(base_dir,"/test_out"), pattern=".*tree_params.json", full.names = TRUE, recursive = TRUE)
+experiment_dirs <- dirname(experiment_specs)
+
+histogram_dfs <- lapply(c(1:length(experiment_specs)), function(i){
+  sim_data <- fromJSON(file=experiment_specs[i])
+  meta_data <- sim_data$meta
+  sim_data <- lapply(sim_data, unlist) 
+  sim_data <- lapply(sim_data, as.numeric) 
+
+  dim.gt <- sim_data$n_exp
+  ### Check that we got the number of expansions approximately right  
+  expansions <- readRDS(paste0(experiment_dirs[i],"/expansions.rds"))
+  expansions <- discard_burn_in(expansions, proportion=burn_in)
+
+  mcmc_data <- expansions$model_data
+  return(data.frame(dim=mcmc_data$dim, gt=dim.gt))
+})
+```
+
+```{r, create dataframe}
+names(results_data) <- c(1:length(results_data)) 
+data_df <- do.call(rbind.data.frame, results_data)
+
+hist_df <- do.call(rbind, histogram_dfs)
+hist_df$gt <- factor(hist_df$gt, levels=c(2:5), ordered=T)
+head(hist_df)
+```
+
+```{r, plot mode dim, eval=T, out.width="90%", fig.width=20, fig.height=20, dpi=300, fig.align="center"}
+
+e_hist <- ggplot(hist_df, aes(y=dim)) + 
+          geom_bar(aes(x = ..prop..), stat="count") + 
+          scale_y_discrete(limits=c(0:9)) + 
+          scale_x_continuous(labels=percent, limits=c(0,1))+
+          coord_cartesian(ylim = c(-0.5, 9.5), xlim=c(0,0.5),expand = FALSE) +
+          ylab("Number of Expansions") + 
+          facet_grid(cols=vars(gt)) +
+          theme_bw() +
+          theme(text = element_text(size=35),  
+                axis.title.x = element_blank(),
+                axis.text.x = element_blank(), 
+                axis.ticks.x = element_blank())
+
+max_e <- max(data_df$expected_dim)
+
+e_dim_scatter <- ggplot(data_df, aes(dim_gt, expected_dim))
+e_dim_scatter <- e_dim_scatter + geom_boxplot(aes(group=dim_gt)) + stat_summary(fun.y=mean, geom="point", lwd=2, color="red")
+e_dim_scatter <- e_dim_scatter + geom_jitter(shape=16, dotsize=1, position=position_jitter(0.2))
+e_dim_scatter <- e_dim_scatter + theme_bw() + labs(x = "True Number of Expansions", y="Expected Number of Expansions") + scale_x_discrete(limits=c(2:5)) + scale_y_continuous(limits=c(0, 12), breaks=c(0:12)) + coord_cartesian(ylim = c(-0.5, 9.5),xlim=c(1.5,5.5), expand = FALSE)
+e_dim_scatter <- e_dim_scatter + theme(axis.text.x = element_text(angle = 45, hjust = 1),
+                                        text = element_text(size=35),  
+                                        axis.title.y = element_blank(),
+                                        axis.title.x = element_blank(), 
+                                        axis.text.y = element_blank(), 
+                                        axis.ticks.y = element_blank())
+
+
+p <- ggarrange(e_hist, e_dim_scatter, widths=c(2,2), heights=c(2))
+png("./Paper/Figures/fig4.png", width=1600,height=800)
+p
+dev.off()
+```

@@ -89,16 +89,16 @@ discard_burn_in.expansionsMCMC <- function(x, proportion=NULL, k_it=NULL, ...){
      metadata <- x$metadata
      if (!is.null(proportion)){
                stopifnot("proportion must be within interval [0,1)"=(proportion>=0 && proportion < 1))
-               burnin <- metadata$n_it*proportion
+               burnin <- metadata$effective_it*proportion
      } else {
-          stopifnot("k_it must be within interval [0, n_it)"=(k_it>=0 && k_it < n_it))
+          stopifnot("k_it must be within interval [0, effective_it)"=(k_it>=0 && k_it < effective_it))
           burnin <- k_it
      }
 
-     model_data_burn_in <- x$model_data[(burnin+1):metadata$n_it, ] 
-     expansion_data_burn_in <- x$expansion_data[x$expansion_data %in% model_data_burn_in$it, ]
+     model_data_burn_in <- x$model_data[(burnin+1):metadata$effective_it, ] 
+     expansion_data_burn_in <- x$expansion_data[x$expansion_data$it %in% model_data_burn_in$it, ]
 
-     metadata$n_it <- metadata$n_it-burnin 
+     metadata$effective_it <- metadata$effective_it-burnin 
      metadata$burn_in <- burnin 
 
      return(expansionsMCMC(x$phylo_preprocessed, x$priors, model_data_burn_in, expansion_data_burn_in, metadata))
@@ -113,16 +113,16 @@ print.expansionsMCMC <- function(x, ...) {
 }
 
 #' @export
-plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence", "traces"), k_modes=NULL, correlates=NULL) {
+plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence", "traces", "mtraces"), k_modes=NULL, correlates=list(), corr_axis_title=list(),
+                                  corr_legend_title=list(), gt.K=NULL, gt.t_mid=NULL) {
      mode <- match.arg(mode)
 
      expansion_data <- x$expansion_data
      model_data <- x$model_data
-
-     expansion_data$mode_clade <- NA
-     expansion_data$is.mode <- NA
-
-     head(expansion_data)
+     if (nrow(expansion_data > 0)) {
+          expansion_data$mode_clade <- NA
+          expansion_data$is.mode <- NA
+     }
 
      modes <- NULL
 
@@ -146,26 +146,35 @@ plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence"
      }
 
      if (mode=="summary") {
-          if (!is.null(correlates)) warning("Unused argument: correlates")
+          stopifnot("No expansions were detected"=nrow(expansion_data)>0)
+          if (length(correlates)>0) warning("Unused argument: correlates")
           plot_summary(model_data, expansion_data, x$phylo_preprocessed, x$priors, modes)
 
      } else if (mode == "modes") {
+          stopifnot("No expansions were detected"=nrow(expansion_data)>0)
           stopifnot("Number of modes must be supplied"=!is.null(k_modes))
-          if (!is.null(correlates)) warning("Unused argument: correlates")
-          plot_mode_summary(model_data, expansion_data, x$priors)
+          if (length(correlates)>0) warning("Unused argument: correlates")
+          plot_mode_summary(model_data, expansion_data, x$priors, k_modes, gt.K, gt.t_mid)
 
      } else if (mode=="persistence") {
-          if (!is.null(k_modes)) warning("Unused argument: k_modes")
+          stopifnot("No expansions were detected"=nrow(expansion_data)>0)
           plot_persistence(model_data,
                                   expansion_data, 
                                   x$phylo_preprocessed, 
-                                  prior_t_given_N=function (t, n) exp(x$priors$prior_t_given_N(t,n)), 
-                                  correlates=correlates)
+                                  corr_axis_title,
+                                  corr_legend_title,
+                                  correlates=correlates,
+                                  modes=modes)
 
      } else if (mode=="traces") {
           if (!is.null(k_modes)) warning("Unused argument: k_modes")
-          if (!is.null(correlates)) warning("Unused argument: correlates")
+          if (length(correlates)>0) warning("Unused argument: correlates")
           plot_traces(model_data, expansion_data)
+     } else if (mode=="mtraces") {
+          if (length(correlates)>0) warning("Unused argument: correlates")
+          stopifnot("No expansions were detected"=nrow(expansion_data)>0)
+          stopifnot("Number of modes must be supplied"=!is.null(k_modes))
+          plot_mode_traces(model_data, expansion_data, k_modes)
      } else {
           stop("Invalid plotting options")
      }

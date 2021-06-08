@@ -40,6 +40,12 @@ rjmcmc <- function(posterior, proposal.sampler, x0, i0, max_it, thinning=1) {
         prior_prop <- posterior_prop$prior
         lh_prop <- posterior_prop$lh
 
+        stopifnot("Missing value encountered in likelihood"=!is.na(lh_prop))
+        stopifnot("Missing value encountered in prior"=!is.na(prior_prop))
+
+        stopifnot("NaN encountered in likelihood"=!is.nan(lh_prop))
+        stopifnot("NaN encountered in prior"=!is.nan(prior_prop))
+
         if (lh_prop > -Inf){
             a <- lh_prop+prior_prop
             b <- lh_prev+prior_prev
