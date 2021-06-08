@@ -13,7 +13,7 @@ library(coda)
 
 set.seed(1)
 
-run_mcmc <- F
+run_mcmc <- T
 
 n_it <- 1e8
 thinning <- n_it/1e4
@@ -36,8 +36,16 @@ if (run_mcmc) {
     tree <- read.tree(file = paste0(base_dir,"/","dated.nwk"))
     tree <- makeNodeLabel(tree)
     tree <- ladderize(tree, F)
+    start <- proc.time()
     expansions <- run_expansion_inference(tree, priors, 1, n_it=n_it, thinning=thinning)
+    elapsed <-proc.time() - start
     saveRDS(expansions, file = paste0(base_dir, "/expansions.rds"))
+
+    sink("TimeUhlemann.txt")
+    print(paste0(n_it," RjMCMC iterations completed. Time elapsed:"))
+    print(elapsed)
+    sink()
+
 } else {
     expansions <- readRDS(file = paste0(base_dir, "/expansions.rds"))
 }

@@ -11,7 +11,7 @@ library(coda)
 
 set.seed(3)
 
-run_mcmc <- F
+run_mcmc <- T
 
 data_dir <- "./tree_sim"
 
