@@ -439,6 +439,46 @@ plot_mode_traces <- function(mcmc.df, event.df, k_modes) {
           heights = c(1,1))
 }
 
+plot_pop_fn <- function(mcmc.df, event.df, which_br, t_max=NULL, eval_pts=100) {
+  mode_br_df <- event.df[which(event.df$br==which_br),]
+  mode_br_mcmc_df <- mcmc.df[mcmc.df$it %in% mode_br_df$it, ]
+  min_x <- min(mode_br_df$time)
+  if(is.null(t_max)) {
+     max_x <- 0.3*abs(min_x)
+  } else {
+     max_x <- t_max
+  }
+  X <- seq(from=min_x, to=max_x, length.out=eval_pts)
+  Y_med <- rep(0, eval_pts)
+  Y_min <- rep(0, eval_pts)
+  Y_max <- rep(0, eval_pts)
+
+  funcs <- lapply(c(1:nrow(mode_br_df)), 
+     function (i) function (s) 1/sat.rate(s, mode_br_df$K[i], (1/mode_br_df$t_mid[i])**2, mode_br_df$time[i]))
+
+  for (i in c(1:eval_pts)) {
+     f_vals <- sapply(c(1:length(funcs)), function(j) funcs[[j]](-X[i]))
+     Y_med[i] <- median(f_vals)
+     ci <- compute_ci(f_vals)
+     Y_min[i] <- ci[1]
+     Y_max[i] <- ci[2]
+  }
+
+  pal <- brewer.pal(n = 3, name = "Dark2")
+  df <- data.frame(t=X, y_med=Y_med, y_min=Y_min, y_max=Y_max)
+  gg <- ggplot(df) +
+  geom_ribbon(aes(x=t,ymin=y_min, ymax=y_max),fill="grey50", alpha=0.3) +
+  geom_line(data=subset(df, t <= 0), aes(x=t, y=y_med), linetype="solid",lwd=2, color=pal[2]) +
+  geom_line(data=subset(df, t > 0), aes(x=t, y=y_med), linetype="longdash",lwd=2, color=pal[3]) + 
+  theme_bw() +
+  xlab("Time") +
+  ylab("Neg") +
+  theme(text = element_text(size=20), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+  plot(gg)
+}
+
 #' Plots mcmc output as several panels
 #' 
 #' @param mcmc.df mcmc.df returned by mcmc2data.frame

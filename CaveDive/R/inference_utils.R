@@ -113,8 +113,8 @@ print.expansionsMCMC <- function(x, ...) {
 }
 
 #' @export
-plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence", "traces", "mtraces"), k_modes=NULL, correlates=list(), corr_axis_title=list(),
-                                  corr_legend_title=list(), gt.K=NULL, gt.t_mid=NULL) {
+plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence", "traces", "mtraces", "popfunc"), k_modes=NULL, correlates=list(), corr_axis_title=list(),
+                                  corr_legend_title=list(), gt.K=NULL, gt.t_mid=NULL, branch=NULL, t_max=NULL) {
      mode <- match.arg(mode)
 
      expansion_data <- x$expansion_data
@@ -175,6 +175,11 @@ plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence"
           stopifnot("No expansions were detected"=nrow(expansion_data)>0)
           stopifnot("Number of modes must be supplied"=!is.null(k_modes))
           plot_mode_traces(model_data, expansion_data, k_modes)
+     } else if(mode=="popfunc") {
+          stopifnot("branch must be supplied"=!is.null(branch))
+          if (!is.null(k_modes)) warning("Unused argument: k_modes")
+          if (length(correlates)>0) warning("Unused argument: correlates")
+          plot_pop_fn(model_data, expansion_data, branch, t_max=t_max, eval_pts=100)
      } else {
           stop("Invalid plotting options")
      }

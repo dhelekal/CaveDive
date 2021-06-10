@@ -23,6 +23,7 @@ corr_df <- read.csv(paste0(base_dir, "/microreact-project-gpsGPSC18-data.csv"),r
 corr_df <- as.data.frame(corr_df)
 
 corr_df1 <- corr_df[,c("In_Silico_Serotype"),drop=F]
+colnames(corr_df1) <- "Serotype"
 #corr_df <- corr_df[,c("Continent"),drop=F]
 
 #corr_df$erm <- sapply(corr_df$erm, function(x) if (x=="neg") "absent" else x)
@@ -38,4 +39,9 @@ dev.off()
 png("fig_gpsc18_param.png", width=1600, height=1600)
 plot(expansions, mode="modes", k_modes=1)
 dev.off()
+
+png("fig_gpsc18_plotfn.png", width=800, height=800)
+plot(expansions, mode="popfunc", branch=385, t_max=300)
+dev.off()
+
 

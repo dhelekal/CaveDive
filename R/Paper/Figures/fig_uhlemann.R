@@ -13,7 +13,7 @@ library(coda)
 
 set.seed(1)
 
-run_mcmc <- T
+run_mcmc <- F
 
 n_it <- 1e8
 thinning <- n_it/1e4

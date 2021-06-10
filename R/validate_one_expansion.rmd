@@ -238,7 +238,7 @@ head(data_df)
 dim_hist <- ggplot(data_df, aes(x=mode_dim))
 dim_hist <- dim_hist + geom_bar(aes(y = ..prop..), stat="count") + 
             geom_text(aes( label = scales::percent(..prop..), y= ..prop.. ), stat= "count", vjust = -.5, size=15)
-dim_hist <- dim_hist + theme_bw() + labs(x = "Mode No. of Expansions") + scale_y_continuous(labels=percent, limits=c(0,1)) 
+dim_hist <- dim_hist + theme_bw() + labs(x = "Posterior Maximum No. Exp.") + scale_y_continuous(labels=percent, limits=c(0,1)) 
 dim_hist <- dim_hist + theme(axis.text.x = element_text(angle = 45, hjust = 1), 
                              axis.title.y = element_blank(),
                              text = element_text(size=35))
