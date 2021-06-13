@@ -479,6 +479,90 @@ plot_pop_fn <- function(mcmc.df, event.df, which_br, t_max=NULL, eval_pts=100) {
   plot(gg)
 }
 
+plot_pop_fn_facet <- function(mcmc.df, event.df, k_modes, eval_pts=100, t_max=NULL, gt.K=NULL, gt.t_mid=NULL, gt.time=NULL) {
+  mode_br_df <- event.df[which(event.df$is.mode),]
+  mode_br_mcmc_df <- mcmc.df[mcmc.df$it %in% mode_br_df$it, ]
+
+  brs <- unique(mode_br_df$br)
+  min_x <- sapply(brs, function(x) min(mode_br_df$time[mode_br_df$br==x]))
+  
+  if(is.null(t_max)) {
+     max_x <- 0.3*abs(min_x)
+  } else {
+     max_x <- t_max
+  }
+
+  Xseq <- lapply(c(1:k_modes), function(i) seq(from=min_x[i], to=max_x[i], length.out=eval_pts))
+
+  Y_med <- c()
+  Y_min <- c()
+  Y_max <- c()
+  X <- c()
+  br_v <- c()
+
+  for (k in c(1:length(brs))) {
+     Y_med_tmp <- rep(0,eval_pts)
+     Y_min_tmp <- rep(0,eval_pts)
+     Y_max_tmp <- rep(0,eval_pts)
+
+     br_subs <- mode_br_df[which(mode_br_df$br==brs[k]),]
+
+     funcs <- lapply(c(1:nrow(br_subs)), 
+     function (i) function (s) 1/sat.rate(s, br_subs$K[i], (1/br_subs$t_mid[i])**2, br_subs$time[i]))
+
+     for (i in c(1:eval_pts)) {
+          f_vals <- sapply(c(1:length(funcs)), function(j) funcs[[j]](-Xseq[[k]][i]))
+          Y_med_tmp[i] <- median(f_vals)
+          ci <- compute_ci(f_vals)
+          Y_min_tmp[i] <- ci[1]
+          Y_max_tmp[i] <- ci[2]
+     }
+     Y_med <- c(Y_med, Y_med_tmp)
+     Y_min <- c(Y_min, Y_min_tmp)
+     Y_max <- c(Y_max, Y_max_tmp)
+     X <- c(X, Xseq[[k]])
+     br_v <- c(br_v, rep(brs[k], eval_pts))
+  }
+
+  Y_val <- c()
+  
+  if(!is.null(gt.K) && !is.null(gt.t_mid) && !is.null(gt.time)) {
+     for (k in c(1:length(brs))) {
+        func <- function (s) 1/sat.rate(s, gt.K[k], (1/gt.t_mid[k])**2, gt.time[k])
+        Y_val_tmp <- sapply(-Xseq[[k]], func) 
+
+        Y_val <- c(Y_val, Y_val_tmp)
+        X <- c(X, Xseq[[k]])
+        br_v <- c(br_v, rep(brs[k], eval_pts))
+     }
+     dummy_df <- data.frame(t=X, y=Y_val, br=br_v)
+  }
+
+
+  br.labs <- sapply(brs, function (x) paste0("Branch: ",x))
+  names(br.labs) <- unique(brs)
+
+  pal <- brewer.pal(n = 3, name = "Dark2")
+  df <- data.frame(t=X, y_med=Y_med, y_min=Y_min, y_max=Y_max, br=br_v)
+  gg <- ggplot(df) +
+  geom_ribbon(aes(x=t,ymin=y_min, ymax=y_max),fill="grey50", alpha=0.3) +
+  geom_line(data=subset(df, t <= 0), aes(x=t, y=y_med), linetype="solid",lwd=2, color=pal[2]) +
+  geom_line(data=subset(df, t > 0), aes(x=t, y=y_med), linetype="longdash",lwd=2, color=pal[3]) + 
+  theme_bw() +
+  xlab("Time") +
+  ylab("Neg") +
+  ylim(c(0, max(Y_max)))
+     
+  if(!is.null(gt.K) && !is.null(gt.t_mid) && !is.null(gt.time)) gg <- gg + 
+       geom_line(data=dummy_df, aes(x=t, y=y), linetype="dotted",lwd=3, color=pal[1])
+
+  gg <- gg + facet_wrap(~br, labeller=labeller(br = br.labs), scales="free") +
+  theme(text = element_text(size=20), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+  plot(gg)
+}
+
 #' Plots mcmc output as several panels
 #' 
 #' @param mcmc.df mcmc.df returned by mcmc2data.frame
