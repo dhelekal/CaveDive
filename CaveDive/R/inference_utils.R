@@ -113,6 +113,18 @@ print.expansionsMCMC <- function(x, ...) {
 }
 
 #' @export
+#' @param x expansionsMCMC object
+#' @param ... further arguments passed to plot
+#' @param mode one of "summary" - produces a summary plot for this chain, "modes" - plot marginals for top k posterior probability branches, "persistence" - plot posterior probability of expansion tip membership, "traces" - plot traces for N, number of expansions, and branches , "mtraces" - plot traces for expansion parameters for top k posterior probability branches, "popfunc" - plot posterior population functions.
+#' @param k_modes number of highest posterior probability branches to generate plots for used by "modes", "mtraces", "popfunc"
+#' @param correlates (Optional) correlates to plot alongside persistence matrix used by "persistence" plot
+#' @param corr_axis_title (Optional) axis title for correlate map used by "persistence" plot
+#' @param corr_legend_title (Optional) legend title for correlate map used by "persistence" plot
+#' @param gt.K true K values if plotting for diagnostic purposes
+#' @param gt.t_mid true t_mid values if plotting for diagnostic purposes
+#' @param gt.time true expansion time values if plotting for diagnostic purposes
+#' @param branch which branch to generate "popfunc" plot for
+#' @param t_max upper x-axis limit for "popfunc" plot
 plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence", "traces", "mtraces", "popfunc"), k_modes=NULL, correlates=list(), corr_axis_title=list(),
                                   corr_legend_title=list(), gt.K=NULL, gt.t_mid=NULL, gt.time=NULL, branch=NULL, t_max=NULL) {
      mode <- match.arg(mode)
