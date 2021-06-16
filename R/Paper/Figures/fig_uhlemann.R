@@ -71,3 +71,11 @@ png("fig_uhlemann_modes.png", width=1600, height=1600)
 plot(expansions, mode="modes",k_modes=3)
 dev.off()# 
 
+png("fig_uhlemann_trace.png", width=1600, height=1600)
+plot(expansions, mode="traces")
+dev.off()
+
+png("fig_uhlemann_mtrace.png", width=1600, height=1600)
+plot(expansions, mode="mtraces",k_modes=3)
+dev.off()
+

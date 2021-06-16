@@ -124,8 +124,23 @@ png("fig_gpsc18_param.png", width=1600, height=1600)
 plot(expansions, mode="modes", k_modes=1)
 dev.off()
 
+png("fig_gpsc18_trace.png", width=1600, height=1600)
+plot(expansions, mode="traces")
+dev.off()
+
+png("fig_gpsc18_summary.png", width=1600, height=1600)
+plot(expansions, mode="summary",k_modes=1)
+dev.off()
+
+
+png("fig_gpsc18_mtrace.png", width=1600, height=1600)
+plot(expansions, mode="mtraces",k_modes=1)
+dev.off()
+
 png("fig_gpsc18_plotfn.png", width=800, height=800)
 plot(gg)
 dev.off()
+
+
 
 

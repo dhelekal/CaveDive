@@ -51,3 +51,15 @@ dev.off()
 png("fig_gpsc9_summary.png", width=1600, height=1600)
 plot(expansions, mode="summary", k_modes=3)
 dev.off()
+
+png("fig_gpsc9_trace.png", width=1600, height=1600)
+plot(expansions, mode="traces")
+dev.off()
+
+png("fig_gpsc9_mtrace.png", width=1600, height=1600)
+plot(expansions, mode="mtraces",k_modes=3)
+dev.off()
+
+png("fig_gpsc9_popfn.png", width=1600, height=800)
+plot(expansions, mode="popfunc",k_modes=3,t_max=c(50,50,50))
+dev.off()
