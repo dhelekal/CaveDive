@@ -31,7 +31,7 @@ compute_ci <- function(x, conf=0.95) {
   return(ci)
 }
 
-base_dir <- "../GPSC_Trees/GPSC18"
+base_dir <- "../Trees/GPSC18"
 expansions <- readRDS(file = paste0(base_dir, "/mcmc_out/expansions.rds"))
 expansions <- discard_burn_in(expansions, proportion=burn_in)
 

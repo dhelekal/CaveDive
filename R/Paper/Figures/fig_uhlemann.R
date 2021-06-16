@@ -19,7 +19,7 @@ n_it <- 1e8
 thinning <- n_it/1e4
 burn_in <- 0.3
 
-base_dir <- "./uhlemann2014"
+base_dir <- "./Trees/Uhlemann2014"
 if(run_mcmc) {
     dir.create(file.path(base_dir))
 }

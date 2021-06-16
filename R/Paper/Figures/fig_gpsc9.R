@@ -15,7 +15,7 @@ set.seed(1)
 
 burn_in <- 0.3
 
-base_dir <- "../GPSC_Trees/GPSC9"
+base_dir <- "../Trees/GPSC9"
 expansions <- readRDS(file = paste0(base_dir, "/mcmc_out/expansions.rds"))
 expansions <- discard_burn_in(expansions, proportion=burn_in)
 
