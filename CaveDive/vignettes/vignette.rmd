@@ -23,11 +23,12 @@ This vignette demonstrates the basic usage of the CaveDive package.
 3. Inference under the CaveDive model, and displaying results
 
 To begin, lets load `CaveDive` and `ape`. `CaveDive` uses `ape` as a backend to manipulate and store phylogenies.
+We also need `treeio` to illustrate how covariates work. `treeio` is not required for normal usage.
 
 ```{r setup, message=FALSE} 
 library(ape)
 library(CaveDive)
-library(ggtree)
+library(treeio)
 set.seed(1)
 ```
 
@@ -53,11 +54,11 @@ The mean and the variance of the gamma prior on time of expansions is `exp_time_
 
 ```{r parametrise priors, message=FALSE}
     expansion_rate<-1 
-    N_mean_log<-4 
-    N_sd_log<-1 
+    N_mean_log<-5 
+    N_sd_log<-1
     t_mid_rate<-5
     K_sd_log<-1/2 
-    exp_time_nu<-1/2
+    exp_time_nu<-1/3
     exp_time_kappa<-1/4
 ```
 
@@ -133,7 +134,7 @@ tip_times <- tip_times[order(-tip_times)]
 phy3 <- simulate_expansion_phylo(priors, 
                                  tip_times, 
                                  concentration=concentration, 
-                                 given=list(n_exp=2, tip_colours=tip_colours), 
+                                 given=list(N=200, K=c(200,180), n_exp=2, tip_colours=tip_colours), 
                                  collapse_singles=F)
 
 times <- node.depth.edgelength(phy3$tree)
@@ -151,7 +152,7 @@ plot_structured_tree(phy3$tree, phy3$params$n_exp+1)
 We shall use `phy3` to demonstrate performing inference under the CaveDive model.
 To perform MCMC inference, we use `run_expansion_inference`. 
 ```{r run inference, message=FALSE}
-n_it <- 1e7
+n_it <- 1e6
 thinning <- n_it/1e4
 phy_inf <- collapse.singles(phy3$tree)
 start <- Sys.time()
@@ -169,7 +170,7 @@ head(expansions$expansion_data)
 
 Next, discarding first 10% of iterations as burn in:
 ```{r discard burn in}
-expansions <- discard_burn_in(expansions, proportion=0.1)
+expansions <- discard_burn_in(expansions, proportion=0.4)
 print(expansions)
 head(expansions$model_data)
 head(expansions$expansion_data)
@@ -190,6 +191,12 @@ Correlates can be visualised as follows:
 plot(expansions, mode="persistence", correlates=list(correlates))
 ```
 
+A parameter marginal plot for most `k_modes` most probable branches:
 ```{r plot modes, out.width="90%", fig.width=30, fig.height=15, dpi=300, fig.align="center", message=FALSE,eval=T} 
 plot(expansions, mode="modes", k_modes=2)
+```
+
+and posterior reconstruction of population trajectories for most `k_modes` most probable branches:
+```{r plot population dynamics, out.width="90%", fig.width=30, fig.height=15, dpi=300, fig.align="center", message=FALSE,eval=T} 
+plot(expansions, mode="popfunc", k_modes=2)
 ```

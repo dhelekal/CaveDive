@@ -5,16 +5,16 @@ options(tibble.print_min = 4, tibble.print_max = 4)
 ## ----setup, message=FALSE-----------------------------------------------------
 library(ape)
 library(CaveDive)
-library(ggtree)
+library(treeio)
 set.seed(1)
 
 ## ----parametrise priors, message=FALSE----------------------------------------
     expansion_rate<-1 
-    N_mean_log<-4 
-    N_sd_log<-1 
+    N_mean_log<-5 
+    N_sd_log<-1
     t_mid_rate<-5
     K_sd_log<-1/2 
-    exp_time_nu<-1/2
+    exp_time_nu<-1/3
     exp_time_kappa<-1/4
 
 ## ----priors, message=FALSE----------------------------------------------------
@@ -72,7 +72,7 @@ tip_times <- tip_times[order(-tip_times)]
 phy3 <- simulate_expansion_phylo(priors, 
                                  tip_times, 
                                  concentration=concentration, 
-                                 given=list(n_exp=2, tip_colours=tip_colours), 
+                                 given=list(N=200, K=c(200,180), n_exp=2, tip_colours=tip_colours), 
                                  collapse_singles=F)
 
 times <- node.depth.edgelength(phy3$tree)
@@ -85,7 +85,7 @@ rownames(correlates) <- phy3$tree$tip.label[tip.ord]
 plot_structured_tree(phy3$tree, phy3$params$n_exp+1)
 
 ## ----run inference, message=FALSE---------------------------------------------
-n_it <- 1e5
+n_it <- 1e6
 thinning <- n_it/1e4
 phy_inf <- collapse.singles(phy3$tree)
 start <- Sys.time()
@@ -100,7 +100,7 @@ head(expansions$model_data)
 head(expansions$expansion_data)
 
 ## ----discard burn in----------------------------------------------------------
-expansions <- discard_burn_in(expansions, proportion=0.1)
+expansions <- discard_burn_in(expansions, proportion=0.4)
 print(expansions)
 head(expansions$model_data)
 head(expansions$expansion_data)
@@ -112,8 +112,11 @@ plot(expansions,mode="traces")
 plot(expansions,mode="summary", k_modes=2)
 
 ## ----plot correlates, out.width="90%", fig.width=23.75, fig.height=20, dpi=300, fig.align="center", message=FALSE,eval=T----
-plot(expansions, mode="persistence", correlates=correlates)
+plot(expansions, mode="persistence", correlates=list(correlates))
 
 ## ----plot modes, out.width="90%", fig.width=30, fig.height=15, dpi=300, fig.align="center", message=FALSE,eval=T----
 plot(expansions, mode="modes", k_modes=2)
+
+## ----plot population dynamics, out.width="90%", fig.width=30, fig.height=15, dpi=300, fig.align="center", message=FALSE,eval=T----
+plot(expansions, mode="popfunc", k_modes=2)
 
