@@ -1,3 +1,0 @@
-[1] "1e+08 RjMCMC iterations completed. Time elapsed:"
-      user     system    elapsed 
-133101.092      0.167 133099.883 

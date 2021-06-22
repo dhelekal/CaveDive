@@ -32,8 +32,12 @@ compute_ci <- function(x, conf=0.95) {
 }
 
 base_dir <- "../Trees/GPSC18"
+
 expansions <- readRDS(file = paste0(base_dir, "/mcmc_out/expansions.rds"))
+expansions2 <- readRDS(file = paste0(base_dir, "/mcmc_out/expansions_s2.rds"))
+
 expansions <- discard_burn_in(expansions, proportion=burn_in)
+expansions2 <- discard_burn_in(expansions2, proportion=burn_in)
 
 corr_df <- read.csv(paste0(base_dir, "/microreact-project-gpsGPSC18-data.csv"),row.names=1)
 corr_df <- as.data.frame(corr_df)
@@ -141,6 +145,13 @@ png("fig_gpsc18_plotfn.png", width=800, height=800)
 plot(gg)
 dev.off()
 
+m1 <- mcmc(expansions$model_data[,2:3],thin=expansions$metadata$thinning)
+m2 <- mcmc(expansions2$model_data[,2:3],thin=expansions2$metadata$thinning)
 
-
+grs <- gelman.diag(mcmc.list(m1,m2))
+sink("GelmanRubinGPSC18.txt")
+print(grs$psrf)
+print(grs$mpsrf)
+print(effectiveSize(m1))
+sink()
 

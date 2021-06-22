@@ -74,7 +74,7 @@ if (length(tree_in) > 0) {
   tree <- read.tree(file = tree_in)
 } else {
   tree_in <- list.files(pattern=".*\\.tre")
-  tree <- read.nexus(file = tree_in)
+  tree <- read.tree(file = tree_in)
 }
 tree <- makeNodeLabel(tree)
 tree <- ladderize(tree, right = F)
