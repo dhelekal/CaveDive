@@ -8,10 +8,10 @@ Note: Navigate to the directory containing this file
 2. Render the above mentioned Rmarkdown files using `rmarkdown::render`. Note, this will take quite a while. 
 
 ### Second, run tree analysis notebooks for all GPSC phylogenies
-This can be performed by executing `sh analyse_all_trees.sh Paper/GPSC_Trees` 
+This can be performed by executing `sh analyse_all_trees.sh Paper/Trees` 
 
 ### Third, generate all other figures
-1. MAKE SURE THE `run_mcmc` flag has been set to `TRUE` in the following files: `Paper/Figures/fig_uhlemann.R`, `Paper/Figures/figure2.R`.
+1. MAKE SURE THE `run_mcmc` flag has been set to `TRUE` in the following files: `Paper/Figures/figure2.R`.
 2. Render all figures by running `sh make_figs.sh`
 
 ## Data references:

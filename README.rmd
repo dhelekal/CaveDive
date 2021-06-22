@@ -7,7 +7,7 @@ output: github_document
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>",
+  comment = "#>"
 )
 set.seed(0)
 ```
@@ -22,7 +22,7 @@ For a more formal description of CaveDive, see the following preprint:
 # Installation
 
 You can install CaveDive in R using the following command:
-`devtools::install_github('xavierdidelot/CaveDive')`
+`devtools::install_github('dhelekal/CaveDive')`
 
 # Documentation
 
