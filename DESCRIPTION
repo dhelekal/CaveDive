@@ -12,7 +12,8 @@ Suggests:
     devtools,
     roxygen2,
     testthat,
-    optparse
+    optparse,
+    rmarkdown
 LinkingTo: Rcpp
 Imports: 
     Rcpp,
