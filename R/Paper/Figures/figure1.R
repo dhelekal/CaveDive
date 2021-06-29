@@ -54,8 +54,12 @@ tree_plt <- plot_structured_tree(phy, 4) + scale_color_brewer(palette="Dark2") +
                   axis.text.x = element_blank(),
                   axis.ticks.x = element_blank(),
                   axis.line.x = element_blank(), 
-                  legend.position = c(0.85,0.85), 
+                  legend.position = "none", 
                   text = element_text(size=20))
+
+layers <- lapply(tree_plt$layers, function(x) if(class(x$geom)[1] == "GeomPoint") NULL else x)
+layers <- layers[!sapply(layers, is.null)]
+tree_plt$layers <- layers
 
 pop_fs <- data.frame(x=unlist(lapply(c(1:4), function (i) seq(from=-x_upper, to=-x_lower, length.out=500))),
                      col=unlist(lapply(c(1:4), function (i) rep(i, 500))))
@@ -68,10 +72,10 @@ func_plt <- ggplot(pop_fs, aes(x=x,y=y, fill=factor(col), color=factor(col))) +
             ylim(0, 200) + xlim(-x_upper,-x_lower)
 func_plt <- func_plt + scale_fill_brewer(palette="Dark2")  + 
    scale_color_brewer(palette="Dark2")  + 
-   scale_y_continuous(position = "right", name="Neg") +
+   scale_y_continuous(position = "right", name="Effective population size") +
    coord_flip() +
    theme_bw() +
-   xlab("Time Before Present") +
+   xlab("Time Before Present (Years)") +
    theme(legend.position="none", 
          panel.grid.major = element_blank(), 
          panel.grid.minor = element_blank(),

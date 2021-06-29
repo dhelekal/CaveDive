@@ -1,4 +1,4 @@
-plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_titles=list(), correlates=list(), modes=NULL) {
+plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_titles=list(), correlates=list(), modes=NULL, no_y_text=F) {
      phy <- pre$phy
      if (is.null(modes)) MRCA_lab=NULL else MRCA_lab=pre$edges.df$node.child[modes]
      tree_map <- plot_tree(pre, event.df, MRCA_lab)
@@ -22,7 +22,7 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_
      heat_map <- ggplot(data = p_df, aes(x = sample_1, y = sample_2)) +
        geom_tile(aes(fill = value)) +
        scale_fill_viridis_c(option= "plasma", na.value = "white") +
-       labs(fill = "Pairwise Probability")+
+       labs(fill = "")+
        guides(fill=guide_legend(title.position = "right", vjust=0.5)) +
        theme_minimal() +
        theme(axis.title.y = element_blank(), 
@@ -43,7 +43,7 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_
      corr_maps <- list(blank)
      n_cor <- length(correlates)
      if(n_cor > 0) {
-          corr_maps <- sapply(c(1:n_cor), function(i) list(build_correlate_map(correlates[[i]], pre, dat, tip.ord, unlist(axis_titles[i]), unlist(legend_titles[i]))))
+          corr_maps <- sapply(c(1:n_cor), function(i) list(build_correlate_map(correlates[[i]], pre, dat, tip.ord, unlist(axis_titles[i]), unlist(legend_titles[i]), no_y_text)))
      }
      tree_map_t <- tree_map + coord_flip() + scale_x_reverse()
 
@@ -51,7 +51,7 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_
                               list(widths=c(1,3,rep(0.75, max(1,n_cor))), heights=c(1,3))))
 }
 
-build_correlate_map <- function(correlate, pre, dat, tip.ord, axis_title, leg_title) {
+build_correlate_map <- function(correlate, pre, dat, tip.ord, axis_title, leg_title, no_y_text) {
      stopifnot("Number correlate rows must match number of tips"=nrow(correlate)==pre$n_tips)
      stopifnot("Correlates must be a data.frame with rownames equal to tip labels"=rownames(correlate)[order(rownames(correlate))]==pre$phy$tip.label[order(pre$phy$tip.label)])
      r_df <- correlate
@@ -87,16 +87,31 @@ build_correlate_map <- function(correlate, pre, dat, tip.ord, axis_title, leg_ti
                     theme_minimal() +
                     guides(fill=guide_legend(title.position = "left"))+
                     coord_flip() +
-                    labs(y=axis_title_str, fill=leg_title_str) +
-                    theme(axis.title.y = element_blank(), 
-                          axis.text.y = element_blank(), 
-                          axis.ticks.y = element_blank(),
-                          panel.grid.major = element_blank(),
-                          panel.grid.minor = element_blank(),
-                          text = element_text(size=30),
-                          axis.text.x = element_text(size=18, angle=45, hjust=1),
-                          legend.position="bottom", legend.direction="vertical",
-                          legend.title = element_text(angle = -90))
+                    labs(y=axis_title_str, fill=leg_title_str)
+                    
+     if (no_y_text) { 
+                         corr_map <- corr_map + theme(axis.title.y = element_blank(), 
+                               axis.text.y = element_blank(), 
+                               axis.ticks.y = element_blank(),
+                               panel.grid.major = element_blank(),
+                               panel.grid.minor = element_blank(),
+                               axis.title.x = element_blank(), 
+                               axis.text.x = element_blank(), 
+                               axis.ticks.x = element_blank(),
+                               text = element_text(size=24),
+                               legend.position="bottom", legend.direction="vertical",
+                               legend.title = element_text(angle = -90))
+                    } else{
+                         corr_map <- corr_map + theme(axis.title.y = element_blank(), 
+                               axis.text.y = element_blank(), 
+                               axis.ticks.y = element_blank(),
+                               panel.grid.major = element_blank(),
+                               panel.grid.minor = element_blank(),
+                               text = element_text(size=22),
+                               axis.text.x = element_text(size=18, angle=45, hjust=1),
+                               legend.position="bottom", legend.direction="vertical",
+                               legend.title = element_text(angle = -90))
+                    }
      return(corr_map)
 }
 
@@ -148,17 +163,18 @@ plot_summary <- function (model_data, expansion_data, phylo_preprocessed, priors
                  geom_bar(aes(y = ..prop..), stat="count") + 
                  geom_text(aes( label = scales::percent(..prop..), y= ..prop.. ), stat= "count", vjust = -.5, size=12) +
                  theme_bw() + 
-                 xlab("Number of Expansions") + 
+                 xlab("Number of Expansions") +
+                 ylab("Probability") + 
                  scale_y_continuous(labels=percent, limits=c(0,1)) +
                  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
-                                  axis.title.y = element_blank(),
                                   text = element_text(size=20))
      hist_N <- ggplot(model_data, aes(N)) +
          geom_histogram(aes(y = stat(count / sum(count))), bins=100) +
          theme_bw() + 
-         xlab("N") +
+         xlab("Background Population Size") +
+         ylab("Density") +
          scale_fill_brewer(palette="Dark2")  + 
-         theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+         theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(),
                text = element_text(size=20))
 
 
@@ -172,8 +188,8 @@ plot_summary <- function (model_data, expansion_data, phylo_preprocessed, priors
         }
 
         hist_br <- hist_br + theme_bw() + 
-        labs(x="Branch Number",fill="Expansion Root") +
-        theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = c(0.8, 0.2),
+        labs(x="Branch Number", y="Frequency", fill="Expansion Root") +
+        theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = c(0.8, 0.2),
               text = element_text(size=14),
               axis.text.x = element_text(size=12, angle=45))
 
@@ -472,7 +488,7 @@ plot_pop_fn <- function(mcmc.df, event.df, which_br, t_max=NULL, eval_pts=100) {
   geom_line(data=subset(df, t > 0), aes(x=t, y=y_med), linetype="longdash",lwd=2, color=pal[3]) + 
   theme_bw() +
   xlab("Time") +
-  ylab("Neg") +
+  ylab("Effective Population Size") +
   theme(text = element_text(size=20), 
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank())
@@ -549,8 +565,8 @@ plot_pop_fn_facet <- function(mcmc.df, event.df, k_modes, eval_pts=100, t_max=NU
   geom_line(data=subset(df, t <= 0), aes(x=t, y=y_med), linetype="solid",lwd=2, color=pal[2]) +
   geom_line(data=subset(df, t > 0), aes(x=t, y=y_med), linetype="longdash",lwd=2, color=pal[3]) + 
   theme_bw() +
-  xlab("Time") +
-  ylab("Neg") +
+  xlab("Time (Years)") +
+  ylab("Effective Population Size") +
   ylim(c(0, max(Y_max)))
      
   if(!is.null(gt.K) && !is.null(gt.t_mid) && !is.null(gt.time)) gg <- gg + 

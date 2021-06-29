@@ -126,7 +126,7 @@ print.expansionsMCMC <- function(x, ...) {
 #' @param branch which branch to generate "popfunc" plot for
 #' @param t_max upper x-axis limit for "popfunc" plot
 plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence", "traces", "mtraces", "popfunc"), k_modes=NULL, correlates=list(), corr_axis_title=list(),
-                                  corr_legend_title=list(), gt.K=NULL, gt.t_mid=NULL, gt.time=NULL, branch=NULL, t_max=NULL) {
+                                  corr_legend_title=list(), gt.K=NULL, gt.t_mid=NULL, gt.time=NULL, branch=NULL, t_max=NULL, no_y_text=F) {
      mode <- match.arg(mode)
 
      expansion_data <- x$expansion_data
@@ -176,7 +176,8 @@ plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence"
                                   corr_axis_title,
                                   corr_legend_title,
                                   correlates=correlates,
-                                  modes=modes)
+                                  modes=modes,
+                                  no_y_text=no_y_text)
 
      } else if (mode=="traces") {
           if (!is.null(k_modes)) warning("Unused argument: k_modes")

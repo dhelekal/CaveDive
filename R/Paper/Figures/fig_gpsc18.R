@@ -112,16 +112,16 @@ geom_line(data=subset(df, t > 0), aes(group=Population, x=t, y=y_med, color=Popu
 scale_color_brewer(palette="Dark2") +
 scale_fill_brewer(palette="Dark2") +
 theme_bw() +
-xlab("Time") +
-ylab("Neg") +
+xlab("Time (Years)") +
+ylab("Effective Population Size") +
 theme(text = element_text(size=20), 
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank(),
       aspect.ratio=1,
       legend.position = c(0.2, 0.8))
 
-png("fig_gpsc18_corr.png", width=1600, height=1600)
-plot(expansions, mode="persistence", k_modes=1, correlates=list(corr_df1))
+png("fig_gpsc18_corr.png", width=1200, height=1200)
+plot(expansions, mode="persistence", k_modes=1, correlates=list(corr_df1), no_y_text=F)
 dev.off()
 
 png("fig_gpsc18_param.png", width=1600, height=1600)
