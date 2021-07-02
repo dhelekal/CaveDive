@@ -277,6 +277,8 @@ preprocess_phylo <- function(phy, order_edges_by_node_label=TRUE){
 
     clades.list <- lapply(nodes.df$id[which(nodes.df$is_tip==FALSE)], function(x) extract.clade(phy, x))
 
+    cl <- clade_lookup(phy, root, nodes.df, edges.df, edges.outgoing)
+
     return(structure(list(phy=phy,
                 nodes.df = nodes.df,
                 edges.df = edges.df,
@@ -286,7 +288,101 @@ preprocess_phylo <- function(phy, order_edges_by_node_label=TRUE){
                 outgoing = edges.outgoing,
                 t_min = t_min, 
                 t_max = t_max,
-                root_idx = root), class="preprocessedPhy"))
+                root_idx = root,
+                clade_tip_lookup=cl$clade_tip_lookup,
+                clade_node_lookup=cl$clade_node_lookup), class="preprocessedPhy"))
+}
+
+clade_lookup <- function(phy, root_idx, nodes.df, edges.df, edges.outgoing) {
+    n_node <- length(which(nodes.df$is_tip==FALSE))
+    n_tips <- length(which(nodes.df$is_tip==TRUE))
+
+    clade_bounds_tips <- data.frame(lo=rep(NA,n_node+n_tips), hi=rep(NA,n_node+n_tips))
+    tip_list <- rep(NA, n_tips)
+
+    tl <- clade_tip_recursion(1, n_tips, root_idx, tip_list, clade_bounds_tips, nodes.df, edges.df, edges.outgoing, n_tips, phy)
+
+    clade_bounds_nodes <- data.frame(lo=rep(NA,n_node+n_tips), hi=rep(NA,n_node+n_tips))
+    node_list <- rep(NA, n_node)
+
+    nl <- clade_node_recursion(1, n_node, root_idx, node_list, clade_bounds_nodes, nodes.df, edges.df, edges.outgoing, n_tips, phy)
+
+    print(nl)
+    stopifnot(all(!is.na(nl$node_list)))
+    stopifnot(all(!is.na(tl$tip_list)))
+
+    return(list(clade_tip_lookup=list(bounds=tl$clade_bounds, tip_list=tl$tip_list),
+                clade_node_lookup=list(bounds=nl$clade_bounds_nodes, tip_list=nl$node_list)))
+}
+
+clade_tip_recursion <- function(index_lo, index_hi, id, tip_list, clade_bounds, nodes.df, edges.df, edges.outgoing, n_tips, phy) {
+    cb <- clade_bounds
+    cb$hi[id] <- index_hi
+    cb$lo[id] <- index_lo
+    if (nodes.df$is_tip[id]) {
+        stopifnot("index error" = index_hi==index_lo)
+        tl <- tip_list
+        tl[index_lo] <- id
+        return(list(tip_list=tl, clade_bounds=cb))
+    } else {
+        next_v <- sapply(edges.outgoing[[id]], function (i) edges.df$node.child[i])
+        next_v <- next_v[order(next_v)]
+
+        if (!nodes.df$is_tip[next_v[1]]) {
+            count_left <- length(extract.clade(phy, next_v[1])$tip.label)
+        } else {
+            count_left <- 1
+        }
+
+        if (!nodes.df$is_tip[next_v[2]]) {
+            count_right <- length(extract.clade(phy, next_v[2])$tip.label)
+        } else {
+            count_right <- 1
+        }
+
+        c <- clade_tip_recursion(index_lo, index_hi-count_right, next_v[1], tip_list, cb, nodes.df, edges.df, edges.outgoing, n_tips, phy)
+        c <- clade_tip_recursion(index_lo+count_left, index_hi, next_v[2], c$tip_list, c$clade_bounds, nodes.df, edges.df, edges.outgoing, n_tips, phy)
+        return(c)
+    }
+}
+
+clade_node_recursion <- function(index_lo, index_hi, id, node_list, clade_bounds, nodes.df, edges.df, edges.outgoing, n_tips, phy) {
+    stopifnot("index error" = !nodes.df$is_tip[id])
+    cb <- clade_bounds
+    cb$hi[id] <- index_hi
+    cb$lo[id] <- index_lo
+
+    nl <- node_list
+    nl[index_lo] <- id
+
+    next_v <- sapply(edges.outgoing[[id]], function (i) edges.df$node.child[i])
+    next_v <- next_v[order(next_v)]
+
+    if (!nodes.df$is_tip[next_v[1]]) {
+        count_left <- length(extract.clade(phy, next_v[1])$node.label)
+    } else {
+        count_left <- 0
+    }
+
+    if (!nodes.df$is_tip[next_v[2]]) {
+        count_right <- length(extract.clade(phy, next_v[2])$node.label)
+    } else {
+        count_right <- 0
+    }
+
+    if (!nodes.df$is_tip[next_v[1]]) {
+        c <- clade_node_recursion(index_lo+1, index_hi-count_right, next_v[1], nl, cb, nodes.df, edges.df, edges.outgoing, n_tips, phy)
+        nl <- c$node_list
+        cb <- c$clade_bounds
+    }
+
+    if (!nodes.df$is_tip[next_v[2]]){
+        c <- clade_node_recursion(index_hi-count_left+1, index_hi, next_v[2], nl, cb, nodes.df, edges.df, edges.outgoing, n_tips, phy)
+        nl <- c$node_list
+        cb <- c$clade_bounds
+    }
+
+    return(list(node_list=nl, clade_bounds=cb))
 }
 
 #' @export
@@ -413,6 +509,137 @@ extract_lineage_times <- function(phylo.preprocessed, div.MRCA.nodes, div_times,
 
         leaf.times <- c(leaf.times, tip.times)
         node.times <- phylo.preprocessed$nodes.df$times[nodeid(phylo.preprocessed$phy, node.labs)]
+
+        sam.times[[ii]] <- leaf.times[order(-leaf.times)]
+        coal.times[[ii]] <- node.times[order(-node.times)]
+
+        partition_counts[ii] <- partition_counts[ii] + length(sam.times[[ii]])
+    }
+    return(list(sam.times=sam.times, 
+                coal.times=coal.times, 
+                empty_tips=empty_tips, 
+                partition_counts=partition_counts, 
+                partitions=partitions))
+}
+
+#' Extracts Lineage times from a parent phylogeny based on provided divergence MRCA nodes and times. 
+#'
+#' @param phylo.preprocessed preprocessed phylogeny
+#' @param div.MRCA.nodes labels of MRCA nodes of diverging lineages
+#' @param div_times absolute divergence times
+#' @param return_partitions if true, return a list named 'partitions' containing tip labels for each partition
+#' @return A list containing lists of sampling time vectors sam.times and coalescent time vectors coal.times for each lineage.
+#' @export
+extract_lineage_times2 <- function(phylo.preprocessed, div.MRCA.nodes, div_times, return_partitions=FALSE) {
+    times.ord <- order(-div_times)
+    k_div <- length(div_times)
+
+    div_from <- rep(NA, k_div)
+
+    coal.times <- list()
+    sam.times <- list()
+
+    if (return_partitions) {
+        partitions <- list()
+    } else {
+        partitions <- NA
+    }
+
+    empty_tips <- FALSE
+    partition_counts <- rep(0, k_div)
+
+    n_tips <- phylo.preprocessed$n_tips
+    nodes.df <- phylo.preprocessed$nodes.df
+
+    MRCA.idx <- nodeid(phylo.preprocessed$phy, div.MRCA.nodes)
+
+    clade_node_lookup <- phylo.preprocessed$clade_node_lookup
+    clade_tip_lookup <- phylo.preprocessed$clade_tip_lookup
+    
+    for (i in c(1:k_div)) {
+        ii <- times.ord[i]
+
+        node_bounds <- clade_node_lookup$bounds[MRCA.idx[ii],]
+        tip_bounds <- clade_tip_lookup$bounds[MRCA.idx[ii],]
+
+        subset_bounds_lo_n <- c()
+        subset_bounds_hi_n <- c()
+
+        subset_bounds_lo_t <- c()
+        subset_bounds_hi_t <- c()
+
+        leaf.times <- c()
+        for (j in which(c(1:k_div) < i)) {
+            jj <- times.ord[j]
+            bounds_sub_tip <- clade_tip_lookup$bounds[MRCA.idx[jj],]
+
+            if (bounds_sub_tip$lo > tip_bounds$lo && 
+                bounds_sub_tip$hi < tip_bounds$hi && is.na(div_from[j])){
+
+                div_from[j] <- i 
+                leaf.times <- c(leaf.times, div_times[jj])
+
+                bounds_sub_node <- clade_tip_lookup$bounds[MRCA.idx[jj],]
+
+                subset_bounds_lo_t<-c(subset_bounds_lo_t, bounds_sub_tip$lo)
+                subset_bounds_hi_t<-c(subset_bounds_hi_t, bounds_sub_tip$hi)
+
+                subset_bounds_lo_n<-c(subset_bounds_lo_n, bounds_sub_node$lo)
+                subset_bounds_hi_n<-c(subset_bounds_hi_n, bounds_sub_node$hi)
+
+                partition_counts[ii] <- partition_counts[ii] - 1
+            }
+        }
+
+        total_tip_len <- tip_bounds$hi - tip_bounds$lo - 
+                         sum(subset_bounds_hi_t-subset_bounds_lo_t) + 1 + length(subset_bounds_hi_t)
+        total_node_len <- node_bounds$hi - node_bounds$lo - 
+                         sum(subset_bounds_hi_n-subset_bounds_lo_n) + 1 + length(subset_bounds_hi_n)
+
+        tip_idx <- rep(total_tip_len,Inf)
+        node_idx <- rep(total_node_len,Inf)
+
+        arr_idx <- 1
+        s_idx <- tip_bounds$lo
+
+        subset_bounds_hi_t <- subset_bounds_hi_t[order(subset_bounds_lo_t)]
+        subset_bounds_lo_t <- subset_bounds_lo_t[order(subset_bounds_lo_t)]
+
+        for (k in c(1:length(subset_bounds_lo_t))) {
+            seg_len <- s_idx - subset_bounds_lo_t[k]
+            if (seg_len > 0) {
+                tip_idx[arr_idx:(arr_idx+seg_len-1)] <- clade_tip_lookup$tip_list[s_idx:(subset_bounds_lo_t[k]-1)]
+                arr_idx<-arr_idx+seg_len+1
+            }
+            s_idx <- subset_bounds_hi_t[k]+1
+        }
+
+        arr_idx <- 1
+        s_idx <- node_bounds$lo
+
+        subset_bounds_hi_n <- subset_bounds_hi_n[order(subset_bounds_lo_n)]
+        subset_bounds_lo_n <- subset_bounds_lo_n[order(subset_bounds_lo_n)]
+
+        for (k in c(1:length(subset_bounds_lo_n))) {
+            seg_len <- s_idx - subset_bounds_lo_n[k]
+            if (seg_len > 0) {
+                node_idx[arr_idx:(arr_idx+seg_len-1)] <- clade_node_lookup$node_list[s_idx:(subset_bounds_lo_n[k]-1)]
+                arr_idx<-arr_idx+seg_len+1
+            }
+            s_idx <- subset_bounds_hi_n[k]+1
+        }
+
+        tip.times <- nodes.df$times[tip_idx]
+        node.times <- nodes.df$times[node_idx]
+
+        if (return_partitions){
+            partitions[[ii]] <- nodes.df$lab[tip_idx]
+        }
+        if (length(tip.times)==0) {
+            empty_tips <- TRUE
+        }
+
+        leaf.times <- c(leaf.times, tip.times )
 
         sam.times[[ii]] <- leaf.times[order(-leaf.times)]
         coal.times[[ii]] <- node.times[order(-node.times)]
