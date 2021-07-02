@@ -8,26 +8,26 @@ standard_priors(
   expansion_rate = 1,
   N_mean_log = 4,
   N_sd_log = 4,
-  t_mid_rate = 10,
+  t_mid_rate = 5,
   K_sd_log = 1/2,
   exp_time_nu = 1/2,
-  exp_time_kappa = 1/8
+  exp_time_kappa = 1/3
 )
 }
 \arguments{
-\item{expansion_rate}{corresponds to '\phi' in paper}
+\item{expansion_rate}{corresponds to 'phi' in paper}
 
-\item{N_mean_log}{corresponds to '\mu_{anc}' in paper}
+\item{N_mean_log}{corresponds to 'mu_{anc}' in paper}
 
-\item{N_sd_log}{corresponds to '\sigma_{anc}' in paper}
+\item{N_sd_log}{corresponds to 'sigma_{anc}' in paper}
 
-\item{t_mid_rate}{corresponds to '\lambda_r' in paper}
+\item{t_mid_rate}{corresponds to 'lambda_r' in paper}
 
-\item{K_sd_log}{corresponds to '\sigma_{exp}' in paper}
+\item{K_sd_log}{corresponds to 'sigma_{exp}' in paper}
 
-\item{exp_time_nu}{corresponds to '\nu' in paper}
+\item{exp_time_nu}{corresponds to 'nu' in paper}
 
-\item{exp_time_kappa}{corresponds to '\kappa' in paper}
+\item{exp_time_kappa}{corresponds to 'kappa' in paper}
 }
 \value{
 a list of prior likelihoods and sampling functions with names 'prior_i', 'prior_i.sample', 'prior_N', 'prior_N.sample' ,prior_t_mid_given_N', 'prior_t_mid_given_N.sample', 'prior_K_given_N', 'prior_K_given_N.sample', 'prior_t_given_N', 'prior_t_given_N.sample'. See `standard_priors` for details.
