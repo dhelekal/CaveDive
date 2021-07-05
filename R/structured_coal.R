@@ -7,7 +7,7 @@
 #' @param div_times Kx1 divergence times for colours, neutral colour must diverge at -Inf. MUST BE IN DESCENDING ORDER
 #' @param div_events Kx1 colour assignment for divergence times, i.e. which colour corresponds to which divergence time
 #' @param Neg.rates Kx1 List of Functions (t)->(R+). 1/Neg(t) for each colour.
-#' @param Neg.rate.ints Kx1 List of Functions (t, s)->(R+). \int_{t}^{s} 1/Neg(\tau)\,d\tau for each colour
+#' @param Neg.rate.ints Kx1 List of Functions (t, s)->(R+). int_{t}^{s} 1/Neg(tau),d tau for each colour
 #' @param div.from Kx1 List of integers denoting parents of diverging lineages. If NA parents will be randomised
 #' @return A list consisting of the simulate coalescent times \code{coalescent_times} and the log-likelihood of the simulation \code{log_likelihood}.
 #' @export

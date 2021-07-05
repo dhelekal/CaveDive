@@ -42,8 +42,8 @@ We parametrise and instatiate a _priorList_ object, which we will use to sample 
 |`N_sd_log`              | $N_M$ (Background Population Size) | Lognormal sd of prior distribution on background (neutral) population           |
 |`t_mid_rate`            | $t_{mid_i}$ (Speed of Growth)      | Non-dimensional exponential rate of prior distribution on how long it takes for an expansion to reach half its maximum size|
 |`K_sd_log`              | $K_i$ (Expansion Carrying Capacity)| Lognormal sd of prior distribution on the maximum population sizes at which individual expansions saturate.|
-|`exp_time_nu`           | $t_{div_i}$ (Time of expansions)   | Parameter that controls the mean of the gamma prior on the time expansions      |
-|`exp_time_kappa`        | $t_{div_i}$ (Time of expansions)   | Parameter that controls the variance of the gamma prior on the time expansions  |
+|`exp_time_nu`           | $t_{div_i}$ (Time of expansions)   | Parameter that controls the mean of the gamma prior on the time of expansions      |
+|`exp_time_kappa`        | $t_{div_i}$ (Time of expansions)   | Parameter that controls the variance of the gamma prior on the time of expansions  |
 |------------------------|------------------------------------|---------------------------------------------------------------------------------|
 
 Note that the form of the priors on expansion carrying capacities is conditioned on $N_M$. $N_M$ thus acts as a form of a scale parameter for the entire genealogy, and governs what can be detected and what cannot. (For example, consider all samples within an expansion coalescing while the expansion population is near-saturated. Such an expansion will leave very little signature in the genealogy, potentially being indistinguishable from a mild bottleneck. Inference of the corresponding $t_{mid}$ parameter will be ouright impossible.)
@@ -168,7 +168,7 @@ head(expansions$model_data)
 head(expansions$expansion_data)
 ```
 
-Next, discarding first 10% of iterations as burn in:
+Next, discarding first 40% of iterations as burn in:
 ```{r discard burn in}
 expansions <- discard_burn_in(expansions, proportion=0.4)
 print(expansions)

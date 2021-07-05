@@ -1,13 +1,13 @@
 offset <- 2
 
 #' Generates a list of priors of the form described in the paper to use with MCMC inference. 
-#' @param expansion_rate corresponds to '\phi' in paper 
-#' @param N_mean_log corresponds to '\mu_{anc}' in paper 
-#' @param N_sd_log corresponds to '\sigma_{anc}' in paper 
-#' @param t_mid_rate corresponds to '\lambda_r' in paper 
-#' @param K_sd_log corresponds to '\sigma_{exp}' in paper 
-#' @param exp_time_nu corresponds to '\nu' in paper 
-#' @param exp_time_kappa corresponds to '\kappa' in paper 
+#' @param expansion_rate corresponds to 'phi' in paper 
+#' @param N_mean_log corresponds to 'mu_{anc}' in paper 
+#' @param N_sd_log corresponds to 'sigma_{anc}' in paper 
+#' @param t_mid_rate corresponds to 'lambda_r' in paper 
+#' @param K_sd_log corresponds to 'sigma_{exp}' in paper 
+#' @param exp_time_nu corresponds to 'nu' in paper 
+#' @param exp_time_kappa corresponds to 'kappa' in paper 
 #' @returns a list of prior likelihoods and sampling functions with names 'prior_i', 'prior_i.sample', 'prior_N', 'prior_N.sample' ,prior_t_mid_given_N', 'prior_t_mid_given_N.sample', 'prior_K_given_N', 'prior_K_given_N.sample', 'prior_t_given_N', 'prior_t_given_N.sample'. See `standard_priors` for details.
 #' @export
 #' 
