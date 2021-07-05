@@ -572,8 +572,8 @@ extract_lineage_times2 <- function(phylo.preprocessed, div.MRCA.nodes, div_times
             jj <- times.ord[j]
             bounds_sub_tip <- list(lo=clade_tip_lookup$bounds$lo[MRCA.idx[jj]],hi=clade_tip_lookup$bounds$hi[MRCA.idx[jj]])
 
-            if (bounds_sub_tip$lo > tip_bounds$lo && 
-                bounds_sub_tip$hi < tip_bounds$hi && is.na(div_from[j])){
+            if (bounds_sub_tip$lo >= tip_bounds$lo && 
+                bounds_sub_tip$hi <= tip_bounds$hi && is.na(div_from[j])){
 
                 div_from[j] <- i 
                 leaf.times <- c(leaf.times, div_times[jj])
