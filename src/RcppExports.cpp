@@ -65,12 +65,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// extract_partition_times_fast
+List extract_partition_times_fast(IntegerVector div_idx, NumericVector div_times, NumericVector vertex_times_ord_nodes, NumericVector vertex_times_ord_tips, DataFrame node_bounds, DataFrame tip_bounds);
+RcppExport SEXP _CaveDive_extract_partition_times_fast(SEXP div_idxSEXP, SEXP div_timesSEXP, SEXP vertex_times_ord_nodesSEXP, SEXP vertex_times_ord_tipsSEXP, SEXP node_boundsSEXP, SEXP tip_boundsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type div_idx(div_idxSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type div_times(div_timesSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type vertex_times_ord_nodes(vertex_times_ord_nodesSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type vertex_times_ord_tips(vertex_times_ord_tipsSEXP);
+    Rcpp::traits::input_parameter< DataFrame >::type node_bounds(node_boundsSEXP);
+    Rcpp::traits::input_parameter< DataFrame >::type tip_bounds(tip_boundsSEXP);
+    rcpp_result_gen = Rcpp::wrap(extract_partition_times_fast(div_idx, div_times, vertex_times_ord_nodes, vertex_times_ord_tips, node_bounds, tip_bounds));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_CaveDive_coalescent_loglh", (DL_FUNC) &_CaveDive_coalescent_loglh, 4},
     {"_CaveDive_exponential_coalescent_loglh", (DL_FUNC) &_CaveDive_exponential_coalescent_loglh, 4},
     {"_CaveDive_logexp_coalescent_loglh", (DL_FUNC) &_CaveDive_logexp_coalescent_loglh, 6},
     {"_CaveDive_sat_coalescent_loglh", (DL_FUNC) &_CaveDive_sat_coalescent_loglh, 6},
+    {"_CaveDive_extract_partition_times_fast", (DL_FUNC) &_CaveDive_extract_partition_times_fast, 6},
     {NULL, NULL, 0}
 };
 

@@ -338,6 +338,71 @@ test_that("extract_lineage_times works", {
     }
 })
 
+test_that("extract_lineage_times_fast works", {
+    set.seed(1)
+    
+    sam <- runif(100, 0, 10)
+    tmax <- max(sam)
+    sam <- sam - tmax
+    sam <- sam[order(-sam)]
+    colours <- trunc(runif(100, 1, 4))
+    
+    N <- 100
+    A <- c(5.1, 0.3)
+    K <- c(100,100)
+
+    div_times <- c(-25, -60, -Inf)
+    div_cols <- c(1, 2, 3)
+    rates <- list(function (s) sat.rate(s, K[1], A[1], div_times[1]), function (s) sat.rate(s, K[2], A[2], div_times[2]), function (s) constant.rate(s, N))
+    rate.ints <- list(function(t,s) sat.rate.int(t, s, K[1], A[1], div_times[1]), function(t,s) sat.rate.int(t, s, K[2], A[2], div_times[2]), function(t,s) constant.rate.int(t,s,N))
+
+    co <- structured_coal.simulate(sam, colours, div_times, div_cols, rates, rate.ints)
+
+    tr <- build_coal_tree.structured(sam, co$times, colours, co$colours, div_times, div_cols, co$div_from)
+    tree <- read.tree(text = tr$full)
+    tree.nodiv <- collapse.singles(tree)
+    
+    times.nodiv <- node.depth.edgelength(tree.nodiv)
+    times.nodiv <- times.nodiv-max(times.nodiv)
+    times.nodiv <- times.nodiv[101:length(times.nodiv)]
+    times.ord <- order(-times.nodiv)
+    times.nodiv <- times.nodiv[times.ord]
+
+    MRCAs.idx <- sapply(c(1:3), function (x) (which(co$colours==x)[which.min(times.nodiv[which(co$colours==x)])])) 
+    MRCAs <- sapply(MRCAs.idx, function (x) tree.nodiv$node.label[times.ord[x]])
+
+    pre <- preprocess_phylo(tree.nodiv)
+    subtrees <- lapply(c(1:length(MRCAs)), function (x) pre$clades.list[[(nodeid(pre$phy, MRCAs[x])-100)]]) 
+    times <- extract_lineage_times(pre, MRCAs, div_times, T)
+    times2 <- extract_lineage_times2(pre, MRCAs, div_times, T) 
+
+    times3 <- extract_partition_times_fast(nodeid(pre$phy, MRCAs), div_times, 
+                                           pre$nodes.df$times[pre$clade_node_lookup$node_list], 
+                                           pre$nodes.df$times[pre$clade_tip_lookup$tip_list], 
+                                           pre$clade_node_lookup$bounds, 
+                                           pre$clade_tip_lookup$bounds)
+    print(times3)
+    print(times2)
+
+    for (i in div_cols){
+      sam.gt <- sam[which(colours==i)]
+      coal.gt  <- co$times[which(co$colours==i)]
+
+      for (j in c(1:length(co$div_from))) {
+        if (co$div_from[j]==i) sam.gt<-c(sam.gt, div_times[j])
+      }
+      sam.gt <- sam.gt[order(-sam.gt)]
+
+      expect_equal(sam.gt, times$sam.times[[i]])
+      expect_equal(coal.gt, times$coal.times[[i]])
+      expect_equal(times$sam.times[[i]], times2$sam.times[[i]])
+      expect_equal(times$coal.times[[i]], times2$coal.times[[i]])
+      expect_equal(times$partitions[[i]], times2$partitions[[i]])
+      expect_equal(times$coal.times[[i]], times3$coal_times[[i]])
+      expect_equal(times$sam.times[[i]], times3$sam_times[[i]])
+    }
+})
+
 test_that("Structured Coalescent likelihood with only one clade matches neutral likelihood", {
     set.seed(1)
 
