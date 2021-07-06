@@ -2,7 +2,7 @@
 % Please edit documentation in R/structured_coal.R
 \name{extract_lineage_times}
 \alias{extract_lineage_times}
-\title{Extracts Lineage times from a parent phylogeny based on provided divergence MRCA nodes and times.}
+\title{Extracts Lineage times (but faster) from a parent phylogeny based on provided divergence MRCA nodes and times.}
 \usage{
 extract_lineage_times(
   phylo.preprocessed,
@@ -24,5 +24,5 @@ extract_lineage_times(
 A list containing lists of sampling time vectors sam.times and coalescent time vectors coal.times for each lineage.
 }
 \description{
-Extracts Lineage times from a parent phylogeny based on provided divergence MRCA nodes and times.
+Extracts Lineage times (but faster) from a parent phylogeny based on provided divergence MRCA nodes and times.
 }
