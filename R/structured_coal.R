@@ -279,6 +279,9 @@ preprocess_phylo <- function(phy, order_edges_by_node_label=TRUE){
 
     cl <- clade_lookup(phy, root, nodes.df, edges.df, edges.outgoing)
 
+    node_times_clade_lookup<-nodes.df$times[cl$clade_node_lookup$node_list] 
+    tip_times_clade_lookup<-nodes.df$times[cl$clade_tip_lookup$tip_list] 
+
     return(structure(list(phy=phy,
                 nodes.df = nodes.df,
                 edges.df = edges.df,
@@ -290,7 +293,9 @@ preprocess_phylo <- function(phy, order_edges_by_node_label=TRUE){
                 t_max = t_max,
                 root_idx = root,
                 clade_tip_lookup=cl$clade_tip_lookup,
-                clade_node_lookup=cl$clade_node_lookup), class="preprocessedPhy"))
+                clade_node_lookup=cl$clade_node_lookup,
+                node_times_clade_lookup=node_times_clade_lookup,
+                tip_times_clade_lookup=tip_times_clade_lookup), class="preprocessedPhy"))
 }
 
 clade_lookup <- function(phy, root_idx, nodes.df, edges.df, edges.outgoing) {
@@ -418,7 +423,7 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div_t
     log_lh <- 0
 
     if(is.na(times.extracted)) {
-        times.extracted <- extract_lineage_times2(phylo.preprocessed, div.MRCA.nodes, div_times)
+        times.extracted <- extract_lineage_times_native(phylo.preprocessed, div.MRCA.nodes, div_times)
     }
     partition_counts <- times.extracted$partition_counts
 
@@ -519,6 +524,17 @@ extract_lineage_times <- function(phylo.preprocessed, div.MRCA.nodes, div_times,
                 empty_tips=empty_tips, 
                 partition_counts=partition_counts, 
                 partitions=partitions))
+}
+
+extract_lineage_times_native <- function(phylo.preprocessed, div.MRCA.nodes, div_times) {
+        stopifnot("div_times must be in ascending order"=order(-div_times)==c(1:length(div_times)))
+
+        res <- extract_partition_times_fast(nodeid(phylo.preprocessed$phy, div.MRCA.nodes), div_times, 
+                                           phylo.preprocessed$node_times_clade_lookup, 
+                                           phylo.preprocessed$tip_times_clade_lookup, 
+                                           phylo.preprocessed$clade_node_lookup$bounds, 
+                                           phylo.preprocessed$clade_tip_lookup$bounds)
+        return(res)
 }
 
 #' Extracts Lineage times (but faster) from a parent phylogeny based on provided divergence MRCA nodes and times. 

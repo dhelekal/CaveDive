@@ -142,9 +142,9 @@ List extract_partition_times_fast(IntegerVector div_idx,
         coal_times.push_back(p_coal);
     }
 
-    List out = List::create(Named("sam_times")=sam_times, 
-        Named("coal_times")=coal_times, 
-        Named("counts")=counts,
+    List out = List::create(Named("sam.times")=sam_times, 
+        Named("coal.times")=coal_times, 
+        Named("partition_counts")=counts,
         Named("empty_tips")=empty_tips);
     return(out);
 }
