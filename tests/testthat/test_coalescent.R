@@ -319,10 +319,7 @@ test_that("extract_lineage_times works", {
     pre <- preprocess_phylo(tree.nodiv)
     subtrees <- lapply(c(1:length(MRCAs)), function (x) pre$clades.list[[(nodeid(pre$phy, MRCAs[x])-100)]]) 
     times <- extract_lineage_times(pre, MRCAs, div_times, T)
-    times2 <- extract_lineage_times2(pre, MRCAs, div_times, T) 
-
     times3 <- extract_lineage_times_native(pre, MRCAs, div_times)
-
 
     for (i in div_cols){
       sam.gt <- sam[which(colours==i)]
@@ -335,10 +332,6 @@ test_that("extract_lineage_times works", {
 
       expect_equal(sam.gt, times$sam.times[[i]])
       expect_equal(coal.gt, times$coal.times[[i]])
-      expect_equal(times$sam.times[[i]], times2$sam.times[[i]])
-      expect_equal(times$coal.times[[i]], times2$coal.times[[i]])
-      expect_equal(times$partitions[[i]], times2$partitions[[i]])
-
       expect_equal(times$sam.times[[i]], times3$sam.times[[i]])
       expect_equal(times$coal.times[[i]], times3$coal.times[[i]])
       expect_equal(times$partition_counts[[i]], times3$partition_counts[[i]])

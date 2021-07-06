@@ -454,78 +454,6 @@ structured_coal.likelihood <- function(phylo.preprocessed, div.MRCA.nodes, div_t
     return(list(log_lh = log_lh, sam.times = times.extracted$sam.times, coal.times = times.extracted$coal.times, partition_counts=partition_counts))
 }
 
-#' Extracts Lineage times from a parent phylogeny based on provided divergence MRCA nodes and times. 
-#'
-#' @param phylo.preprocessed preprocessed phylogeny
-#' @param div.MRCA.nodes labels of MRCA nodes of diverging lineages
-#' @param div_times absolute divergence times
-#' @param return_partitions if true, return a list named 'partitions' containing tip labels for each partition
-#' @return A list containing lists of sampling time vectors sam.times and coalescent time vectors coal.times for each lineage.
-#' @export
-extract_lineage_times <- function(phylo.preprocessed, div.MRCA.nodes, div_times, return_partitions=FALSE) {
-    times.ord <- order(-div_times)
-    k_div <- length(div_times)
-
-    div_from <- rep(NA, k_div)
-
-    coal.times <- list()
-    sam.times <- list()
-
-    if (return_partitions) {
-        partitions <- list()
-    } else {
-        partitions <- NA
-    }
-
-    empty_tips <- FALSE
-    partition_counts <- rep(0, k_div)
-
-    n_tips <- phylo.preprocessed$n_tips
-
-    MRCA.idx <- nodeid(phylo.preprocessed$phy, div.MRCA.nodes)-n_tips
-    subtrees <- lapply(c(1:length(div.MRCA.nodes)), function (x) phylo.preprocessed$clades.list[[MRCA.idx[x]]]) 
-    
-    for (i in c(1:k_div)) {
-        ii <- times.ord[i]
-
-        node.labs <- subtrees[[ii]]$node.label
-        leaf.labs <-subtrees[[ii]]$tip.label
-
-        leaf.times <- c()
-        for (j in which(c(1:k_div) < i)) {
-            if (!is.na(nodeid(subtrees[[ii]], div.MRCA.nodes[times.ord[j]])) && is.na(div_from[j])){
-                div_from[j] <- i 
-                jj <- times.ord[j]
-                node.labs <- node.labs[which(is.na(nodeid(subtrees[[jj]], node.labs)))]
-                leaf.labs <- leaf.labs[which(is.na(nodeid(subtrees[[jj]], leaf.labs)))]
-                leaf.times <- c(leaf.times, div_times[jj])
-                partition_counts[ii] <- partition_counts[ii] - 1
-            }
-        }
-
-        tip.times <- phylo.preprocessed$nodes.df$times[nodeid(phylo.preprocessed$phy, leaf.labs)]
-        if (return_partitions){
-            partitions[[ii]] <- leaf.labs[order(-tip.times)]
-        }
-        if (length(tip.times)==0) {
-            empty_tips <- TRUE
-        }
-
-        leaf.times <- c(leaf.times, tip.times)
-        node.times <- phylo.preprocessed$nodes.df$times[nodeid(phylo.preprocessed$phy, node.labs)]
-
-        sam.times[[ii]] <- leaf.times[order(-leaf.times)]
-        coal.times[[ii]] <- node.times[order(-node.times)]
-
-        partition_counts[ii] <- partition_counts[ii] + length(sam.times[[ii]])
-    }
-    return(list(sam.times=sam.times, 
-                coal.times=coal.times, 
-                empty_tips=empty_tips, 
-                partition_counts=partition_counts, 
-                partitions=partitions))
-}
-
 extract_lineage_times_native <- function(phylo.preprocessed, div.MRCA.nodes, div_times) {
         stopifnot("div_times must be in ascending order"=order(-div_times)==c(1:length(div_times)))
 
@@ -545,7 +473,7 @@ extract_lineage_times_native <- function(phylo.preprocessed, div.MRCA.nodes, div
 #' @param return_partitions if true, return a list named 'partitions' containing tip labels for each partition
 #' @return A list containing lists of sampling time vectors sam.times and coalescent time vectors coal.times for each lineage.
 #' @export
-extract_lineage_times2 <- function(phylo.preprocessed, div.MRCA.nodes, div_times, return_partitions=FALSE) {
+extract_lineage_times <- function(phylo.preprocessed, div.MRCA.nodes, div_times, return_partitions=FALSE) {
     times.ord <- order(-div_times)
     k_div <- length(div_times)
 
