@@ -50,3 +50,7 @@ sat_coalescent_loglh <- function(sampling_times, coalescent_times, t0, r, N, t_m
     .Call('_CaveDive_sat_coalescent_loglh', PACKAGE = 'CaveDive', sampling_times, coalescent_times, t0, r, N, t_max)
 }
 
+extract_partition_times_fast <- function(div_idx, div_times, vertex_times_ord_nodes, vertex_times_ord_tips, node_bounds, tip_bounds) {
+    .Call('_CaveDive_extract_partition_times_fast', PACKAGE = 'CaveDive', div_idx, div_times, vertex_times_ord_nodes, vertex_times_ord_tips, node_bounds, tip_bounds)
+}
+

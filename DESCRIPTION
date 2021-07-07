@@ -1,6 +1,6 @@
 Package: CaveDive
 Title: Phylodynamics for Clonal Expansion
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: person("David", "Helekal", email = "David.Helekal@warwick.ac.uk", role = c("aut", "cre"))
 Description: CaveDive implements simulations and inference of phylogenies containing phylodynamic signatures consistent with the presence of one or several clonal expansions within the sampled population.
 Depends: R (>= 4.0.0)
