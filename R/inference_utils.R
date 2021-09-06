@@ -192,12 +192,13 @@ plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence"
           stopifnot("either branch or k_modes must be supplied"=!(is.null(branch)&&is.null(k_modes)))
           stopifnot("either branch or k_modes must be supplied"=!(!is.null(branch)&&!is.null(k_modes)))
           if (length(correlates)>0) warning("Unused argument: correlates")
-          if(!is.null(branch)) plot_pop_fn(model_data, expansion_data, branch, t_max=t_max, eval_pts=100)
+          if(!is.null(branch)) plot_pop_fn(model_data, expansion_data, branch, t_max=t_max, eval_pts=100, tree_scale=tree_scale)
           if(!is.null(k_modes)) plot_pop_fn_facet(model_data, expansion_data, k_modes, t_max=t_max,
-                                                                                       eval_pts=100, 
-                                                                                       gt.K=gt.K, 
-                                                                                       gt.t_mid=gt.t_mid, 
-                                                                                       gt.time=gt.time)
+                                                                                          eval_pts=100, 
+                                                                                          gt.K=gt.K, 
+                                                                                          gt.t_mid=gt.t_mid, 
+                                                                                          gt.time=gt.time,
+                                                                                          tree_scale=tree_scale)
      } else {
           stop("Invalid plotting options")
      }
