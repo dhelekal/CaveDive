@@ -414,25 +414,27 @@ plot_mode_traces <- function(mcmc.df, event.df, k_modes) {
                geom_line(alpha = 0.3) +
                theme_bw() + 
                xlim(c(min_it,max_it)) +
-               theme(axis.title.x = element_blank(), axis.text.x = element_blank()) 
+               theme(axis.title.x = element_blank(), 
+                     axis.text.x = element_blank(),
+                     axis.text.y = element_blank(),
+                     text = element_text(size=20)) 
   K_facet <- K_facet + 
              facet_wrap(~br, labeller=labeller(br = br.labs), scales="free") +
-             labs(y="Carrying Capacity") +
-             theme_bw() +
-             theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),text = element_text(size=20))
+             labs(y="Carrying Capacity")
+
 
   t_mid_facet <- ggplot(mode_br_df, aes(x=it, y=t_mid)) +
                geom_line(alpha = 0.3) +
                theme_bw() + 
                xlim(c(min_it,max_it)) +
-               theme(axis.title.x = element_blank(), axis.text.x = element_blank()) 
+               theme(axis.title.x = element_blank(), 
+                     axis.text.x = element_blank(),
+                     axis.text.y = element_blank(),
+                     text = element_text(size=20)) 
   
   t_mid_facet <- t_mid_facet +
              facet_wrap(~br, labeller=labeller(br = br.labs), scales="free") +
-             labs(y="Time to Midpoint") +
-             theme_bw() +
-             theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),text = element_text(size=20))
-
+             labs(y="Time to Midpoint")
   grid.arrange(
           grobs=list(K_facet, t_mid_facet),
           nrow=2,
