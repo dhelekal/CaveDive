@@ -1,7 +1,7 @@
-plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_titles=list(), correlates=list(), modes=NULL) {
+plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_titles=list(), correlates=list(), modes=NULL, tree_scale=NULL) {
      phy <- pre$phy
      if (is.null(modes)) MRCA_lab=NULL else MRCA_lab=pre$edges.df$node.child[modes]
-     tree_map <- plot_tree(pre, event.df, MRCA_lab)
+     tree_map <- plot_tree(pre, event.df, MRCA_lab, tree_scale)
 
      dat <- tree_map[["data"]]
      dat <- dat[dat$isTip,]
@@ -100,7 +100,7 @@ build_correlate_map <- function(correlate, pre, dat, tip.ord, axis_title, leg_ti
      return(corr_map)
 }
 
-plot_tree<-function(pre,event.df, MRCA_lab=NULL){
+plot_tree<-function(pre,event.df, MRCA_lab=NULL, tree_scale=NULL){
    tree <- pre$phy
    freq <- table(event.df$br) 
 
@@ -129,16 +129,28 @@ plot_tree<-function(pre,event.df, MRCA_lab=NULL){
    scale_x_continuous(limits=c(0, x_max)) +
    scale_color_viridis(option="plasma") +
    theme_tree2() + 
-   theme_minimal() +
-   theme(axis.title.x = element_blank(), 
-          axis.text.x = element_blank(), 
-          axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank(),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          plot.margin = margin(0, 0, 0, 0, "cm"),
-          legend.position = "none")
+   theme_minimal()
+
+   if(is.null(tree_scale)) {
+     p1 <- p1 + theme(axis.title.x = element_blank(), 
+                    axis.text.x = element_blank(), 
+                    axis.title.y = element_blank(),
+                    axis.text.y = element_blank(),
+                    axis.ticks.y = element_blank(),
+                    panel.grid.major = element_blank(),
+                    panel.grid.minor = element_blank(),
+                    plot.margin = margin(0, 0, 0, 0, "cm"),
+                    legend.position = "none")
+   } else {
+     p1 <- p1 + xlab(paste0("Time before present (", tree_scale, ")"))
+     p1 <- p1 + theme(axis.title.y = element_blank(),
+                    axis.text.y = element_blank(),
+                    axis.ticks.y = element_blank(),
+                    panel.grid.major = element_blank(),
+                    panel.grid.minor = element_blank(),
+                    plot.margin = margin(0, 0, 0, 0, "cm"),
+                    legend.position = "none")
+   }
    return(p1)
 }
 
