@@ -142,11 +142,8 @@ plot_tree<-function(pre,event.df, MRCA_lab=NULL, tree_scale=NULL){
                     plot.margin = margin(0, 0, 0, 0, "cm"),
                     legend.position = "none")
    } else {
-     p1 <- p1 + xlab(paste0("Time before present (", tree_scale, ")"))
-     p1 <- p1 + theme(axis.title.y = element_blank(),
-                    axis.text.y = element_blank(),
-                    axis.ticks.y = element_blank(),
-                    panel.grid.major = element_blank(),
+     p1 <- p1 + labs(x=paste0("Time (", tree_scale, ")"), y="")
+     p1 <- p1 + theme(panel.grid.major = element_blank(),
                     panel.grid.minor = element_blank(),
                     plot.margin = margin(0, 0, 0, 0, "cm"),
                     legend.position = "none")
