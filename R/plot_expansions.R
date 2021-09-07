@@ -155,6 +155,9 @@ plot_tree<-function(pre,event.df, MRCA_lab=NULL, tree_scale=NULL){
 }
 
 plot_summary <- function (model_data, expansion_data, phylo_preprocessed, priors, modes=NULL) {
+
+     rdbu <- brewer.pal(n = 3, name = "RdBu")
+     col_scheme <- scale_fill_manual(values=c(rdbu[1], rdbu[3]), na.value=rdbu[2])
      
      hist_dim <- ggplot(model_data, aes(x=dim)) +
                  geom_bar(aes(y = ..prop..), stat="count") + 
@@ -179,7 +182,7 @@ plot_summary <- function (model_data, expansion_data, phylo_preprocessed, priors
           hist_br <- hist_br + geom_bar(aes(y = stat(count / sum(count)))) 
         } else {
           hist_br <- hist_br + geom_bar(aes(y = stat(count / sum(count)), fill=is.mode)) + 
-          scale_fill_brewer(palette="Dark2") + 
+          col_scheme + 
                      geom_text(stat="count", aes(label = mode_clade, y= ((..count..)/sum(..count..))), vjust = -.25, hjust=-0.1, size=11, color="red")
         }
 
