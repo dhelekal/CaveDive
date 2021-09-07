@@ -75,7 +75,7 @@ func_plt <- func_plt + scale_fill_brewer(palette="Dark2")  +
    scale_y_continuous(position = "right", name="Effective population size") +
    coord_flip() +
    theme_bw() +
-   xlab("Time Before Present (Years)") +
+   xlab("Time (Years)") +
    theme(legend.position="none", 
          panel.grid.major = element_blank(), 
          panel.grid.minor = element_blank(),
