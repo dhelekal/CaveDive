@@ -112,6 +112,7 @@ print.expansionsMCMC <- function(x, ...) {
      cat(paste("\nThinning applied: ", x$metadata$thinning,"\n"))
 }
 
+#' Plot results
 #' @export
 #' @param x expansionsMCMC object
 #' @param ... further arguments passed to plot
@@ -125,6 +126,7 @@ print.expansionsMCMC <- function(x, ...) {
 #' @param gt.time true expansion time values if plotting for diagnostic purposes
 #' @param branch which branch to generate "popfunc" plot for
 #' @param t_max upper x-axis limit for "popfunc" plot
+#' @param tree_scale time unit axis label
 plot.expansionsMCMC <- function(x, ..., mode=c("summary", "modes", "persistence", "traces", "mtraces", "popfunc"), k_modes=NULL, correlates=list(), corr_axis_title=list(),
                                   corr_legend_title=list(), gt.K=NULL, gt.t_mid=NULL, gt.time=NULL, branch=NULL, t_max=NULL, tree_scale=NULL) {
      mode <- match.arg(mode)
