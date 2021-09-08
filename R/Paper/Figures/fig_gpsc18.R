@@ -54,7 +54,7 @@ colnames(corr_df1) <- "Serotype"
 #corr_df <- corr_df[expansions$phylo_preprocessed$phy$tip.label,]
 
 which_br <- 385
-t_max<-300
+t_max<- 25
 eval_pts <- 100
 
 event.df <- expansions$expansion_data
