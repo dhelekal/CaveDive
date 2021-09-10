@@ -54,7 +54,7 @@ colnames(corr_df1) <- "Serotype"
 #corr_df <- corr_df[expansions$phylo_preprocessed$phy$tip.label,]
 
 which_br <- 385
-t_max<- 25
+t_max<- 50
 eval_pts <- 100
 
 event.df <- expansions$expansion_data
@@ -114,14 +114,14 @@ scale_fill_brewer(palette="Dark2") +
 theme_bw() +
 xlab("Time (Years)") +
 ylab("Effective Population Size") +
-theme(text = element_text(size=20), 
+theme(text = element_text(size=30), 
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank(),
       aspect.ratio=1,
       legend.position = c(0.2, 0.8))
 
 png("fig_gpsc18_corr.png", width=1200, height=1200)
-plot(expansions, mode="persistence", k_modes=1, correlates=list(corr_df1), no_y_text=F)
+plot(expansions, mode="persistence", k_modes=1, correlates=list(corr_df1), no_y_text=F, tree_scale= "Years")
 dev.off()
 
 png("fig_gpsc18_param.png", width=1600, height=1600)
@@ -141,7 +141,7 @@ png("fig_gpsc18_mtrace.png", width=1600, height=1600)
 plot(expansions, mode="mtraces",k_modes=1)
 dev.off()
 
-png("fig_gpsc18_plotfn.png", width=800, height=800)
+png("fig_gpsc18_plotfn.png", width=800, height=800, tree_scale="Years")
 plot(gg)
 dev.off()
 

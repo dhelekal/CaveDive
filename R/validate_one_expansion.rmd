@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r, eval mcmc}
-eval_mcmc <- T
+eval_mcmc <- F
 ```
 
 ```{bash, clean directory, include=FALSE, eval=eval_mcmc}
