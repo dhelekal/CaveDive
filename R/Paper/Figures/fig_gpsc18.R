@@ -99,6 +99,9 @@ for (i in c(1:eval_pts)) {
    Y_max_neut[i] <- ci[2]
 }
 
+rdbu <- brewer.pal(n = 3, name = "RdBu")
+col_scheme <- scale_color_manual(values=c(rdbu[1], rdbu[3]), na.value=rdbu[2])
+fill_scheme <- scale_fill_manual(values=c(rdbu[1], rdbu[3]), na.value=rdbu[2])
 
 df <- data.frame(t=c(X,X), 
         y_med=c(Y_med, Y_med_neut),
@@ -109,7 +112,8 @@ gg <- ggplot(df, aes(group=Population)) +
 geom_ribbon(aes(x=t,ymin=y_min, ymax=y_max, fill=Population), alpha=0.3) +
 geom_line(data=subset(df, t <= 0), aes(group=Population, x=t, y=y_med, color=Population), linetype="solid",lwd=2) +
 geom_line(data=subset(df, t > 0), aes(group=Population, x=t, y=y_med, color=Population), linetype="longdash",lwd=2) + 
-scale_color_brewer(palette="Dark2") +
+col_scheme +
+fill_scheme +
 scale_fill_brewer(palette="Dark2") +
 theme_bw() +
 xlab("Time (Years)") +
