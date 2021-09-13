@@ -83,7 +83,7 @@ func_plt <- func_plt + scale_fill_brewer(palette="Dark2")  +
          axis.line = element_line(color = 'black'), 
          text = element_text(size=20))
 
-png("fig1.png",width=1600,height=900)
+png("fig1.png",width=1280,height=720)
 ggarrange(
     func_plt,tree_plt,
     widths = c(2,2),
