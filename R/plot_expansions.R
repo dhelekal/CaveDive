@@ -36,8 +36,7 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_
              plot.margin = margin(0, 0, 0, 0, "cm"),
              text = element_text(size=30),
              legend.position = c(0.8,0.2),
-             legend.title = element_text(angle = -90, hjust=0.5),
-             aspect.ratio=1)
+             legend.title = element_text(angle = -90, hjust=0.5))
 
      blank <- ggplot() + theme_minimal()
      corr_maps <- list(blank)
@@ -46,9 +45,14 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_
           corr_maps <- sapply(c(1:n_cor), function(i) list(build_correlate_map(correlates[[i]], pre, dat, tip.ord, unlist(axis_titles[i]), unlist(legend_titles[i]))))
      }
      tree_map_t <- tree_map + coord_flip() + scale_x_reverse()
-
-     do.call("ggarrange",c(c(list(blank), list(tree_map_t), rep(list(blank), max(1, n_cor)), list(tree_map), list(heat_map), corr_maps), 
-                              list(widths=c(1,3,rep(0.75, max(1,n_cor))), heights=c(1,3))))
+     plot_list <- c(list(plot_spacer()), list(plot_spacer()), list(tree_map_t), rep(list(plot_spacer()), max(1, n_cor)),
+                              rep(list(plot_spacer()), 3+max(1, n_cor)),
+                              list(tree_map), list(plot_spacer()), list(heat_map), corr_maps)
+     plot(wrap_plots(plot_list,
+               byrow=T,
+               ncol=3+max(1, n_cor),
+               widths=c(1, -0.35, 3, rep(0.5, max(1, n_cor))), 
+               heights=c(1, -0.15, 3)))
 }
 
 build_correlate_map <- function(correlate, pre, dat, tip.ord, axis_title, leg_title) {
@@ -94,8 +98,9 @@ build_correlate_map <- function(correlate, pre, dat, tip.ord, axis_title, leg_ti
                           panel.grid.major = element_blank(),
                           panel.grid.minor = element_blank(),
                           text = element_text(size=30),
-                          axis.text.x = element_text(size=18, angle=45, hjust=1),
+                          axis.text.x = element_text(size=22, angle=45, hjust=1),
                           legend.position="bottom", legend.direction="vertical",
+                          plot.margin = margin(0, 0, 0, 0, "cm"),
                           legend.title = element_text(angle = -90))
      return(corr_map)
 }
@@ -138,6 +143,7 @@ plot_tree<-function(pre,event.df, MRCA_lab=NULL, tree_scale=NULL){
                     axis.title.y = element_blank(),
                     axis.text.y = element_blank(),
                     axis.ticks.y = element_blank(),
+                    text = element_text(size=30),
                     panel.grid.major = element_blank(),
                     panel.grid.minor = element_blank(),
                     plot.margin = margin(0, 0, 0, 0, "cm"),
@@ -146,6 +152,7 @@ plot_tree<-function(pre,event.df, MRCA_lab=NULL, tree_scale=NULL){
      p1 <- p1 + labs(x=paste0("Time (", tree_scale, ")"), y="")
      p1 <- p1 + theme(panel.grid.major = element_blank(),
                     panel.grid.minor = element_blank(),
+                    text = element_text(size=30),
                     plot.margin = margin(0, 0, 0, 0, "cm"),
                     legend.position = "none")
    }
@@ -162,17 +169,18 @@ plot_summary <- function (model_data, expansion_data, phylo_preprocessed, priors
                  geom_text(aes( label = scales::percent(..prop..), y= ..prop.. ), stat= "count", vjust = -.5, size=12) +
                  theme_bw() + 
                  xlab("Number of Expansions") + 
+                 ylab("Posterior Marginal Probability") +
                  scale_y_continuous(labels=percent, limits=c(0,1)) +
                  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
-                                  axis.title.y = element_blank(),
-                                  text = element_text(size=20))
+                                  text = element_text(size=24))
      hist_N <- ggplot(model_data, aes(N)) +
          geom_histogram(aes(y = stat(count / sum(count))), bins=100) +
          theme_bw() + 
-         xlab("N") +
-         scale_fill_brewer(palette="Dark2")  + 
-         theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),
-               text = element_text(size=20))
+         xlab("Background Pop. Size") +
+         ylab("Posterior Marginal Density") +
+         scale_fill_brewer(palette="Dark2") + 
+         theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+               text = element_text(size=24))
 
 
      hist_br <- ggplot(expansion_data, aes(x=factor(br)))
@@ -185,9 +193,9 @@ plot_summary <- function (model_data, expansion_data, phylo_preprocessed, priors
         }
 
         hist_br <- hist_br + theme_bw() + 
-        labs(x="Branch Number",fill="Expansion Root") +
-        theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = c(0.8, 0.2),
-              text = element_text(size=14),
+        labs(x="Branch Number", y="Frequency of Expansion Root Present", fill="Highlighted Expansion") +
+        theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = c(0.8, 0.2),
+              text = element_text(size=24),
               axis.text.x = element_text(size=12, angle=45))
 
      if (is.null(modes)) MRCA_lab=NULL else MRCA_lab=phylo_preprocessed$edges.df$node.child[modes]
