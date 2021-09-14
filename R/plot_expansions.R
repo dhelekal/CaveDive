@@ -51,7 +51,7 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_
      plot(wrap_plots(plot_list,
                byrow=T,
                ncol=3+max(1, n_cor),
-               widths=c(1, -0.35, 3, rep(0.5, max(1, n_cor))), 
+               widths=c(1, -0.35, 3, rep(0.75, max(1, n_cor))), 
                heights=c(1, -0.15, 3)))
 }
 
@@ -503,7 +503,7 @@ plot_pop_fn <- function(mcmc.df, event.df, which_br, t_max=NULL, eval_pts=100, t
      theme_bw() +
      xlab(text_x) +
      ylab("Neg") +
-     theme(text = element_text(size=20), 
+     theme(text = element_text(size=24), 
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank())
      plot(gg)
