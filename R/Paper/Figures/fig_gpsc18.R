@@ -114,7 +114,6 @@ geom_line(data=subset(df, t <= 0), aes(group=Population, x=t, y=y_med, color=Pop
 geom_line(data=subset(df, t > 0), aes(group=Population, x=t, y=y_med, color=Population), linetype="longdash",lwd=2) + 
 col_scheme +
 fill_scheme +
-scale_fill_brewer(palette="Dark2") +
 theme_bw() +
 xlab("Time (Years)") +
 ylab("Effective Population Size") +
