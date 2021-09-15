@@ -48,7 +48,7 @@ We parametrise and instatiate a _priorList_ object, which we will use to sample 
 
 Note that the form of the priors on expansion carrying capacities is conditioned on $N_M$. $N_M$ thus acts as a form of a scale parameter for the entire genealogy, and governs what can be detected and what cannot. (For example, consider all samples within an expansion coalescing while the expansion population is near-saturated. Such an expansion will leave very little signature in the genealogy, potentially being indistinguishable from a mild bottleneck. Inference of the corresponding $t_{mid}$ parameter will be ouright impossible.)
 
-The full exponential rate of prior on $t_{mid_i}$ is `t_mid_rate * N_M`.
+The full exponential rate of prior on $t_{mid_i}$ is `t_mid_rate / N_M`.
 The mean and the variance of the gamma prior on time of expansions is `exp_time_nu * N_M` and `exp_time_kappa^2 * N_M^2` respectively.
 
 
