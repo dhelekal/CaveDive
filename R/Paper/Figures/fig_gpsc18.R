@@ -127,20 +127,19 @@ png("fig_gpsc18_corr.png", width=1200, height=1200)
 plot(expansions, mode="persistence", k_modes=1, correlates=list(corr_df1), no_y_text=F, tree_scale= "Years")
 dev.off()
 
-png("fig_gpsc18_param.png", width=1600, height=1600)
-plot(expansions, mode="modes", k_modes=1)
-dev.off()
-
-png("fig_gpsc18_trace.png", width=1600, height=1600)
-plot(expansions, mode="traces")
-dev.off()
-
-png("fig_gpsc18_summary.png", width=1600, height=1600)
+png("fig_gpsc18_supp1.png", width=1600, height=1600)
 plot(expansions, mode="summary",k_modes=1)
 dev.off()
 
+png("fig_gpsc18_supp2.png", width=1600, height=1600)
+plot(expansions, mode="traces")
+dev.off()
 
-png("fig_gpsc18_mtrace.png", width=1600, height=1600)
+png("fig_gpsc18_supp3.png", width=1600, height=1600)
+plot(expansions, mode="modes", k_modes=1)
+dev.off()
+
+png("fig_gpsc18_supp4.png", width=1600, height=1600)
 plot(expansions, mode="mtraces",k_modes=1)
 dev.off()
 

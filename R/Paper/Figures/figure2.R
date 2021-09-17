@@ -77,7 +77,7 @@ if(run_mcmc) {
     expansions2 <- readRDS(file = paste0(data_dir, "/expansions2.rds"))
 }
 
-png("fig2_pop_fn.png", width=1600, height=800)
+png("fig2b.png", width=1600, height=800)
 plot(expansions, mode="popfunc", k_modes=3, gt.K=params$K[c(1,3,2)], gt.t_mid=params$t_mid[c(1,3,2)], gt.time=params$div_times[c(1,3,2)], t_max=c(20,20,20), tree_scale="Years")
 
 dev.off()
@@ -86,11 +86,11 @@ png("fig2a.png", width=1600, height=1600)
 plot(expansions, mode="summary", k_modes=3)
 dev.off()
 
-png("fig2b.png", width=1800, height=1600)
+png("fig2_supp1.png", width=1800, height=1600)
 plot(expansions, mode="modes", k_modes=3, gt.K=params$K[c(1,3,2)], gt.t_mid=params$t_mid[c(1,3,2)])
 dev.off()
 
-png("fig2_trace.png", width=1600, height=1600)
+png("fig2_supp2.png", width=1600, height=1600)
 plot(expansions, mode="traces")
 dev.off()
 

@@ -34,19 +34,19 @@ png("fig_uhlemann_corr.png", width=1200, height=1200)
 plot(expansions, mode="persistence",k_modes=3, correlates=list(corr_df), tree_scale = "Years")
 dev.off()
 
-png("fig_uhlemann_summary.png", width=1600, height=1600)
+png("fig_uhlemann_supp1.png", width=1600, height=1600)
 plot(expansions, mode="summary",k_modes=3)
 dev.off() 
 
-png("fig_uhlemann_modes.png", width=1600, height=1600)
-plot(expansions, mode="modes",k_modes=3)
-dev.off() 
-
-png("fig_uhlemann_trace.png", width=1600, height=1600)
+png("fig_uhlemann_supp2.png", width=1600, height=1600)
 plot(expansions, mode="traces")
 dev.off()
 
-png("fig_uhlemann_mtrace.png", width=1600, height=1600)
+png("fig_uhlemann_supp3.png", width=1600, height=1600)
+plot(expansions, mode="modes",k_modes=3)
+dev.off() 
+
+png("fig_uhlemann_supp4.png", width=1600, height=1600)
 plot(expansions, mode="mtraces",k_modes=3)
 dev.off()
 
