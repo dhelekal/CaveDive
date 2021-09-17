@@ -140,7 +140,7 @@ plot_tree<-function(pre,event.df, MRCA_lab=NULL, tree_scale=NULL){
                  subset=!is.na(lab), 
                  x=branch), color="red", size=12, vjust=-1, hjust=1) +
    scale_size_manual(values=c(1)) +
-   scale_x_continuous(limits=c(0, x_max)) +
+   scale_x_continuous(limits=c(0, x_max), labels = function (x) x-x_max) +
    scale_y_discrete(labels = NULL, breaks = NULL)+
    scale_color_viridis(option="plasma") +
    theme_tree2() + 
