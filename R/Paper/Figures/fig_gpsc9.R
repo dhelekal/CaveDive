@@ -41,7 +41,7 @@ colnames(corr_df3) <- "Continent"
 #for(c in colnames(corr_df)) corr_df[,c] <- as.logical(corr_df[,c])
 
 #corr_df <- corr_df[expansions$phylo_preprocessed$phy$tip.label,]
-png("fig_gpsc9_corr.png", width=1600, height=1600)
+png("fig_gpsc9_corr.png", width=1800, height=1800)
 plot(expansions, mode="persistence", k_modes=3, correlates=list(corr_df3, corr_df1, corr_df2), 
                                      corr_axis_title=list(),
                                      corr_legend_title=list(), no_y_text=T, tree_scale="Years")

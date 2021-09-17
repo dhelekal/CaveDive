@@ -1,0 +1,186 @@
+---
+title: "Biased Sampling"
+author: "David Helekal"
+date: "12/2/2020"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r, eval mcmc}
+eval_mcmc <- T
+```
+
+```{bash, clean directory, include=FALSE, eval=eval_mcmc}
+rm -rf ./Paper/Sim/sim_biased
+rm -rf ./Paper/Sim/tmp3
+
+mkdir ./Paper/Sim/tmp3
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(CaveDive)
+library(rmutil)
+library(ape)
+library(ggplot2)
+library(ggtree)
+library(ggExtra)
+library(treeio)
+library(viridis)
+library(patchwork)
+library(rjson)
+library(scales)
+
+
+dir.create(file.path("./Paper/Sim/", "sim_biased"))
+base_dir <- "./Paper/Sim/sim_biased"
+```
+## Biased Simulation
+
+We simulate several constant population size phylogenies where a particular clade suffers from sampling biased.
+
+### Parameter Recovery
+
+
+### Set up the experiment 
+```{r, set parameters}
+set.seed(1)
+
+burn_in <- 0.1
+n_it <- 2e7
+thinning <- n_it/1e4
+
+repetitions <- 20
+sampling_levels <- c(0.2, 0.35, 0.5, 0.65, 0.8)
+lambdar_range <- c(5)
+pop_range <- c(4)
+
+n<-500
+```
+
+```{r, generate parameter specification files, eval=eval_mcmc}
+dir.create(file.path(base_dir, "test_out"))
+
+tres <- list()
+for (l in c(1:repetitions)) {
+    tr <- rcoal(n)
+    tr <- makeNodeLabel(tr)
+    tr$edge.length <- tr$edge.length*100
+    tres <- c(tres, list(tr))
+}
+
+for(j in c(1:length(sampling_levels))) {
+    dir_name <- paste0("sam_",j)
+    dir.create(file.path(paste0(base_dir,"/test_out"), dir_name))
+    for (l in c(1:repetitions)) {
+      dir_name2 <- file.path(paste0(base_dir,"/test_out/", dir_name),paste0("r_", l))
+      dir.create(dir_name2)
+      tr <- tres[[l]]
+
+      #Find node with roughly half of the leaves
+      d<-node.depth(tr)
+      d<-abs(n/2-d)
+      w<-which.min(d)
+
+      #Find descendants of this node
+      d<-extract.clade(tr,w)$tip.label
+      #Keep proportion p of leaves in this clade
+      p<-sampling_levels[j]
+      tr<-drop.tip(tr,d[runif(length(d))>p])
+      #keep on average 0.5 of leaves in the rest of the tree
+      d<-setdiff(tr$tip.label,d)
+      tr<-drop.tip(tr,d[runif(length(d))>0.5])
+      write.tree(tr, file=paste0(dir_name2,"/tree.nwk"))
+
+      sim_data <- list(proportion=p)
+      sim_data_txt <- toJSON(sim_data)
+      write(sim_data_txt, paste0(dir_name2,"/tree_params.json"))
+  }
+}
+```
+
+### Run MCMC inference 
+```{bash, run mcmc, results=FALSE, eval=eval_mcmc}
+find ./Paper/Sim/sim_biased | grep .*tree.nwk | xargs dirname | parallel -j 10 --verbose --tmpdir ./Paper/Sim/tmp3 --halt-on-error 2 eval Rscript "./Scripts/run_expansions_inference_nwk.R -n 2e7 -t 2e3 --lambdar 5 -s 1 -f {}/tree.nwk -o {}"
+```
+
+### Produce plots for dimension mode analysis
+```{r, process data}
+experiment_specs <- list.files(path = paste0(base_dir,"/test_out"), pattern=".*tree_params.json", full.names = TRUE, recursive = TRUE)
+experiment_dirs <- dirname(experiment_specs)
+
+results_data <- lapply(c(1:length(experiment_specs)), function(i){
+  sim_data <- fromJSON(file=experiment_specs[i])
+  meta_data <- sim_data$meta
+  sim_data <- lapply(sim_data, unlist) 
+  sim_data <- lapply(sim_data, as.numeric) 
+
+  bias <- 2*sim_data$proportion
+  ### Check that we got the number of expansions approximately right  
+  expansions <- readRDS(paste0(experiment_dirs[i],"/expansions.rds"))
+  expansions <- discard_burn_in(expansions, proportion=burn_in)
+  pre <- expansions$phylo_preprocessed
+
+  mcmc_data <- expansions$model_data
+  event_data <- expansions$expansion_data
+
+  p_correct_dim <- length(which(mcmc_data$dim==0))/length(mcmc_data$dim)
+  expected_dim <- mean(mcmc_data$dim)
+
+  unique.dim <- unique(mcmc_data$dim)
+
+  return(list(p_correct_dim=p_correct_dim, 
+              expected_dim=expected_dim, 
+              bias=bias))
+})
+```
+
+```{r, aggregate histograms}
+experiment_specs <- list.files(path = paste0(base_dir,"/test_out"), pattern=".*tree_params.json", full.names = TRUE, recursive = TRUE)
+experiment_dirs <- dirname(experiment_specs)
+
+histogram_dfs <- lapply(c(1:length(experiment_specs)), function(i){
+  sim_data <- fromJSON(file=experiment_specs[i])
+  meta_data <- sim_data$meta
+  sim_data <- lapply(sim_data, unlist) 
+  sim_data <- lapply(sim_data, as.numeric) 
+
+  bias <- 2*sim_data$proportion
+  ### Check that we got the number of expansions approximately right  
+  expansions <- readRDS(paste0(experiment_dirs[i],"/expansions.rds"))
+  expansions <- discard_burn_in(expansions, proportion=burn_in)
+
+  mcmc_data <- expansions$model_data
+  return(data.frame(dim=mcmc_data$dim, bias=bias))
+})
+```
+
+```{r, create dataframe}
+names(results_data) <- c(1:length(results_data)) 
+data_df <- do.call(rbind.data.frame, results_data)
+
+hist_df <- do.call(rbind, histogram_dfs)
+hist_df$bias <- factor(hist_df$bias, levels=2*sampling_levels, ordered=T)
+head(hist_df)
+```
+
+```{r, plot dims, eval=T, out.width="90%", fig.width=20, fig.height=20, dpi=300, fig.align="center"}
+e_hist <- ggplot(hist_df, aes(y=dim)) + 
+          geom_bar(aes(x = ..prop..), stat="count") + 
+          #scale_y_discrete(limits=c(0:4)) + 
+          scale_x_continuous(labels=percent, limits=c(0,1))+
+          ylab("Number of Expansions") + 
+          facet_grid(cols=vars(bias)) +
+          theme_bw() +
+          theme(text = element_text(size=35),  
+                axis.title.x = element_blank(),
+                axis.text.x = element_blank(), 
+                axis.ticks.x = element_blank())
+
+e_hist
+png("./Paper/Figures/fig_bias.png", width=800,height=800)
+e_hist
+dev.off()
+```
+### Done
