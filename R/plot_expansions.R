@@ -43,9 +43,14 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_
      n_cor <- length(correlates)
      if(n_cor > 0) {
           corr_maps <- sapply(c(1:n_cor), function(i) list(build_correlate_map(correlates[[i]], pre, dat, tip.ord, unlist(axis_titles[i]), unlist(legend_titles[i]))))
+          corr_guides <- sapply(corr_maps, function(cmap) list(plot_grid(get_legend(cmap+theme(
+                          legend.position="bottom", 
+                          legend.direction="horizontal",     
+                          )
+                          ))))
      }
      tree_map_t <- tree_map + coord_flip() + scale_x_reverse()
-     plot_list <- c(list(plot_spacer()), list(plot_spacer()), list(tree_map_t), rep(list(plot_spacer()), max(1, n_cor)),
+     plot_list <- c(list(plot_spacer()), list(plot_spacer()), list(tree_map_t), corr_guides, #rep(list(plot_spacer()), max(1, n_cor)),
                               rep(list(plot_spacer()), 3+max(1, n_cor)),
                               list(tree_map), list(plot_spacer()), list(heat_map), corr_maps)
      plot(wrap_plots(plot_list,
@@ -89,7 +94,11 @@ build_correlate_map <- function(correlate, pre, dat, tip.ord, axis_title, leg_ti
                     geom_tile(aes(fill = value)) +
                     col_scheme +
                     theme_minimal() +
-                    guides(fill=guide_legend(title.position = "left"))+
+                    guides(fill = guide_legend(direction = "horizontal",
+                             title.position = "bottom",
+                             label.position="top", label.hjust = 0.5, 
+                             label.vjust = 0.5,
+                             label.theme = element_text(angle = 90,size=30)))+
                     coord_flip() +
                     labs(y=axis_title_str, fill=leg_title_str) +
                     theme(axis.title.y = element_blank(), 
@@ -98,10 +107,10 @@ build_correlate_map <- function(correlate, pre, dat, tip.ord, axis_title, leg_ti
                           panel.grid.major = element_blank(),
                           panel.grid.minor = element_blank(),
                           text = element_text(size=30),
-                          axis.text.x = element_text(size=22, angle=45, hjust=1),
-                          legend.position="bottom", legend.direction="vertical",
-                          plot.margin = margin(0, 0, 0, 0, "cm"),
-                          legend.title = element_text(angle = -90))
+                          axis.text.x = element_text(size=28, angle=45, hjust=1),
+                          legend.position="none", 
+                          plot.margin = margin(0, 0, 0, 0, "cm")
+                          )
      return(corr_map)
 }
 

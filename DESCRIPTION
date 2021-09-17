@@ -26,7 +26,7 @@ Imports:
     gridExtra,
     grid,
     gtable,
-    egg,
+    cowplot,
     pracma,
     reshape2, 
     scales,
