@@ -82,7 +82,7 @@ plot(expansions, mode="popfunc", k_modes=3, gt.K=params$K[c(1,3,2)], gt.t_mid=pa
 
 dev.off()
 
-png("fig2a.png", width=1600, height=1600)
+png("fig2a.png", width=1400, height=1400)
 plot(expansions, mode="summary", k_modes=3)
 dev.off()
 

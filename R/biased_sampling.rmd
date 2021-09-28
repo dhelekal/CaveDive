@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r, eval mcmc}
-eval_mcmc <- T
+eval_mcmc <- F
 ```
 
 ```{bash, clean directory, include=FALSE, eval=eval_mcmc}
@@ -31,6 +31,7 @@ library(viridis)
 library(patchwork)
 library(rjson)
 library(scales)
+library(stringr)
 
 
 dir.create(file.path("./Paper/Sim/", "sim_biased"))
@@ -51,11 +52,8 @@ burn_in <- 0.1
 n_it <- 2e7
 thinning <- n_it/1e4
 
-repetitions <- 20
-sampling_levels <- c(0.2, 0.35, 0.5, 0.65, 0.8)
-lambdar_range <- c(5)
-pop_range <- c(4)
-
+repetitions <- 40
+sampling_levels <- c(0.1, 0.2, 0.3, 0.4, 0.5)
 n<-500
 ```
 
@@ -93,7 +91,7 @@ for(j in c(1:length(sampling_levels))) {
       tr<-drop.tip(tr,d[runif(length(d))>0.5])
       write.tree(tr, file=paste0(dir_name2,"/tree.nwk"))
 
-      sim_data <- list(proportion=p)
+      sim_data <- list(proportion=p, tree=l)
       sim_data_txt <- toJSON(sim_data)
       write(sim_data_txt, paste0(dir_name2,"/tree_params.json"))
   }
@@ -117,7 +115,8 @@ results_data <- lapply(c(1:length(experiment_specs)), function(i){
   sim_data <- lapply(sim_data, as.numeric) 
 
   bias <- 2*sim_data$proportion
-  ### Check that we got the number of expansions approximately right  
+  which_tree = sim_data$tree
+
   expansions <- readRDS(paste0(experiment_dirs[i],"/expansions.rds"))
   expansions <- discard_burn_in(expansions, proportion=burn_in)
   pre <- expansions$phylo_preprocessed
@@ -132,7 +131,8 @@ results_data <- lapply(c(1:length(experiment_specs)), function(i){
 
   return(list(p_correct_dim=p_correct_dim, 
               expected_dim=expected_dim, 
-              bias=bias))
+              bias=bias,
+              tree=which_tree))
 })
 ```
 
@@ -168,19 +168,28 @@ head(hist_df)
 ```{r, plot dims, eval=T, out.width="90%", fig.width=20, fig.height=20, dpi=300, fig.align="center"}
 e_hist <- ggplot(hist_df, aes(y=dim)) + 
           geom_bar(aes(x = ..prop..), stat="count") + 
-          #scale_y_discrete(limits=c(0:4)) + 
-          scale_x_continuous(labels=percent, limits=c(0,1))+
-          ylab("Number of Expansions") + 
+          scale_y_discrete(limits=c(0:4)) + 
+          scale_x_continuous(labels=percent, limits=c(0,1), position = "top")+
+          coord_cartesian(ylim = c(-0.5, 4.5), xlim=c(0,1) ,expand = FALSE) +
+          labs(y="Expected Posterior Number of Expansions Marginal", x="Relative Prop. of Tips Retained") + 
           facet_grid(cols=vars(bias)) +
           theme_bw() +
           theme(text = element_text(size=35),  
-                axis.title.x = element_blank(),
                 axis.text.x = element_blank(), 
                 axis.ticks.x = element_blank())
 
-e_hist
-png("./Paper/Figures/fig_bias.png", width=800,height=800)
-e_hist
+e_dim_scatter <- ggplot(data_df, aes(x=factor(bias), y=expected_dim))
+e_dim_scatter <- e_dim_scatter + geom_boxplot(aes(group=bias)) + stat_summary(fun.y=mean, geom="point", lwd=2, color="red")
+e_dim_scatter <- e_dim_scatter + geom_jitter(shape=16, dotsize=1, position=position_jitter(0.2))
+e_dim_scatter <- e_dim_scatter + theme_bw() + labs(x = "Relative Prop. of Tips Retained", y="Median Number of Expansions") + 
+                  scale_x_discrete(limits=factor(c(0.2,0.4,0.6,0.8,1)), position = "top") + 
+                  scale_y_continuous(limits=c(0, 4), breaks=c(0:4)) +
+                  coord_cartesian(ylim = c(-0.5, 4.5), xlim=c(0.5, 5.5),expand = FALSE)
+e_dim_scatter <- e_dim_scatter + theme(axis.text.x = element_text(angle = 45, hjust = 1),
+                                        text = element_text(size=35))
+e_hist | e_dim_scatter
+png("./Paper/Figures/fig_bias.png", width=1600,height=1600)
+e_hist | e_dim_scatter
 dev.off()
 ```
 ### Done

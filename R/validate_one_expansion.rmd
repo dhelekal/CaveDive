@@ -299,7 +299,7 @@ t_mid_scatter <- ggplot(data_df_m, aes(x=t_mid_gt, y=expected_t_mid))
 t_mid_scatter <- t_mid_scatter + geom_point()
 t_mid_scatter <- t_mid_scatter + geom_errorbar(aes(ymin = ci_t_mid_lo, ymax = ci_t_mid_hi), width = 0.2, alpha=0.3)
 t_mid_scatter <- t_mid_scatter + scale_x_continuous(trans="log10", limits=lims) + scale_y_continuous(trans="log10", limits=lims)
-t_mid_scatter <- t_mid_scatter + theme_bw() + labs(x ="True Time to Midpoint", y="Posterior Median Time to Midpoint") + coord_fixed(ratio = 1)
+t_mid_scatter <- t_mid_scatter + theme_bw() + labs(x ="True Time to Half Capacity", y="Posterior Median Time to Half Capacity") + coord_fixed(ratio = 1)
 t_mid_scatter <- t_mid_scatter + theme(axis.text.x = element_text(angle = 45, hjust = 1), text = element_text(size=35))
 t_mid_scatter <- t_mid_scatter + geom_abline(intercept = 0, slope = 1)
 
