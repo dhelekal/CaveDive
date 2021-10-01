@@ -38,8 +38,8 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_
              legend.position = c(0.8,0.2),
              legend.title = element_text(angle = -90, hjust=0.5))
 
-     blank <- ggplot() + theme_minimal()
-     corr_maps <- list(blank)
+     corr_maps <- list(plot_spacer())
+     corr_guides <- list(plot_spacer())
      n_cor <- length(correlates)
      if(n_cor > 0) {
           corr_maps <- sapply(c(1:n_cor), function(i) list(build_correlate_map(correlates[[i]], pre, dat, tip.ord, unlist(axis_titles[i]), unlist(legend_titles[i]))))
