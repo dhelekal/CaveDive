@@ -41,29 +41,29 @@ colnames(corr_df3) <- "Continent"
 #for(c in colnames(corr_df)) corr_df[,c] <- as.logical(corr_df[,c])
 
 #corr_df <- corr_df[expansions$phylo_preprocessed$phy$tip.label,]
-png("fig_gpsc9_corr.png", width=1800, height=1800)
+pdf("fig_gpsc9_corr.pdf", width=22, height=22)
 plot(expansions, mode="persistence", k_modes=3, correlates=list(corr_df3, corr_df1, corr_df2), 
                                      corr_axis_title=list(),
                                      corr_legend_title=list(), no_y_text=T, tree_scale="Years")
 dev.off()
 
-png("fig_gpsc9_supp1.png", width=1600, height=1600)
+pdf("fig_gpsc9_supp1.pdf", width=18, height=18)
 plot(expansions, mode="summary", k_modes=3)
 dev.off()
 
-png("fig_gpsc9_supp2.png", width=1600, height=1600)
+pdf("fig_gpsc9_supp2.pdf", width=12, height=12)
 plot(expansions, mode="traces")
 dev.off()
 
-png("fig_gpsc9_supp3.png", width=1600, height=1600)
+pdf("fig_gpsc9_supp3.pdf", width=12, height=12)
 plot(expansions, mode="modes", k_modes=3)
 dev.off()
 
-png("fig_gpsc9_supp4.png", width=1600, height=1600)
+pdf("fig_gpsc9_supp4.pdf", width=12, height=12)
 plot(expansions, mode="mtraces",k_modes=3)
 dev.off()
 
-png("fig_gpsc9_popfn.png", width=1600, height=800)
+pdf("fig_gpsc9_popfn.pdf", width=12, height=6)
 plot(expansions, mode="popfunc",k_modes=3,t_max=c(50,50,50), tree_scale="Years")
 
 dev.off()

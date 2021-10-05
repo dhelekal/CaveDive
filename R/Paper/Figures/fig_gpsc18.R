@@ -123,27 +123,27 @@ theme(text = element_text(size=30),
       aspect.ratio=1,
       legend.position = c(0.2, 0.8))
 
-png("fig_gpsc18_corr.png", width=1200, height=1200)
+pdf("fig_gpsc18_corr.pdf", width=18, height=18)
 plot(expansions, mode="persistence", k_modes=1, correlates=list(corr_df1), no_y_text=F, tree_scale= "Years")
 dev.off()
 
-png("fig_gpsc18_supp1.png", width=1600, height=1600)
+pdf("fig_gpsc18_supp1.pdf", width=18, height=18)
 plot(expansions, mode="summary",k_modes=1)
 dev.off()
 
-png("fig_gpsc18_supp2.png", width=1600, height=1600)
+pdf("fig_gpsc18_supp2.pdf", width=12, height=12)
 plot(expansions, mode="traces")
 dev.off()
 
-png("fig_gpsc18_supp3.png", width=1600, height=1600)
+pdf("fig_gpsc18_supp3.pdf", width=12, height=12)
 plot(expansions, mode="modes", k_modes=1)
 dev.off()
 
-png("fig_gpsc18_supp4.png", width=1600, height=1600)
+pdf("fig_gpsc18_supp4.pdf", width=12, height=12)
 plot(expansions, mode="mtraces",k_modes=1)
 dev.off()
 
-png("fig_gpsc18_plotfn.png", width=800, height=800)
+pdf("fig_gpsc18_plotfn.pdf", width=10, height=10)
 plot(gg)
 dev.off()
 

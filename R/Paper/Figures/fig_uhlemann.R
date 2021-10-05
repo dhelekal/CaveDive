@@ -30,23 +30,23 @@ corr_df <- corr_df[, c("MRSA", "ACME")]
 for(c in colnames(corr_df)) corr_df[,c] <- sapply(corr_df[,c], function (x) if (x==0) "absent" else "present")
 
 corr_df <- corr_df[expansions$phylo_preprocessed$phy$tip.label,]
-png("fig_uhlemann_corr.png", width=1200, height=1200)
+pdf("fig_uhlemann_corr.pdf", width=16, height=16)
 plot(expansions, mode="persistence",k_modes=3, correlates=list(corr_df), tree_scale = "Years")
 dev.off()
 
-png("fig_uhlemann_supp1.png", width=1600, height=1600)
+pdf("fig_uhlemann_supp1.pdf", width=22, height=22)
 plot(expansions, mode="summary",k_modes=3)
 dev.off() 
 
-png("fig_uhlemann_supp2.png", width=1600, height=1600)
+pdf("fig_uhlemann_supp2.pdf", width=12, height=12)
 plot(expansions, mode="traces")
 dev.off()
 
-png("fig_uhlemann_supp3.png", width=1600, height=1600)
+pdf("fig_uhlemann_supp3.pdf", width=12, height=12)
 plot(expansions, mode="modes",k_modes=3)
 dev.off() 
 
-png("fig_uhlemann_supp4.png", width=1600, height=1600)
+pdf("fig_uhlemann_supp4.pdf", width=12, height=12)
 plot(expansions, mode="mtraces",k_modes=3)
 dev.off()
 
