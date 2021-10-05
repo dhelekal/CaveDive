@@ -34,7 +34,7 @@ pdf("fig_uhlemann_corr.pdf", width=16, height=16)
 plot(expansions, mode="persistence",k_modes=3, correlates=list(corr_df), tree_scale = "Years")
 dev.off()
 
-pdf("fig_uhlemann_supp1.pdf", width=22, height=22)
+pdf("fig_uhlemann_supp1.pdf", width=22, height=22,onefile=F)
 plot(expansions, mode="summary",k_modes=3)
 dev.off() 
 

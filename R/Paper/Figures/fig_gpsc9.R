@@ -47,7 +47,7 @@ plot(expansions, mode="persistence", k_modes=3, correlates=list(corr_df3, corr_d
                                      corr_legend_title=list(), no_y_text=T, tree_scale="Years")
 dev.off()
 
-pdf("fig_gpsc9_supp1.pdf", width=18, height=18)
+pdf("fig_gpsc9_supp1.pdf", width=18, height=18,onefile=F)
 plot(expansions, mode="summary", k_modes=3)
 dev.off()
 

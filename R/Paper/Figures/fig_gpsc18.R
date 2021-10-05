@@ -127,7 +127,7 @@ pdf("fig_gpsc18_corr.pdf", width=18, height=18)
 plot(expansions, mode="persistence", k_modes=1, correlates=list(corr_df1), no_y_text=F, tree_scale= "Years")
 dev.off()
 
-pdf("fig_gpsc18_supp1.pdf", width=18, height=18)
+pdf("fig_gpsc18_supp1.pdf", width=18, height=18,onefile=F)
 plot(expansions, mode="summary",k_modes=1)
 dev.off()
 
