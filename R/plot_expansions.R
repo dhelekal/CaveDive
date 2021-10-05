@@ -353,8 +353,11 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlig
      p2 <- p2 + prior_mixture(function(t,n) prior_t_given_N(t-x_max, n), mcmc.df$N)
    }
    p2 <- p2 + theme_bw() + theme(axis.title.y = element_blank(),
+                                  axis.text.x = element_blank(),
+                                  axis.ticks.x = element_blank(),
                                   axis.text.y = element_blank(),
-                                  axis.ticks.y = element_blank())
+                                  axis.ticks.y = element_blank(),
+                                  text = element_text(size=24))
 
    grid_layout <- rbind(c(1,3), c(2,NA))
    grid_width <- c(5,1)
