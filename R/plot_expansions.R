@@ -1,7 +1,7 @@
-plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_titles=list(), correlates=list(), modes=NULL) {
+plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_titles=list(), correlates=list(), modes=NULL, tree_scale=NULL) {
      phy <- pre$phy
      if (is.null(modes)) MRCA_lab=NULL else MRCA_lab=pre$edges.df$node.child[modes]
-     tree_map <- plot_tree(pre, event.df, MRCA_lab)
+     tree_map <- plot_tree(pre, event.df, MRCA_lab, tree_scale)
 
      dat <- tree_map[["data"]]
      dat <- dat[dat$isTip,]
@@ -36,19 +36,28 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_
              plot.margin = margin(0, 0, 0, 0, "cm"),
              text = element_text(size=30),
              legend.position = c(0.8,0.2),
-             legend.title = element_text(angle = -90, hjust=0.5),
-             aspect.ratio=1)
+             legend.title = element_text(angle = -90, hjust=0.5))
 
-     blank <- ggplot() + theme_minimal()
-     corr_maps <- list(blank)
+     corr_maps <- list(plot_spacer())
+     corr_guides <- list(plot_spacer())
      n_cor <- length(correlates)
      if(n_cor > 0) {
           corr_maps <- sapply(c(1:n_cor), function(i) list(build_correlate_map(correlates[[i]], pre, dat, tip.ord, unlist(axis_titles[i]), unlist(legend_titles[i]))))
+          corr_guides <- sapply(corr_maps, function(cmap) list(plot_grid(get_legend(cmap+theme(
+                          legend.position="bottom", 
+                          legend.direction="horizontal",     
+                          )
+                          ))))
      }
      tree_map_t <- tree_map + coord_flip() + scale_x_reverse()
-
-     do.call("ggarrange",c(c(list(blank), list(tree_map_t), rep(list(blank), max(1, n_cor)), list(tree_map), list(heat_map), corr_maps), 
-                              list(widths=c(1,3,rep(0.75, max(1,n_cor))), heights=c(1,3))))
+     plot_list <- c(list(plot_spacer()), list(plot_spacer()), list(tree_map_t), corr_guides, #rep(list(plot_spacer()), max(1, n_cor)),
+                              rep(list(plot_spacer()), 3+max(1, n_cor)),
+                              list(tree_map), list(plot_spacer()), list(heat_map), corr_maps)
+     plot(wrap_plots(plot_list,
+               byrow=T,
+               ncol=3+max(1, n_cor),
+               widths=c(1, -0.35, 3, rep(0.75, max(1, n_cor))), 
+               heights=c(1, -0.15, 3)))
 }
 
 build_correlate_map <- function(correlate, pre, dat, tip.ord, axis_title, leg_title) {
@@ -85,7 +94,11 @@ build_correlate_map <- function(correlate, pre, dat, tip.ord, axis_title, leg_ti
                     geom_tile(aes(fill = value)) +
                     col_scheme +
                     theme_minimal() +
-                    guides(fill=guide_legend(title.position = "left"))+
+                    guides(fill = guide_legend(direction = "horizontal",
+                             title.position = "bottom",
+                             label.position="top", label.hjust = 0.5, 
+                             label.vjust = 0.5,
+                             label.theme = element_text(angle = 90,size=30)))+
                     coord_flip() +
                     labs(y=axis_title_str, fill=leg_title_str) +
                     theme(axis.title.y = element_blank(), 
@@ -94,13 +107,14 @@ build_correlate_map <- function(correlate, pre, dat, tip.ord, axis_title, leg_ti
                           panel.grid.major = element_blank(),
                           panel.grid.minor = element_blank(),
                           text = element_text(size=30),
-                          axis.text.x = element_text(size=18, angle=45, hjust=1),
-                          legend.position="bottom", legend.direction="vertical",
-                          legend.title = element_text(angle = -90))
+                          axis.text.x = element_text(size=28, angle=45, hjust=1),
+                          legend.position="none", 
+                          plot.margin = margin(0, 0, 0, 0, "cm")
+                          )
      return(corr_map)
 }
 
-plot_tree<-function(pre,event.df, MRCA_lab=NULL){
+plot_tree<-function(pre,event.df, MRCA_lab=NULL, tree_scale=NULL){
    tree <- pre$phy
    freq <- table(event.df$br) 
 
@@ -127,39 +141,55 @@ plot_tree<-function(pre,event.df, MRCA_lab=NULL){
                  x=branch), color="red", size=12, vjust=-1, hjust=1) +
    scale_size_manual(values=c(1)) +
    scale_x_continuous(limits=c(0, x_max)) +
+   scale_y_discrete(labels = NULL, breaks = NULL)+
    scale_color_viridis(option="plasma") +
    theme_tree2() + 
-   theme_minimal() +
-   theme(axis.title.x = element_blank(), 
-          axis.text.x = element_blank(), 
-          axis.title.y = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank(),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          plot.margin = margin(0, 0, 0, 0, "cm"),
-          legend.position = "none")
+   theme_minimal()
+
+   if(is.null(tree_scale)) {
+     p1 <- p1 + theme(axis.title.x = element_blank(), 
+                    axis.text.x = element_blank(), 
+                    axis.title.y = element_blank(),
+                    axis.text.y = element_blank(),
+                    axis.ticks.y = element_blank(),
+                    text = element_text(size=30),
+                    panel.grid.major = element_blank(),
+                    panel.grid.minor = element_blank(),
+                    plot.margin = margin(0, 0, 0, 0, "cm"),
+                    legend.position = "none")
+   } else {
+     p1 <- p1 + labs(x=paste0("Time (", tree_scale, ")"), y="")
+     p1 <- p1 + theme(panel.grid.major = element_blank(),
+                    panel.grid.minor = element_blank(),
+                    text = element_text(size=30),
+                    plot.margin = margin(0, 0, 0, 0, "cm"),
+                    legend.position = "none")
+   }
    return(p1)
 }
 
 plot_summary <- function (model_data, expansion_data, phylo_preprocessed, priors, modes=NULL) {
+
+     rdbu <- brewer.pal(n = 3, name = "RdBu")
+     col_scheme <- scale_fill_manual(values=c(rdbu[1], rdbu[3]), na.value=rdbu[2])
      
      hist_dim <- ggplot(model_data, aes(x=dim)) +
                  geom_bar(aes(y = ..prop..), stat="count") + 
                  geom_text(aes( label = scales::percent(..prop..), y= ..prop.. ), stat= "count", vjust = -.5, size=12) +
                  theme_bw() + 
                  xlab("Number of Expansions") + 
+                 ylab("Posterior Marginal Probability") +
                  scale_y_continuous(labels=percent, limits=c(0,1)) +
                  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
-                                  axis.title.y = element_blank(),
-                                  text = element_text(size=20))
+                                  text = element_text(size=24))
      hist_N <- ggplot(model_data, aes(N)) +
          geom_histogram(aes(y = stat(count / sum(count))), bins=100) +
          theme_bw() + 
-         xlab("N") +
-         scale_fill_brewer(palette="Dark2")  + 
-         theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(),
-               text = element_text(size=20))
+         xlab("Background Pop. Size") +
+         ylab("Posterior Marginal Density") +
+         scale_fill_brewer(palette="Dark2") + 
+         theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+               text = element_text(size=24))
 
 
      hist_br <- ggplot(expansion_data, aes(x=factor(br)))
@@ -167,14 +197,14 @@ plot_summary <- function (model_data, expansion_data, phylo_preprocessed, priors
           hist_br <- hist_br + geom_bar(aes(y = stat(count / sum(count)))) 
         } else {
           hist_br <- hist_br + geom_bar(aes(y = stat(count / sum(count)), fill=is.mode)) + 
-          scale_fill_brewer(palette="Dark2") + 
+          col_scheme + 
                      geom_text(stat="count", aes(label = mode_clade, y= ((..count..)/sum(..count..))), vjust = -.25, hjust=-0.1, size=11, color="red")
         }
 
         hist_br <- hist_br + theme_bw() + 
-        labs(x="Branch Number",fill="Expansion Root") +
-        theme(axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = c(0.8, 0.2),
-              text = element_text(size=14),
+        labs(x="Branch Number", y="Frequency of Expansion Root Present", fill="Highlighted Expansion") +
+        theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), legend.position = c(0.8, 0.2),
+              text = element_text(size=24),
               axis.text.x = element_text(size=12, angle=45))
 
      if (is.null(modes)) MRCA_lab=NULL else MRCA_lab=phylo_preprocessed$edges.df$node.child[modes]
@@ -323,8 +353,11 @@ plot_tree_freq <- function(mcmc.df, event.df, pre, prior_t_given_N=NULL, highlig
      p2 <- p2 + prior_mixture(function(t,n) prior_t_given_N(t-x_max, n), mcmc.df$N)
    }
    p2 <- p2 + theme_bw() + theme(axis.title.y = element_blank(),
+                                  axis.text.x = element_blank(),
+                                  axis.ticks.x = element_blank(),
                                   axis.text.y = element_blank(),
-                                  axis.ticks.y = element_blank())
+                                  axis.ticks.y = element_blank(),
+                                  text = element_text(size=24))
 
    grid_layout <- rbind(c(1,3), c(2,NA))
    grid_width <- c(5,1)
@@ -441,128 +474,139 @@ plot_mode_traces <- function(mcmc.df, event.df, k_modes) {
           heights = c(1,1))
 }
 
-plot_pop_fn <- function(mcmc.df, event.df, which_br, t_max=NULL, eval_pts=100) {
-  mode_br_df <- event.df[which(event.df$br==which_br),]
-  mode_br_mcmc_df <- mcmc.df[mcmc.df$it %in% mode_br_df$it, ]
-  min_x <- min(mode_br_df$time)
-  if(is.null(t_max)) {
-     max_x <- 0.3*abs(min_x)
-  } else {
-     max_x <- t_max
-  }
-  X <- seq(from=min_x, to=max_x, length.out=eval_pts)
-  Y_med <- rep(0, eval_pts)
-  Y_min <- rep(0, eval_pts)
-  Y_max <- rep(0, eval_pts)
+plot_pop_fn <- function(mcmc.df, event.df, which_br, t_max=NULL, eval_pts=100, tree_scale=NULL) {
+     mode_br_df <- event.df[which(event.df$br==which_br),]
+     mode_br_mcmc_df <- mcmc.df[mcmc.df$it %in% mode_br_df$it, ]
+     min_x <- min(mode_br_df$time)
+     if(is.null(t_max)) {
+          max_x <- 0.3*abs(min_x)
+     } else {
+          max_x <- t_max
+     }
+     X <- seq(from=min_x, to=max_x, length.out=eval_pts)
+     Y_med <- rep(0, eval_pts)
+     Y_min <- rep(0, eval_pts)
+     Y_max <- rep(0, eval_pts)
 
-  funcs <- lapply(c(1:nrow(mode_br_df)), 
-     function (i) function (s) 1/sat.rate(s, mode_br_df$K[i], (1/mode_br_df$t_mid[i])**2, mode_br_df$time[i]))
-
-  for (i in c(1:eval_pts)) {
-     f_vals <- sapply(c(1:length(funcs)), function(j) funcs[[j]](-X[i]))
-     Y_med[i] <- median(f_vals)
-     ci <- compute_ci(f_vals)
-     Y_min[i] <- ci[1]
-     Y_max[i] <- ci[2]
-  }
-
-  pal <- brewer.pal(n = 3, name = "Dark2")
-  df <- data.frame(t=X, y_med=Y_med, y_min=Y_min, y_max=Y_max)
-  gg <- ggplot(df) +
-  geom_ribbon(aes(x=t,ymin=y_min, ymax=y_max),fill="grey50", alpha=0.3) +
-  geom_line(data=subset(df, t <= 0), aes(x=t, y=y_med), linetype="solid",lwd=2, color=pal[2]) +
-  geom_line(data=subset(df, t > 0), aes(x=t, y=y_med), linetype="longdash",lwd=2, color=pal[3]) + 
-  theme_bw() +
-  xlab("Time") +
-  ylab("Neg") +
-  theme(text = element_text(size=20), 
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank())
-  plot(gg)
-}
-
-plot_pop_fn_facet <- function(mcmc.df, event.df, k_modes, eval_pts=100, t_max=NULL, gt.K=NULL, gt.t_mid=NULL, gt.time=NULL) {
-  mode_br_df <- event.df[which(event.df$is.mode),]
-  mode_br_mcmc_df <- mcmc.df[mcmc.df$it %in% mode_br_df$it, ]
-
-  brs <- unique(mode_br_df$br)
-  min_x <- sapply(brs, function(x) min(mode_br_df$time[mode_br_df$br==x]))
-  
-  if(is.null(t_max)) {
-     max_x <- 0.3*abs(min_x)
-  } else {
-     max_x <- t_max
-  }
-
-  Xseq <- lapply(c(1:k_modes), function(i) seq(from=min_x[i], to=max_x[i], length.out=eval_pts))
-
-  Y_med <- c()
-  Y_min <- c()
-  Y_max <- c()
-  X <- c()
-  br_v <- c()
-
-  for (k in c(1:length(brs))) {
-     Y_med_tmp <- rep(0,eval_pts)
-     Y_min_tmp <- rep(0,eval_pts)
-     Y_max_tmp <- rep(0,eval_pts)
-
-     br_subs <- mode_br_df[which(mode_br_df$br==brs[k]),]
-
-     funcs <- lapply(c(1:nrow(br_subs)), 
-     function (i) function (s) 1/sat.rate(s, br_subs$K[i], (1/br_subs$t_mid[i])**2, br_subs$time[i]))
+     funcs <- lapply(c(1:nrow(mode_br_df)), 
+          function (i) function (s) 1/sat.rate(s, mode_br_df$K[i], (1/mode_br_df$t_mid[i])**2, mode_br_df$time[i]))
 
      for (i in c(1:eval_pts)) {
-          f_vals <- sapply(c(1:length(funcs)), function(j) funcs[[j]](-Xseq[[k]][i]))
-          Y_med_tmp[i] <- median(f_vals)
+          f_vals <- sapply(c(1:length(funcs)), function(j) funcs[[j]](-X[i]))
+          Y_med[i] <- median(f_vals)
           ci <- compute_ci(f_vals)
-          Y_min_tmp[i] <- ci[1]
-          Y_max_tmp[i] <- ci[2]
+          Y_min[i] <- ci[1]
+          Y_max[i] <- ci[2]
      }
-     Y_med <- c(Y_med, Y_med_tmp)
-     Y_min <- c(Y_min, Y_min_tmp)
-     Y_max <- c(Y_max, Y_max_tmp)
-     X <- c(X, Xseq[[k]])
-     br_v <- c(br_v, rep(brs[k], eval_pts))
-  }
 
-  Y_val <- c()
-  
-  if(!is.null(gt.K) && !is.null(gt.t_mid) && !is.null(gt.time)) {
-     for (k in c(1:length(brs))) {
-        func <- function (s) 1/sat.rate(s, gt.K[k], (1/gt.t_mid[k])**2, gt.time[k])
-        Y_val_tmp <- sapply(-Xseq[[k]], func) 
 
-        Y_val <- c(Y_val, Y_val_tmp)
-        X <- c(X, Xseq[[k]])
-        br_v <- c(br_v, rep(brs[k], eval_pts))
+     text_x <- "Time"
+
+     if(!is.null(tree_scale)) {
+          text_x <- paste0(text_x, " (",tree_scale, ")")
      }
-     dummy_df <- data.frame(t=X, y=Y_val, br=br_v)
-  }
 
+     pal <- brewer.pal(n = 3, name = "Dark2")
+     df <- data.frame(t=X, y_med=Y_med, y_min=Y_min, y_max=Y_max)
+     gg <- ggplot(df) +
+     geom_ribbon(aes(x=t,ymin=y_min, ymax=y_max),fill="grey50", alpha=0.3) +
+     geom_line(data=subset(df, t <= 0), aes(x=t, y=y_med), linetype="solid",lwd=2, color=pal[2]) +
+     geom_line(data=subset(df, t > 0), aes(x=t, y=y_med), linetype="longdash",lwd=2, color=pal[3]) + 
+     theme_bw() +
+     xlab(text_x) +
+     ylab("Neg") +
+     theme(text = element_text(size=24), 
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank())
+     plot(gg)
+}
 
-  br.labs <- sapply(brs, function (x) paste0("Branch: ",x))
-  names(br.labs) <- unique(brs)
+plot_pop_fn_facet <- function(mcmc.df, event.df, k_modes, eval_pts=100, t_max=NULL, gt.K=NULL, gt.t_mid=NULL, gt.time=NULL, tree_scale=NULL) {
+     mode_br_df <- event.df[which(event.df$is.mode),]
+     mode_br_mcmc_df <- mcmc.df[mcmc.df$it %in% mode_br_df$it, ]
 
-  pal <- brewer.pal(n = 3, name = "Dark2")
-  df <- data.frame(t=X, y_med=Y_med, y_min=Y_min, y_max=Y_max, br=br_v)
-  gg <- ggplot(df) +
-  geom_ribbon(aes(x=t,ymin=y_min, ymax=y_max),fill="grey50", alpha=0.3) +
-  geom_line(data=subset(df, t <= 0), aes(x=t, y=y_med), linetype="solid",lwd=2, color=pal[2]) +
-  geom_line(data=subset(df, t > 0), aes(x=t, y=y_med), linetype="longdash",lwd=2, color=pal[3]) + 
-  theme_bw() +
-  xlab("Time") +
-  ylab("Neg") +
-  ylim(c(0, max(Y_max)))
+     brs <- unique(mode_br_df$br)
+     min_x <- sapply(brs, function(x) min(mode_br_df$time[mode_br_df$br==x]))
      
-  if(!is.null(gt.K) && !is.null(gt.t_mid) && !is.null(gt.time)) gg <- gg + 
-       geom_line(data=dummy_df, aes(x=t, y=y), linetype="dotted",lwd=3, color=pal[1])
+     if(is.null(t_max)) {
+          max_x <- 0.3*abs(min_x)
+     } else {
+          max_x <- t_max
+     }
 
-  gg <- gg + facet_wrap(~br, labeller=labeller(br = br.labs), scales="free") +
-  theme(text = element_text(size=20), 
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank())
-  plot(gg)
+     Xseq <- lapply(c(1:k_modes), function(i) seq(from=min_x[i], to=max_x[i], length.out=eval_pts))
+
+     Y_med <- c()
+     Y_min <- c()
+     Y_max <- c()
+     X <- c()
+     br_v <- c()
+
+     for (k in c(1:length(brs))) {
+          Y_med_tmp <- rep(0,eval_pts)
+          Y_min_tmp <- rep(0,eval_pts)
+          Y_max_tmp <- rep(0,eval_pts)
+
+          br_subs <- mode_br_df[which(mode_br_df$br==brs[k]),]
+
+          funcs <- lapply(c(1:nrow(br_subs)), 
+          function (i) function (s) 1/sat.rate(s, br_subs$K[i], (1/br_subs$t_mid[i])**2, br_subs$time[i]))
+
+          for (i in c(1:eval_pts)) {
+               f_vals <- sapply(c(1:length(funcs)), function(j) funcs[[j]](-Xseq[[k]][i]))
+               Y_med_tmp[i] <- median(f_vals)
+               ci <- compute_ci(f_vals)
+               Y_min_tmp[i] <- ci[1]
+               Y_max_tmp[i] <- ci[2]
+          }
+          Y_med <- c(Y_med, Y_med_tmp)
+          Y_min <- c(Y_min, Y_min_tmp)
+          Y_max <- c(Y_max, Y_max_tmp)
+          X <- c(X, Xseq[[k]])
+          br_v <- c(br_v, rep(brs[k], eval_pts))
+     }
+
+     Y_val <- c()
+     
+     if(!is.null(gt.K) && !is.null(gt.t_mid) && !is.null(gt.time)) {
+          for (k in c(1:length(brs))) {
+          func <- function (s) 1/sat.rate(s, gt.K[k], (1/gt.t_mid[k])**2, gt.time[k])
+          Y_val_tmp <- sapply(-Xseq[[k]], func) 
+
+          Y_val <- c(Y_val, Y_val_tmp)
+          X <- c(X, Xseq[[k]])
+          br_v <- c(br_v, rep(brs[k], eval_pts))
+          }
+          dummy_df <- data.frame(t=X, y=Y_val, br=br_v)
+     }
+
+     text_x <- "Time"
+     if(!is.null(tree_scale)) {
+          text_x <- paste0(text_x, " (",tree_scale, ")")
+     }
+
+     br.labs <- sapply(brs, function (x) paste0("Branch: ",x))
+     names(br.labs) <- unique(brs)
+
+     pal <- brewer.pal(n = 3, name = "Dark2")
+     df <- data.frame(t=X, y_med=Y_med, y_min=Y_min, y_max=Y_max, br=br_v)
+     gg <- ggplot(df) +
+     geom_ribbon(aes(x=t,ymin=y_min, ymax=y_max),fill="grey50", alpha=0.3) +
+     geom_line(data=subset(df, t <= 0), aes(x=t, y=y_med), linetype="solid",lwd=2, color=pal[2]) +
+     geom_line(data=subset(df, t > 0), aes(x=t, y=y_med), linetype="longdash",lwd=2, color=pal[3]) + 
+     theme_bw() +
+     xlab(text_x) +
+     ylab("Neg") +
+     ylim(c(0, max(Y_max)))
+          
+     if(!is.null(gt.K) && !is.null(gt.t_mid) && !is.null(gt.time)) gg <- gg + 
+          geom_line(data=dummy_df, aes(x=t, y=y), linetype="dotted",lwd=3, color=pal[1])
+
+     gg <- gg + facet_wrap(~br, labeller=labeller(br = br.labs), scales="free") +
+     theme(text = element_text(size=20), 
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank())
+     plot(gg)
 }
 
 #' Plots mcmc output as several panels

@@ -26,11 +26,12 @@ Imports:
     gridExtra,
     grid,
     gtable,
-    egg,
+    cowplot,
     pracma,
     reshape2, 
     scales,
     RColorBrewer,
-    ape
+    ape,
+    patchwork
 VignetteBuilder: knitr
 RoxygenNote: 7.1.1
