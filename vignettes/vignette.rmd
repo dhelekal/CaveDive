@@ -40,7 +40,8 @@ We parametrise and instatiate a _priorList_ object, which we will use to sample 
 |`expansion_rate`        | $M$ (Number of Expansions)         | Poisson rate that governs the number of expansions in a population              |
 |`N_mean_log`            | $N_M$ (Background Population Size) | Lognormal mean of prior distribution on background (neutral) population         |
 |`N_sd_log`              | $N_M$ (Background Population Size) | Lognormal sd of prior distribution on background (neutral) population           |
-|`t_mid_rate`            | $t_{mid_i}$ (Speed of Growth)      | Non-dimensional exponential rate of prior distribution on how long it takes for an expansion to reach half its maximum size|
+|`t_mid_rate`            | $t_{mid_i}$ (Speed of Growth)      | Non-dimensional 
+exponential rate of prior distribution on how long it takes for an expansion to reach half its maximum size|
 |`K_sd_log`              | $K_i$ (Expansion Carrying Capacity)| Lognormal sd of prior distribution on the maximum population sizes at which individual expansions saturate.|
 |`exp_time_nu`           | $t_{div_i}$ (Time of expansions)   | Parameter that controls the mean of the gamma prior on the time of expansions      |
 |`exp_time_kappa`        | $t_{div_i}$ (Time of expansions)   | Parameter that controls the variance of the gamma prior on the time of expansions  |
@@ -51,26 +52,29 @@ Note that the form of the priors on expansion carrying capacities is conditioned
 The full exponential rate of prior on $t_{mid_i}$ is `t_mid_rate / N_M`.
 The mean and the variance of the gamma prior on time of expansions is `exp_time_nu * N_M` and `exp_time_kappa^2 * N_M^2` respectively.
 
-
-```{r parametrise priors, message=FALSE}
-    expansion_rate<-1 
-    N_mean_log<-5 
-    N_sd_log<-1
-    t_mid_rate<-5
-    K_sd_log<-1/2 
-    exp_time_nu<-1/3
-    exp_time_kappa<-1/4
+```{r inference priors, message=FALSE} 
+inference_priors <- standard_priors(expansion_rate=1, 
+                            N_mean_log=3, 
+                            N_sd_log=3, 
+                            t_mid_rate=5, 
+                            K_sd_log=1/2, 
+                            exp_time_nu=1/2, 
+                            exp_time_kappa=1/2)
+print(inference_priors)
 ```
 
-```{r priors, message=FALSE} 
-priors <- standard_priors(expansion_rate=expansion_rate, 
-                            N_mean_log=N_mean_log, 
-                            N_sd_log=N_sd_log, 
-                            t_mid_rate=t_mid_rate, 
-                            K_sd_log=K_sd_log, 
-                            exp_time_nu=exp_time_nu, 
-                            exp_time_kappa=exp_time_kappa)
-print(priors)
+These parameters, however, aren't best suited for simulating clonal expansions, 
+as they are too uninformative to produce clonal expansions that will be identifiable, hence we generate another set of priors for simulation
+
+```{r simulation priors, message=FALSE} 
+simulation_priors <- standard_priors(expansion_rate=1, 
+                            N_mean_log=4, 
+                            N_sd_log=1/2, 
+                            t_mid_rate=5, 
+                            K_sd_log=1/2, 
+                            exp_time_nu=1/3, 
+                            exp_time_kappa=1/4)
+print(simulation_priors)
 ```
 
 ## Simulations
@@ -93,7 +97,7 @@ tip_times <- runif(100, 0, 5)
 tip_times <- tip_times - max(tip_times)
 tip_times <- tip_times[order(-tip_times)]
 
-phy1 <- simulate_expansion_phylo(priors, 
+phy1 <- simulate_expansion_phylo(simulation_priors, 
                                  tip_times, 
                                  concentration=concentration, 
                                  collapse_singles=F)
@@ -107,7 +111,7 @@ tip_times <- runif(100, 0, 5)
 tip_times <- tip_times - max(tip_times)
 tip_times <- tip_times[order(-tip_times)]
 
-phy2 <- simulate_expansion_phylo(priors, 
+phy2 <- simulate_expansion_phylo(simulation_priors, 
                                  tip_times, 
                                  concentration=concentration, 
                                  given=list(n_exp=3, N=100), 
@@ -118,6 +122,7 @@ plot_structured_tree(phy2$tree, phy2$params$n_exp+1)
 
 Alternative one may wish to pre-assign the tips to individual expansions. A phylogeny with 2 expansions, where the first 30 tips belong to expansion number 1, the next 30 to expansion number 2, and 40 to the background population.
 ```{r simulate a phylogeny 3, out.width="50%", dpi=300, fig.align="center", message=FALSE} 
+set.seed(1)
 tip_times <- runif(100, 0, 5)
 tip_times <- tip_times - max(tip_times)
 
@@ -131,10 +136,10 @@ tip_colours <- c(rep(1,30), rep(2,30), rep(3,40))[order(-tip_times)]
 
 tip_times <- tip_times[order(-tip_times)]
 
-phy3 <- simulate_expansion_phylo(priors, 
+phy3 <- simulate_expansion_phylo(simulation_priors, 
                                  tip_times, 
                                  concentration=concentration, 
-                                 given=list(N=200, K=c(200,180), n_exp=2, tip_colours=tip_colours), 
+                                 given=list(n_exp=2, tip_colours=tip_colours), 
                                  collapse_singles=F)
 
 times <- node.depth.edgelength(phy3$tree)
@@ -156,7 +161,7 @@ n_it <- 1e6
 thinning <- n_it/1e4
 phy_inf <- collapse.singles(phy3$tree)
 start <- Sys.time()
-expansions <- run_expansion_inference(phy_inf, priors, concentration=1, n_it=n_it, thinning=thinning) 
+expansions <- run_expansion_inference(phy_inf, inference_priors, concentration=2, n_it=n_it, thinning=thinning) 
 end <- Sys.time()
 total_time <- as.numeric (end - start, units = "mins")
 print(paste("Total time elapsed: ",total_time))

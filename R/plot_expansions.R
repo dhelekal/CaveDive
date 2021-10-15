@@ -56,8 +56,8 @@ plot_persistence <- function(mcmc.df, event.df, pre, axis_titles=list(), legend_
      plot(wrap_plots(plot_list,
                byrow=T,
                ncol=3+max(1, n_cor),
-               widths=c(1, -0.35, 3, rep(0.75, max(1, n_cor))), 
-               heights=c(1, -0.15, 3)))
+               widths=c(1, -0.0, 3, rep(0.75, max(1, n_cor))), 
+               heights=c(1, -0.0, 3)))
 }
 
 build_correlate_map <- function(correlate, pre, dat, tip.ord, axis_title, leg_title) {
