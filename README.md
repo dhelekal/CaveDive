@@ -13,8 +13,7 @@ vignette.
 For a more formal description of CaveDive, see the following preprint:
 
 Files and scripts required to reproduce results and figures in this
-preprint can be found under the branch `paper`, in the directory `R`. 
-The package version used for results in the preprint is located under the same branch `paper` in the directory `CaveDive`. 
+preprint can be found under the branch `paper`, in the directory `R`.
 
 # Installation
 
