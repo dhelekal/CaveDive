@@ -5,6 +5,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // coalescent_loglh
 double coalescent_loglh(NumericVector sampling_times, NumericVector coalescent_times, const double pop_size, const double t_max);
 RcppExport SEXP _CaveDive_coalescent_loglh(SEXP sampling_timesSEXP, SEXP coalescent_timesSEXP, SEXP pop_sizeSEXP, SEXP t_maxSEXP) {
