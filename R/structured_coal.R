@@ -237,7 +237,12 @@ structured_coal.simulate <- function(sampling_times, colours, div_times, div_eve
 #' @export
 preprocess_phylo <- function(phy, order_edges_by_node_label=TRUE){
     stopifnot("phy must be an ape phylogeny"= class(phy) == "phylo")
-    stopifnot("phylogeny must be labeled" = all(!is.na(phy$node.label))&&all(!is.na(phy$tip.label)))
+    stopifnot("Phylogeny must have both node labels and tip labels." =
+                                            !is.null(phy$tip.label) &&
+                                            !is.null(phy$node.label) &&
+                                            all(!is.na(phy$node.label))&&
+                                            all(!is.na(phy$tip.label))
+                                            )
 
     labs <- c(phy$node.label, phy$tip.label)
     nodes <- nodeid(phy, labs)
