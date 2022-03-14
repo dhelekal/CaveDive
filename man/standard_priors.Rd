@@ -6,8 +6,8 @@
 \usage{
 standard_priors(
   expansion_rate = 1,
-  N_mean_log = 4,
-  N_sd_log = 4,
+  N_mean_log = 3,
+  N_sd_log = 3,
   t_mid_rate = 5,
   K_sd_log = 1/2,
   exp_time_nu = 1/2,
