@@ -13,7 +13,7 @@ vignette.
 For a more formal description of CaveDive, see the following paper: https://doi.org/10.1093/sysbio/syab095
 
 Files and scripts required to reproduce results and figures in this
-preprint can be found under the branch `paper-data`, in the [directory](https://github.com/dhelekal/CaveDive/tree/paper-data/R/). `R`.
+preprint can be found under the branch `paper-data`, in the [directory](https://github.com/dhelekal/CaveDive/tree/paper-data/R/) `R`.
 
 # Installation
 
