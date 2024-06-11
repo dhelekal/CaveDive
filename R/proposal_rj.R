@@ -206,8 +206,8 @@ move_update_branch2 <- function(x_prev, pre, scale) { ### update branch
 
   direction <- sign(delta_t)
   curr_br <- div.branch
-  while(!(nodes$times[edges$node.child[curr_br]] > div.times_upd &&
-    nodes$times[edges$node.parent[curr_br]] < div.times_upd) && !is.na(curr_br)) {
+  while(!is.na(curr_br) && !(nodes$times[edges$node.child[curr_br]] > div.times_upd &&
+    nodes$times[edges$node.parent[curr_br]] < div.times_upd)) {
     if (direction < 0) {
       if (edges$node.parent[curr_br] == root) { ### traversing root, switch direction
         direction <- -direction
